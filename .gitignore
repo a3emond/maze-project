@@ -1,16 +1,15 @@
-# Ignore Visual Studio files
+# Visual Studio files
 .vs/
 *.suo
 *.user
 *.userosscache
-*.sln.docstates
 
-# Ignore build outputs
+# Build outputs
 bin/
 obj/
 publish/
 
-# Ignore temporary files
+# Temporary and cache files
 *.log
 *.db
 *.vscode/
