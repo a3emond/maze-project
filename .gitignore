@@ -1,6 +1,16 @@
+# Ignore Visual Studio files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore build outputs
 bin/
 obj/
 publish/
-wwwroot/
-.idea/
-.vscode/
+
+# Ignore temporary files
+*.log
+*.db
+*.vscode/
