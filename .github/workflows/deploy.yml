@@ -32,21 +32,22 @@ jobs:
     - name: Build Blazor WebAssembly
       run: dotnet publish MazeGameBlazorApp/MazeGameBlazor/MazeGameBlazor/MazeGameBlazor.csproj -c Release -o build
 
-      # Step 5: Deploy Built Files to the Production Server
+    # Step 5: Deploy Built Files to the Production Server
     - name: Deploy Built Files to Server
       run: |
+        # Configure SSH
         mkdir -p ~/.ssh
         echo "${{ secrets.SERVER_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
         ssh-keyscan -H aedev.pro >> ~/.ssh/known_hosts
 
-        # Clone the repository and deploy
+        # Clone the repository and deploy the build files
         git clone ssh://a3emond@aedev.pro:/var/www/maze.aedev.pro deploy_repo
         cd deploy_repo
         rm -rf *
-        cp -r ../build/wwwroot/* .
+        cp -r ../build/* .
         git add .
-        git commit -m "Deploy new build from GitHub Actions"
+        git commit -m "Deploy new build from GitHub Actions" || echo "No changes to commit"
         git push origin master
       env:
-        GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+        GIT_SSH_COMMAND: ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no
