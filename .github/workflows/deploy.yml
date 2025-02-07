@@ -1,4 +1,4 @@
-name: Deploy Blazor WebAssembly
+name: Build and Deploy Blazor WebAssembly
 
 on:
   push:
@@ -32,13 +32,21 @@ jobs:
     - name: Build Blazor WebAssembly
       run: dotnet publish MazeGameBlazorApp/MazeGameBlazor/MazeGameBlazor/MazeGameBlazor.csproj -c Release -o build
 
-    # Step 5: Deploy via FTP to your server
-    - name: Deploy to FTP
-      uses: SamKirkland/FTP-Deploy-Action@4.3.0
-      with:
-        server: ${{ secrets.FTP_HOST }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./build/wwwroot/
-        server-dir: /var/www/maze.aedev.pro/
-        protocol: ftps
+    # Step 5: Deploy the Built Files to Production Server
+    - name: Deploy Built Files to Server
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan aedev.pro >> ~/.ssh/known_hosts
+
+        # Clone the production repo and push built files
+        git clone ssh://a3emond@aedev.pro:/var/www/maze.aedev.pro.git deploy_repo
+        cd deploy_repo
+        rm -rf *
+        cp -r ../build/wwwroot/* .
+        git add .
+        git commit -m "Deploy new build from GitHub Actions"
+        git push origin master
+      env:
+        GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
