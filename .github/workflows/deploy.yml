@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Check out the repository
+    # Step 1: Checkout the repository
     - name: Checkout code
       uses: actions/checkout@v3
 
@@ -18,13 +18,17 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '9.0'  
+        dotnet-version: '9.0'
 
-    # Step 3: Build the Blazor WebAssembly app
+    # Step 3: Restore dependencies
+    - name: Restore dependencies
+      run: dotnet restore MazeGameBlazorApp/MazeGameBlazor/MazeGameBlazor.csproj
+
+    # Step 4: Build the Blazor WebAssembly app
     - name: Build Blazor WebAssembly
-      run: dotnet publish MazeGameBlazorApp/MazeGameBlazorApp.csproj -c Release -o build
+      run: dotnet publish MazeGameBlazorApp/MazeGameBlazor/MazeGameBlazor.csproj -c Release -o build
 
-    # Step 4: Deploy via FTP to your server
+    # Step 5: Deploy via FTP to your server
     - name: Deploy to FTP
       uses: SamKirkland/FTP-Deploy-Action@4.3.0
       with:
@@ -33,4 +37,4 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./build/wwwroot/
         server-dir: /var/www/maze.aedev.pro/
-        protocol: ftps 
+        protocol: ftps
