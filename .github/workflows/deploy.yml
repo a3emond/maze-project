@@ -26,11 +26,11 @@ jobs:
 
     # Step 3: Restore dependencies
     - name: Restore dependencies
-      run: dotnet restore MazeGameBlazorApp/MazeGameBlazor/MazeGameBlazor.csproj
+      run: dotnet restore MazeGameBlazorApp/MazeGameBlazor/MazeGameBlazor/MazeGameBlazor.csproj
 
     # Step 4: Build the Blazor WebAssembly app
     - name: Build Blazor WebAssembly
-      run: dotnet publish MazeGameBlazorApp/MazeGameBlazor/MazeGameBlazor.csproj -c Release -o build
+      run: dotnet publish MazeGameBlazorApp/MazeGameBlazor/MazeGameBlazor/MazeGameBlazor.csproj -c Release -o build
 
     # Step 5: Deploy via FTP to your server
     - name: Deploy to FTP
