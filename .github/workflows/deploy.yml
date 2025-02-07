@@ -35,19 +35,14 @@ jobs:
     # Step 5: Deploy Built Files to the Production Server
     - name: Deploy Built Files to Server
       run: |
-        # Configure SSH
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SERVER_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        ssh-keyscan -H aedev.pro >> ~/.ssh/known_hosts
-
+        # Install sshpass for password-based SSH
+        sudo apt-get update && sudo apt-get install -y sshpass
+    
         # Clone the repository and deploy the build files
-        git clone ssh://a3emond@aedev.pro:/var/www/maze.aedev.pro deploy_repo
-        cd deploy_repo
-        rm -rf *
-        cp -r ../build/* .
-        git add .
-        git commit -m "Deploy new build from GitHub Actions" || echo "No changes to commit"
-        git push origin master
+        sshpass -p "${{ secrets.SERVER_SSH_PASSWORD }}" \
+        ssh -o StrictHostKeyChecking=no a3emond@aedev.pro "rm -rf /var/www/maze.aedev.pro/*"
+        
+        sshpass -p "${{ secrets.SERVER_SSH_PASSWORD }}" \
+        scp -o StrictHostKeyChecking=no -r ./build/* a3emond@aedev.pro:/var/www/maze.aedev.pro/
       env:
-        GIT_SSH_COMMAND: ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no
+        SERVER_SSH_PASSWORD: ${{ secrets.SERVER_SSH_PASSWORD }}
