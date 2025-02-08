@@ -1,0 +1,71 @@
+@startuml
+skinparam linetype ortho
+
+entity User {
+  * Id : string [PK]
+  --
+  * UserName : nvarchar(100)
+  * Email : nvarchar(200)
+  * PasswordHash : nvarchar(MAX)
+  * Role : nvarchar(50)
+  * CreatedAt : datetime
+}
+
+entity Role {
+  * Id : string [PK]
+  --
+  * Name : nvarchar(50)
+}
+
+entity UserRoles {
+  * UserId : string [FK]
+  * RoleId : string [FK]
+}
+
+entity BlogPost {
+  * Id : int [PK]
+  --
+  * Title : nvarchar(200)
+  * Content : nvarchar(MAX)
+  * CreatedAt : datetime
+  * LikeCount : int
+  * AuthorId : string [FK]
+}
+
+entity Comment {
+  * Id : int [PK]
+  --
+  * Content : nvarchar(MAX)
+  * Author : nvarchar(100)
+  * CreatedAt : datetime
+  * BlogPostId : int [FK]
+}
+
+entity Likes {
+  * Id : int [PK]
+  --
+  * BlogPostId : int [FK]
+  * UserId : string [FK]
+}
+
+entity Media {
+  * Id : int [PK]
+  --
+  * Url : nvarchar(MAX)
+  * ThumbnailUrl : nvarchar(MAX)
+  * Type : nvarchar(50)
+  * BlogPostId : int [FK]
+}
+
+User -- UserRoles : "1 to many"
+Role -- UserRoles : "1 to many"
+UserRoles -- User : "many to 1"
+UserRoles -- Role : "many to 1"
+
+User -- BlogPost : "1 to many"
+BlogPost -- Comment : "1 to many"
+BlogPost -- Media : "1 to many"
+BlogPost -- Likes : "1 to many"
+Likes -- User : "many to 1"
+
+@enduml

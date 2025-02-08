@@ -2,4 +2,25 @@
 
 <PageTitle>Home</PageTitle>
 
-<a href="https://github.com/a3emond/maze-project"> Have a look on GitHub!</a>
+<a href="https://github.com/a3emond/maze-project" target="_blank"> Have a look on GitHub!</a>
+
+@code {
+
+    // get the last blog entry and put it in a what's new section
+    protected override async Task OnInitializedAsync()
+    {
+        // var blogEntries = await BlogService.GetBlogEntries();
+        // var lastBlogEntry = blogEntries.OrderByDescending(b => b.Date).FirstOrDefault();
+        // if (lastBlogEntry != null)
+        // {
+        //     var blogEntry = new BlogEntry
+        //         {
+        //             Title = lastBlogEntry.Title,
+        //             Content = lastBlogEntry.Content,
+        //             Date = lastBlogEntry.Date
+        //         };
+        //     BlogService.SetLastBlogEntry(blogEntry);
+        // }
+    }
+
+}
