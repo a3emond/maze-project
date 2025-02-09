@@ -54,3 +54,4 @@ jobs:
         scp -o StrictHostKeyChecking=no -r ./build/* a3emond@aedev.pro:/var/www/maze.aedev.pro/
       env:
         SERVER_SSH_PASSWORD: ${{ secrets.SERVER_SSH_PASSWORD }}
+
