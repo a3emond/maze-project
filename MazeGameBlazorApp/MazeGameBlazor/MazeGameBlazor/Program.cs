@@ -36,6 +36,8 @@ namespace MazeGameBlazor
 
             // Custom services
             builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<BlogService>();
+
 
 
 

@@ -4,7 +4,7 @@
 @inject AuthService AuthService
 <h3>Login</h3>
 
-<EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm">
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm" id="loginForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -30,6 +30,10 @@
         <p>
             <a href="/">Click here to go to the home page</a>
         </p>
+        <!-- Hide form-->
+        <script>
+            document.getElementById("loginForm").style.display = "none";
+        </script>
     }
 }
 

@@ -1,0 +1,41 @@
+﻿@page "/create-blog"
+@inject NavigationManager Navigation
+
+
+@inherits CreateBlogBase
+
+<h2>Create Blog Entry</h2>
+
+@if (!IsAdmin)
+{
+    <p>You do not have access to this page.</p>
+    Navigation.NavigateTo("/");
+}
+else
+{
+    <EditForm Model="NewBlogPost" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div>
+            <label for="title">Title</label>
+            <InputText id="title" @bind-Value="NewBlogPost.Title" class="form-control" />
+        </div>
+
+        <div>
+            <label for="content">Content</label>
+            <InputTextArea id="content" @bind-Value="NewBlogPost.Content" class="form-control" />
+        </div>
+
+        <div>
+            <label for="media">Upload Media</label>
+            <InputFile OnChange="HandleFileChange" />
+            @if (!string.IsNullOrEmpty(UploadedFileName))
+            {
+                <p>Uploaded File: @UploadedFileName</p>
+            }
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Blog</button>
+    </EditForm>
+}
