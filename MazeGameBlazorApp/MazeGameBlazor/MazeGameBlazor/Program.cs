@@ -2,6 +2,7 @@ using MazeGameBlazor.Components;
 using MazeGameBlazor.Database;
 using MazeGameBlazor.Database.Models;
 using MazeGameBlazor.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

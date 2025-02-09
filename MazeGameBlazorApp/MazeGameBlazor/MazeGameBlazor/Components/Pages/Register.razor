@@ -1,7 +1,7 @@
 ﻿@page "/register"
 @using MazeGameBlazor.Services
 @inject AuthenticationStateProvider AuthStateProvider
-@inject AuthService AuthService 
+@inject AuthService AuthService
 
 <h3>Register</h3>
 
@@ -32,19 +32,31 @@
     <button type="submit">Register</button>
 </EditForm>
 
-@if (message != null)
+@if (!string.IsNullOrEmpty(message))
 {
     <p>@message</p>
+
+    @if (registrationSuccessful)
+    {
+        <p>
+            <a href="/login">Click here to go to the login page</a>
+        </p>
+    }
 }
 
 @code {
-    private RegisterModel registerModel = new();
+    [SupplyParameterFromForm]
+    private RegisterModel registerModel { get; set; }
+    protected override void OnInitialized() => registerModel ??= new RegisterModel();
+
     private string? message;
+    private bool registrationSuccessful = false;
 
     private async Task HandleRegistration()
     {
         if (registerModel.Password != registerModel.ConfirmPassword)
         {
+            registrationSuccessful = false;
             message = "Passwords do not match.";
             return;
         }
@@ -52,10 +64,20 @@
         try
         {
             var result = await AuthService.RegisterUserAsync(registerModel);
-            message = result.Succeeded ? "Registration successful!" : string.Join(", ", result.Errors.Select(e => e.Description));
+            if (result.Succeeded)
+            {
+                registrationSuccessful = true;
+                message = "Registration successful! Use the link below to go to the login page.";
+            }
+            else
+            {
+                registrationSuccessful = false;
+                message = string.Join(", ", result.Errors.Select(e => e.Description));
+            }
         }
         catch (Exception ex)
         {
+            registrationSuccessful = false;
             message = $"Error: {ex.Message}";
         }
     }

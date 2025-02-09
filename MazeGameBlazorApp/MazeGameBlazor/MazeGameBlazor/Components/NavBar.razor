@@ -1,0 +1,92 @@
+﻿@rendermode InteractiveServer
+@using MazeGameBlazor.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+@inject AuthService AuthService
+
+<nav class="navbar">
+    <ul>
+        <li>
+            <NavLink href="/" Match="NavLinkMatch.All" class="nav-button">
+                <i class="fas fa-home"></i> Home
+            </NavLink>
+        </li>
+        <li>
+            <NavLink href="/game" class="nav-button">
+                <i class="fas fa-gamepad"></i> Play Game
+            </NavLink>
+        </li>
+        <li>
+            <NavLink href="/blog" class="nav-button">
+                <i class="fas fa-book-open"></i> Blog
+            </NavLink>
+        </li>
+        <li>
+            <a href="https://github.com/a3emond/maze-project" class="nav-button github-button" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-github"></i> GitHub
+            </a>
+        </li>
+
+        @if (isLoggedIn)
+        {
+            <li>
+                <span class="nav-button">
+                    <i class="fas fa-user"></i> @userName
+                </span>
+            </li>
+            <li>
+                <button class="nav-button logout-button" @onclick="HandleLogout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </li>
+        }
+        else
+        {
+            <li>
+                <NavLink href="/login" class="nav-button">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </NavLink>
+            </li>
+            <li>
+                <NavLink href="/register" class="nav-button">
+                    <i class="fas fa-user-plus"></i> Register
+                </NavLink>
+            </li>
+        }
+    </ul>
+</nav>
+
+@code {
+    private bool isLoggedIn;
+    private string userName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthStateProvider.AuthenticationStateChanged += HandleAuthStateChanged;
+        await UpdateAuthStateAsync();
+    }
+
+    private async Task UpdateAuthStateAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        isLoggedIn = user.Identity?.IsAuthenticated ?? false;
+        userName = isLoggedIn ? user.Identity?.Name ?? "User" : string.Empty;
+
+        StateHasChanged();
+    }
+
+    private async void HandleAuthStateChanged(Task<AuthenticationState> authStateTask)
+    {
+        await UpdateAuthStateAsync();
+    }
+
+    private void HandleLogout()
+    {
+        NavManager.NavigateTo("/logout");
+    }
+
+
+
+}

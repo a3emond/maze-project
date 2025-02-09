@@ -1,0 +1,59 @@
+﻿@page "/logout"
+@layout MinimalLayout
+@using MazeGameBlazor.Components.Layout
+@using MazeGameBlazor.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject AuthService AuthService   
+@inject NavigationManager NavManager
+
+<h1>@logoutMessage</h1>
+
+@if (isLogoutComplete)
+{
+    <!-- Anchor to return to main page -->
+    <a href="/" class="btn btn-primary">Return to Home</a>
+}
+
+@code {
+    private bool isLogoutComplete = false;
+    private string logoutMessage = "Logging out...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PerformLogoutAsync();
+    }
+
+    private async Task PerformLogoutAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            try
+            {
+                // Perform the logout operation
+                await AuthService.LogoutAsync();
+
+                // Update the message once logout is complete
+                logoutMessage = "You have been logged out. Thank you!";
+                
+            }
+            catch (Exception e)
+            {
+                // Handle logout errors and update the message
+                logoutMessage = "An error occurred during logout. Please try again.";
+                Console.WriteLine($"Logout error: {e.Message}");
+            }
+        }
+        else
+        {
+            // If the user is not authenticated, skip logout
+            logoutMessage = "You are not logged in.";
+        }
+        
+        // Mark logout as complete to show the anchor
+        isLogoutComplete = true;
+        StateHasChanged(); // Force re-render to update the UI
+    }
+}
