@@ -45,13 +45,14 @@ jobs:
           sudo chmod -R u+w /var/www/maze.aedev.pro
         "
     
-        # Remove old build files
+                # Sync build files to the server
         sshpass -p "${{ secrets.SERVER_SSH_PASSWORD }}" \
-        ssh -o StrictHostKeyChecking=no a3emond@aedev.pro "rm -rf /var/www/maze.aedev.pro/*"
-    
-        # Deploy the new build files
+        rsync -avz --delete --checksum ./build/ a3emond@aedev.pro:/var/www/maze.aedev.pro/
+        
+        # Restart the Blazor app service
         sshpass -p "${{ secrets.SERVER_SSH_PASSWORD }}" \
-        scp -o StrictHostKeyChecking=no -r ./build/* a3emond@aedev.pro:/var/www/maze.aedev.pro/
+        ssh -o StrictHostKeyChecking=no a3emond@aedev.pro "sudo systemctl restart mazegame.service"
+
       env:
         SERVER_SSH_PASSWORD: ${{ secrets.SERVER_SSH_PASSWORD }}
 
