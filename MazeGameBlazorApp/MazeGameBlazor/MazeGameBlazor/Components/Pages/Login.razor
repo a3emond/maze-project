@@ -1,0 +1,75 @@
+﻿@page "/login"
+
+@using MazeGameBlazor.Services
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+<h3>Login</h3>
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="loginModel.Email" />
+    </div>
+
+    <div>
+        <label>Password:</label>
+        <InputText @bind-Value="loginModel.Password" InputType="password" />
+    </div>
+
+    <button type="submit">Login</button>
+</EditForm>
+
+@if (message != null)
+{
+    <p>@message</p>
+}
+
+@code {
+    [SupplyParameterFromForm]
+    private LoginModel? loginModel { get; set; }
+
+    protected override void OnInitialized() => loginModel ??= new();
+
+
+    private string? message;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            var result = await AuthService.LoginUserAsync(loginModel);
+            if (result.Succeeded)
+            {
+                message = "Login successful!";
+                try
+                {
+                    Navigation.NavigateTo("/");
+
+                }
+                catch (Exception navEx)
+                {
+                    Console.WriteLine($"Navigation error: {navEx.Message}");
+                    message = "Error during navigation.";
+                }
+            }
+            else
+            {
+                message = "Invalid Email or Password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Login error: {ex.Message}");
+            message = $"Error: {ex.Message}";
+        }
+    }
+    
+    public class LoginModel
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

@@ -1,71 +1,95 @@
 @startuml
-skinparam linetype ortho
-
-entity User {
-  * Id : string [PK]
-  --
-  * UserName : nvarchar(100)
-  * Email : nvarchar(200)
-  * PasswordHash : nvarchar(MAX)
-  * Role : nvarchar(50)
-  * CreatedAt : datetime
-}
-
-entity Role {
-  * Id : string [PK]
-  --
-  * Name : nvarchar(50)
-}
-
-entity UserRoles {
-  * UserId : string [FK]
-  * RoleId : string [FK]
-}
-
 entity BlogPost {
-  * Id : int [PK]
-  --
-  * Title : nvarchar(200)
-  * Content : nvarchar(MAX)
-  * CreatedAt : datetime
-  * LikeCount : int
-  * AuthorId : string [FK]
+    Id : int <<PK>>
+    Title : string [MaxLength(100)]
+    Content : string [MaxLength(1000)]
+    CreatedAt : datetime
+    LikeCount : int
+    AuthorId : string <<FK>>
 }
 
 entity Comment {
-  * Id : int [PK]
-  --
-  * Content : nvarchar(MAX)
-  * Author : nvarchar(100)
-  * CreatedAt : datetime
-  * BlogPostId : int [FK]
+    Id : int <<PK>>
+    Content : string [MaxLength(800)]
+    Author : string [MaxLength(50)]
+    BlogPostId : int <<FK>>
 }
 
-entity Likes {
-  * Id : int [PK]
-  --
-  * BlogPostId : int [FK]
-  * UserId : string [FK]
+entity Like {
+    Id : int <<PK>>
+    BlogPostId : int <<FK>>
+    UserId : string <<FK>>
 }
 
 entity Media {
-  * Id : int [PK]
-  --
-  * Url : nvarchar(MAX)
-  * ThumbnailUrl : nvarchar(MAX)
-  * Type : nvarchar(50)
-  * BlogPostId : int [FK]
+    Id : int <<PK>>
+    Url : string [MaxLength(200)]
+    ThumbnailUrl : string [MaxLength(200)]
+    Type : string (Enum)
+    BlogPostId : int <<FK>>
 }
 
-User -- UserRoles : "1 to many"
-Role -- UserRoles : "1 to many"
-UserRoles -- User : "many to 1"
-UserRoles -- Role : "many to 1"
+entity User {
+    Id : string <<PK>>
+    UserName : string [MaxLength(256)]
+    NormalizedUserName : string [MaxLength(256)]
+    Email : string [MaxLength(256)]
+    NormalizedEmail : string [MaxLength(256)]
+    EmailConfirmed : bool
+    PasswordHash : string
+    SecurityStamp : string
+    CreatedAt : datetime
+}
 
-User -- BlogPost : "1 to many"
-BlogPost -- Comment : "1 to many"
-BlogPost -- Media : "1 to many"
-BlogPost -- Likes : "1 to many"
-Likes -- User : "many to 1"
+entity Role {
+    Id : string <<PK>>
+    Name : string [MaxLength(256)]
+    NormalizedName : string [MaxLength(256)]
+}
 
+entity AspNetUserRole {
+    UserId : string <<FK>>
+    RoleId : string <<FK>>
+}
+
+entity AspNetUserClaim {
+    Id : int <<PK>>
+    UserId : string <<FK>>
+    ClaimType : string
+    ClaimValue : string
+}
+
+entity AspNetRoleClaim {
+    Id : int <<PK>>
+    RoleId : string <<FK>>
+    ClaimType : string
+    ClaimValue : string
+}
+
+entity AspNetUserLogin {
+    LoginProvider : string <<PK>>
+    ProviderKey : string <<PK>>
+    ProviderDisplayName : string
+    UserId : string <<FK>>
+}
+
+entity AspNetUserToken {
+    UserId : string <<PK>>
+    LoginProvider : string <<PK>>
+    Name : string <<PK>>
+    Value : string
+}
+
+' Relationships
+BlogPost ||--o{ Comment : "1-to-many"
+BlogPost ||--o{ Media : "1-to-many"
+BlogPost ||--o{ Like : "1-to-many"
+User ||--o{ BlogPost : "1-to-many"
+User ||--o{ Like : "1-to-many"
+User ||--o{ AspNetUserRole : "1-to-many"
+Role ||--o{ AspNetUserRole : "1-to-many"
+User ||--o{ AspNetUserClaim : "1-to-many"
+Role ||--o{ AspNetRoleClaim : "1-to-many"
+User ||--o{ AspNetUserLogin : "1-to-many"
+User ||--o{ AspNetUserToken : "1-to-many"
 @enduml
