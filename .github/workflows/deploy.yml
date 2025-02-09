@@ -38,10 +38,18 @@ jobs:
         # Install sshpass for password-based SSH
         sudo apt-get update && sudo apt-get install -y sshpass
     
-        # Clone the repository and deploy the build files
+        # Adjust permissions to allow deletion and update
+        sshpass -p "${{ secrets.SERVER_SSH_PASSWORD }}" \
+        ssh -o StrictHostKeyChecking=no a3emond@aedev.pro "
+          sudo chown -R a3emond:a3emond /var/www/maze.aedev.pro &&
+          sudo chmod -R u+w /var/www/maze.aedev.pro
+        "
+    
+        # Remove old build files
         sshpass -p "${{ secrets.SERVER_SSH_PASSWORD }}" \
         ssh -o StrictHostKeyChecking=no a3emond@aedev.pro "rm -rf /var/www/maze.aedev.pro/*"
-        
+    
+        # Deploy the new build files
         sshpass -p "${{ secrets.SERVER_SSH_PASSWORD }}" \
         scp -o StrictHostKeyChecking=no -r ./build/* a3emond@aedev.pro:/var/www/maze.aedev.pro/
       env:
