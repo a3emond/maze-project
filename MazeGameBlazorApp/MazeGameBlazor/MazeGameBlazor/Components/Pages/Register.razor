@@ -1,0 +1,70 @@
+﻿@page "/register"
+@using MazeGameBlazor.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject AuthService AuthService 
+
+<h3>Register</h3>
+
+<EditForm Model="@registerModel" OnValidSubmit="HandleRegistration" FormName="registerForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Username:</label>
+        <InputText @bind-Value="registerModel.UserName" />
+    </div>
+
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="registerModel.Email" />
+    </div>
+
+    <div>
+        <label>Password:</label>
+        <InputText @bind-Value="registerModel.Password" InputType="password" />
+    </div>
+
+    <div>
+        <label>Confirm Password:</label>
+        <InputText @bind-Value="registerModel.ConfirmPassword" InputType="password" />
+    </div>
+
+    <button type="submit">Register</button>
+</EditForm>
+
+@if (message != null)
+{
+    <p>@message</p>
+}
+
+@code {
+    private RegisterModel registerModel = new();
+    private string? message;
+
+    private async Task HandleRegistration()
+    {
+        if (registerModel.Password != registerModel.ConfirmPassword)
+        {
+            message = "Passwords do not match.";
+            return;
+        }
+
+        try
+        {
+            var result = await AuthService.RegisterUserAsync(registerModel);
+            message = result.Succeeded ? "Registration successful!" : string.Join(", ", result.Errors.Select(e => e.Description));
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+        }
+    }
+
+    public class RegisterModel
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}
