@@ -1,9 +1,14 @@
+using System.Collections.Immutable;
 using MazeGameBlazor.Components;
 using MazeGameBlazor.Database;
 using MazeGameBlazor.Database.Models;
 using MazeGameBlazor.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 namespace MazeGameBlazor
 {
@@ -14,6 +19,9 @@ namespace MazeGameBlazor
             Console.WriteLine(Environment.GetEnvironmentVariable("AdminPassword"));
 
             var builder = WebApplication.CreateBuilder(args);
+
+            // Register API controllers
+            builder.Services.AddControllers();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
@@ -33,13 +41,58 @@ namespace MazeGameBlazor
             builder.Services.AddAuthentication();
             builder.Services.AddAuthorization();
 
+            // Add HttpClientFactory
+            builder.Services.AddHttpClient();
+
+            // adjust limits for file upload
+            builder.Services.Configure<KestrelServerOptions>(options =>
+            {
+                options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // Set to 100 MB or your desired size
+            });
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.ValueLengthLimit = int.MaxValue;
+                options.MultipartBodyLengthLimit = int.MaxValue;
+                options.MultipartHeadersLengthLimit = int.MaxValue;
+            });
+
+            // CORS policy
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                });
+            });
+
             // Custom services
             builder.Services.AddScoped<AuthService>();
-
-
+            builder.Services.AddScoped<BlogService>();
+            
+            
 
 
             var app = builder.Build();
+
+
+            app.UseCors();
+            app.UseRouting();
+            app.MapControllers();
+            app.UseStaticFiles();
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")),
+                RequestPath = "/uploads",
+                ServeUnknownFileTypes = true, // Allow serving video files
+                DefaultContentType = "application/octet-stream", // Handle different formats
+                OnPrepareResponse = ctx =>
+                {
+                    ctx.Context.Response.Headers.Append("Accept-Ranges", "bytes");
+                },
+            });
 
 
             // Add Default Roles and Admin User

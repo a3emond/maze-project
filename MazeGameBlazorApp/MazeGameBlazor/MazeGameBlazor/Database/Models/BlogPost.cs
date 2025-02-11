@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MazeGameBlazor.Database.Models
@@ -22,13 +23,15 @@ namespace MazeGameBlazor.Database.Models
         [Required]
         public User Author { get; set; }
 
-        
-        
+        // ✅ Keep only one Media per BlogPost
+        public int? MediaId { get; set; }  // Nullable in case a post has no media
+        [ForeignKey("MediaId")]
+        public Media? Media { get; set; }
+
+        // Other relationships
         [AllowNull]
-        public ICollection<Comment> Comments { get; set; } // nullable
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
         [AllowNull]
-        public ICollection<Like> Likes { get; set; }
-        [AllowNull]
-        public ICollection<Media> Media { get; set; }
+        public ICollection<Like> Likes { get; set; } = new List<Like>();
     }
 }

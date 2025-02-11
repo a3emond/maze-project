@@ -1,30 +1,52 @@
 ﻿@page "/login"
-
 @using MazeGameBlazor.Services
-@inject NavigationManager Navigation
+@inject NavigationManager NavManager
 @inject AuthService AuthService
 <h3>Login</h3>
 
-<EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm" id="loginForm">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
 
     <div>
         <label>Email:</label>
-        <InputText @bind-Value="loginModel.Email" />
+        <InputText @bind-Value="loginModel.Email"/>
     </div>
 
     <div>
         <label>Password:</label>
-        <InputText @bind-Value="loginModel.Password" InputType="password" />
+        <InputText @bind-Value="loginModel.Password" InputType="password"/>
     </div>
 
     <button type="submit">Login</button>
 </EditForm>
 
-@if (message != null)
+
+    
+<div style="text-align:center;" id="register-button">
+    <br/><br/><br/>
+    <span>Don't have an account yet? ----->&nbsp;</span>
+    <NavLink href="/register" class="nav-button" style="background-color:blueviolet; color:white; padding:1rem; border-radius:0.5rem">
+        <i class="fas fa-user-plus"></i> Register
+    </NavLink>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
 {
     <p>@message</p>
+
+    @if (loginSuccessful)
+    {
+        <p>
+            <a href="/">Click here to go to the home page</a>
+        </p>
+        <!-- Hide form-->
+        <script>
+            document.getElementById("loginForm").style.display = "none";
+            document.getElementById("register-button").style.display = "none";
+        </script>
+    }
 }
 
 @code {
@@ -33,8 +55,8 @@
 
     protected override void OnInitialized() => loginModel ??= new();
 
-
     private string? message;
+    private bool loginSuccessful = false;
 
     private async Task HandleLogin()
     {
@@ -43,30 +65,24 @@
             var result = await AuthService.LoginUserAsync(loginModel);
             if (result.Succeeded)
             {
-                message = "Login successful!";
-                try
-                {
-                    Navigation.NavigateTo("/");
-
-                }
-                catch (Exception navEx)
-                {
-                    Console.WriteLine($"Navigation error: {navEx.Message}");
-                    message = "Error during navigation.";
-                }
+                loginSuccessful = true;
+                message = "Login successful! Use the link below to go to the home page.";
             }
             else
             {
+                loginSuccessful = false;
                 message = "Invalid Email or Password.";
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Login error: {ex.Message}");
+            Console.WriteLine($"Login error stack trace: {ex.StackTrace}");
+            loginSuccessful = false;
             message = $"Error: {ex.Message}";
         }
     }
-    
+
     public class LoginModel
     {
         public string Email { get; set; } = string.Empty;

@@ -4,6 +4,7 @@ using MazeGameBlazor.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MazeGameBlazor.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250211015847_DeleteMediaRecords")]
+    partial class DeleteMediaRecords
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,9 +48,6 @@ namespace MazeGameBlazor.Migrations
                     b.Property<int>("LikeCount")
                         .HasColumnType("int");
 
-                    b.Property<int?>("MediaId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -56,8 +56,6 @@ namespace MazeGameBlazor.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
-
-                    b.HasIndex("MediaId");
 
                     b.ToTable("BlogPosts");
                 });
@@ -122,6 +120,9 @@ namespace MazeGameBlazor.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BlogPostId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -132,6 +133,8 @@ namespace MazeGameBlazor.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BlogPostId");
 
                     b.ToTable("Media");
                 });
@@ -345,13 +348,7 @@ namespace MazeGameBlazor.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MazeGameBlazor.Database.Models.Media", "Media")
-                        .WithMany()
-                        .HasForeignKey("MediaId");
-
                     b.Navigation("Author");
-
-                    b.Navigation("Media");
                 });
 
             modelBuilder.Entity("MazeGameBlazor.Database.Models.Comment", b =>
@@ -370,7 +367,7 @@ namespace MazeGameBlazor.Migrations
                     b.HasOne("MazeGameBlazor.Database.Models.BlogPost", "BlogPost")
                         .WithMany("Likes")
                         .HasForeignKey("BlogPostId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("MazeGameBlazor.Database.Models.User", "User")
@@ -382,6 +379,13 @@ namespace MazeGameBlazor.Migrations
                     b.Navigation("BlogPost");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MazeGameBlazor.Database.Models.Media", b =>
+                {
+                    b.HasOne("MazeGameBlazor.Database.Models.BlogPost", null)
+                        .WithMany("Media")
+                        .HasForeignKey("BlogPostId");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -440,6 +444,8 @@ namespace MazeGameBlazor.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Likes");
+
+                    b.Navigation("Media");
                 });
 
             modelBuilder.Entity("MazeGameBlazor.Database.Models.User", b =>

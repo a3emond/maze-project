@@ -1,0 +1,207 @@
+﻿@page "/create-blog"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BlogService BlogService
+@inject IHttpClientFactory HttpClientFactory
+@inject AuthenticationStateProvider AuthStateProvider 
+
+<h2>Create Blog Entry</h2>
+
+<!-- Step 1: Upload or Select Media -->
+<div>
+    <h3>Step 1: Upload or Select Media</h3>
+
+    <!-- File Upload Section -->
+    <InputFile OnChange="HandleFileSelection" MaxAllowedSize="104857600" /> <!-- 100 MB -->
+    @if (!string.IsNullOrEmpty(SelectedFileName))
+    {
+        <p>Selected File: @SelectedFileName</p>
+        <button @onclick="UploadFile" class="btn btn-primary">Upload File</button>
+    }
+    @if (!string.IsNullOrEmpty(UploadStatus))
+    {
+        <p class="alert">@UploadStatus</p>
+    }
+
+    <!-- Available Media Section -->
+    <h4>Available Media</h4>
+    <div class="media-gallery">
+        @foreach (var media in AvailableMedia)
+        {
+            <div class="media-item">
+                <img src="@media.ThumbnailUrl" alt="Media" class="media-thumbnail" />
+                <button @onclick="() => AddMediaToPost(media)" class="btn btn-success">Add to Post</button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Step 2: Blog Post Creation -->
+@if (SelectedMediaIds.Count > 0)
+{
+    <div>
+        <h3>Step 2: Create Blog Post</h3>
+        <EditForm Model="NewBlogPost" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div>
+                <label for="title">Title</label>
+                <InputText id="title" @bind-Value="NewBlogPost.Title" class="form-control" />
+            </div>
+
+            <div>
+                <label for="content">Content</label>
+                <InputTextArea id="content" @bind-Value="NewBlogPost.Content" class="form-control" />
+            </div>
+
+            <!-- Selected Media Preview -->
+            <h4>Selected Media</h4>
+            <div class="selected-media">
+                @foreach (var media in SelectedMedia)
+                {
+                    <div class="selected-media-item">
+                        <img src="@media.ThumbnailUrl" alt="Selected Media" class="selected-media-thumbnail" />
+                        <button @onclick="() => RemoveMediaFromPost(media)" class="btn btn-danger">Remove</button>
+                    </div>
+                }
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create Blog Post</button>
+        </EditForm>
+    </div>
+}
+
+@code {
+    private BlogPostDto NewBlogPost { get; set; } = new();
+    private string SelectedFileName { get; set; } = string.Empty;
+    private string UploadStatus { get; set; } = string.Empty;
+    private List<MediaUploadResult> AvailableMedia { get; set; } = new();
+    private List<int> SelectedMediaIds { get; set; } = new();
+    private List<MediaUploadResult> SelectedMedia { get; set; } = new();
+    private bool IsBlogPostCreated { get; set; } = false;
+    private Stream? SelectedFileStream { get; set; }
+    private string SelectedFileContentType { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailableMedia();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                UploadStatus = "Error: Unable to determine the logged-in user.";
+                return;
+            }
+
+            NewBlogPost.AuthorId = userId; // Assign the current user's ID
+
+            var createdPost = await BlogService.CreateBlogAsync(NewBlogPost);
+            if (createdPost?.Id > 0)
+            {
+                NewBlogPost.Id = createdPost.Id;
+                IsBlogPostCreated = true;
+
+                // Attach selected media
+                await AttachMediaToBlogPost(NewBlogPost.Id, SelectedMediaIds);
+                Navigation.NavigateTo("/blog");
+            }
+            else
+            {
+                UploadStatus = "Error creating blog post. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            UploadStatus = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task LoadAvailableMedia()
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        AvailableMedia = await httpClient.GetFromJsonAsync<List<MediaUploadResult>>("https://localhost:7208/api/media");
+    }
+
+    private void AddMediaToPost(MediaUploadResult media)
+    {
+        if (!SelectedMediaIds.Contains(media.Id))
+        {
+            SelectedMediaIds.Add(media.Id);
+            SelectedMedia.Add(media);
+        }
+    }
+
+    private void RemoveMediaFromPost(MediaUploadResult media)
+    {
+        if (SelectedMediaIds.Contains(media.Id))
+        {
+            SelectedMediaIds.Remove(media.Id);
+            SelectedMedia.Remove(media);
+        }
+    }
+
+    private async Task AttachMediaToBlogPost(int blogPostId, List<int> mediaIds)
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        var requestData = new { BlogPostId = blogPostId, MediaIds = mediaIds };
+        await httpClient.PostAsJsonAsync("https://localhost:7208/api/media/attach", requestData);
+    }
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            SelectedFileName = file.Name;
+            SelectedFileContentType = file.ContentType;
+            using var stream = file.OpenReadStream(100 * 1024 * 1024);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            SelectedFileStream = new MemoryStream(memoryStream.ToArray()); // Store stream for upload
+        }
+    }
+
+    private async Task UploadFile()
+    {
+        if (SelectedFileStream == null || string.IsNullOrEmpty(SelectedFileName))
+        {
+            UploadStatus = "No file selected.";
+            return;
+        }
+
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient();
+            using var content = new MultipartFormDataContent();
+            var fileContent = new StreamContent(SelectedFileStream);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedFileContentType);
+            content.Add(fileContent, "file", SelectedFileName);
+
+            var response = await httpClient.PostAsync("https://localhost:7208/api/media/upload", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<MediaUploadResult>();
+                UploadStatus = "File uploaded successfully!";
+                AvailableMedia.Add(result);
+            }
+            else
+            {
+                UploadStatus = $"File upload failed: {response.ReasonPhrase}";
+            }
+        }
+        catch (Exception ex)
+        {
+            UploadStatus = $"Error: {ex.Message}";
+        }
+    }
+}

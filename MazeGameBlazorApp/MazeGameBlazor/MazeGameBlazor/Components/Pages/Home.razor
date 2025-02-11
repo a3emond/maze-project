@@ -1,26 +1,67 @@
 ﻿@page "/"
+@using MazeGameBlazor.Database.Models
+@inject IHttpClientFactory HttpClientFactory
 
 <PageTitle>Home</PageTitle>
 
 <a href="https://github.com/a3emond/maze-project" target="_blank"> Have a look on GitHub!</a>
 
+<!-- Welcome message -->
+<h1>Welcome to My Algorithm Project!</h1>
+
+<!-- Latest News Section (Last Blog Entry) -->
+<h2>Latest News</h2>
+
+@if (post != null)
+{
+    <div class="news">
+        <BlogCard Id="@post.Id"
+        Title="@post.Title"
+        Content="@post.Content"
+        Author="@post.Author?.UserName"
+        CreatedAt="@post.CreatedAt"
+        LikeCount="@post.LikeCount"
+        MediaType="@mediaType"
+        MediaUrl="@mediaUrl" />
+    </div>
+}
+else
+{
+    <p>No latest blog post available.</p>
+}
+
+<!-- Game description -->
+<h2>Game Description</h2>
+<p>
+    This is a maze game where you have to find the exit. You can move using the arrow keys on your keyboard.
+    The game is built using the Blazor framework and C# programming language.
+</p>
+
 @code {
+    // Get the latest blog post
+    private BlogPost? post;
+    private MediaType mediaType = MediaType.Image;
+    private string mediaUrl = "/images/default.jpg";
 
-    // get the last blog entry and put it in a what's new section
-    //protected override async Task OnInitializedAsync()
-    //{
-        // var blogEntries = await BlogService.GetBlogEntries();
-        // var lastBlogEntry = blogEntries.OrderByDescending(b => b.Date).FirstOrDefault();
-        // if (lastBlogEntry != null)
-        // {
-        //     var blogEntry = new BlogEntry
-        //         {
-        //             Title = lastBlogEntry.Title,
-        //             Content = lastBlogEntry.Content,
-        //             Date = lastBlogEntry.Date
-        //         };
-        //     BlogService.SetLastBlogEntry(blogEntry);
-        // }
-    //}
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient();
+            post = await httpClient.GetFromJsonAsync<BlogPost>("https://localhost:7208/api/blog/latest");
 
+            // Ensure post and Media are not null
+            if (post?.Media != null)
+            {
+                var firstMedia = post.Media;
+                mediaType = firstMedia?.Type ?? MediaType.Image;
+                mediaUrl = firstMedia?.Url ?? "/images/default.jpg";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching blog post: {ex.Message}");
+            post = null; // Ensure post stays null if the request fails
+        }
+    }
 }

@@ -1,8 +1,10 @@
-﻿using MazeGameBlazor.Database.Models;
+﻿using System.Security.Claims;
+using MazeGameBlazor.Database.Models;
 using Microsoft.AspNetCore.Identity;
-using MazeGameBlazor.Components.Pages;
 using static MazeGameBlazor.Components.Pages.Register;
 using static MazeGameBlazor.Components.Pages.Login;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components;
 
 namespace MazeGameBlazor.Services
 {
@@ -10,6 +12,8 @@ namespace MazeGameBlazor.Services
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+
+
 
         public AuthService(UserManager<User> userManager, SignInManager<User> signInManager)
         {
@@ -46,7 +50,7 @@ namespace MazeGameBlazor.Services
             }
 
             return await _signInManager.PasswordSignInAsync(
-                user.UserName,  // Use UserName instead of Email
+                user.UserName, // Use UserName instead of Email
                 model.Password,
                 isPersistent: false,
                 lockoutOnFailure: false
@@ -59,5 +63,4 @@ namespace MazeGameBlazor.Services
             await _signInManager.SignOutAsync();
         }
     }
-
 }

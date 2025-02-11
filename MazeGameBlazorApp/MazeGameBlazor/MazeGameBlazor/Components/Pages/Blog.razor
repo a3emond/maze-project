@@ -1,0 +1,39 @@
+﻿@page "/blog"
+@using MazeGameBlazor.Database.Models
+@inject BlogService BlogService
+
+@code {
+    private List<BlogPost> BlogPosts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        BlogPosts = await BlogService.GetAllBlogsAsync();
+    }
+}
+
+<h2>My Blog</h2>
+
+@if (BlogPosts.Count == 0)
+{
+    <p>No blog posts available.</p>
+}
+else
+{
+    @foreach (var post in BlogPosts)
+    {
+        var firstMedia = post.Media;
+        var mediaType = firstMedia?.Type ?? MediaType.Image;
+        var mediaUrl = firstMedia?.Url ?? "/images/default.jpg";
+
+        <BlogCard 
+            Id="@post.Id"
+            Title="@post.Title"
+            Content="@post.Content"
+            Author="@post.Author.UserName"
+            CreatedAt="@post.CreatedAt"
+            LikeCount="@post.LikeCount"
+            MediaType="@mediaType"
+            MediaUrl="@mediaUrl"
+        />
+    }
+}

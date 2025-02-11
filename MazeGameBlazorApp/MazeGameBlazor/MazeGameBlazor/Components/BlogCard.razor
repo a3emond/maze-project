@@ -1,0 +1,83 @@
+﻿@using MazeGameBlazor.Database.Models
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Content { get; set; } = "";
+    [Parameter] public string Author { get; set; } = "";
+    [Parameter] public DateTime CreatedAt { get; set; }
+    [Parameter] public int LikeCount { get; set; }
+    [Parameter] public MediaType MediaType { get; set; }
+    [Parameter] public string MediaUrl { get; set; } = "";
+    [Parameter] public string ThumbnailUrl { get; set; } = "";
+}
+
+<div class="blog-card">
+    @switch (MediaType)
+    {
+        case MediaType.Image:
+            <img src="@MediaUrl" alt="@Title" class="blog-media" />
+            break;
+        case MediaType.Video:
+            <video controls class="blog-media">
+                <source src="@MediaUrl" type="video/mp4" />
+                Your browser does not support the video tag.
+            </video>
+            break;
+        case MediaType.Audio:
+            <audio controls class="blog-media">
+                <source src="@MediaUrl" type="audio/mpeg" />
+                Your browser does not support the audio tag.
+            </audio>
+            break;
+        case MediaType.Document:
+            <a href="@MediaUrl" class="blog-media document-link" target="_blank">View Document</a>
+            break;
+        default:
+            <p class="blog-media">Unsupported media type.</p>
+            break;
+    }
+    <div class="blog-content">
+        <h3>@Title</h3>
+        <p class="blog-meta">By @Author | @CreatedAt.ToString("MMMM dd, yyyy")</p>
+        <p>@Content</p>
+        <p><strong>@LikeCount</strong> ❤️</p>
+        <a href="/blog/@Id">Read More</a>
+    </div>
+</div>
+
+<style>
+    .blog-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 10px 0;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .blog-card:hover {
+            transform: scale(1.02);
+        }
+
+    .blog-media {
+        width: 100%;
+        max-height: 300px;
+        object-fit: cover;
+    }
+
+    .document-link {
+        font-size: 1em;
+        color: blue;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .blog-content {
+        padding: 15px;
+    }
+
+    .blog-meta {
+        font-size: 0.8em;
+        color: gray;
+    }
+</style>

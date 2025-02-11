@@ -1,0 +1,109 @@
+﻿@rendermode InteractiveServer
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using MazeGameBlazor.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+@inject AuthService AuthService
+
+<nav class="navbar">
+    <ul>
+        <!-- Standard Navigation -->
+        <li>
+            <NavLink href="/" Match="NavLinkMatch.All" class="nav-button">
+                <i class="fas fa-home"></i> Home
+            </NavLink>
+        </li>
+        <li>
+            <NavLink href="/game" class="nav-button">
+                <i class="fas fa-gamepad"></i> Play Game
+            </NavLink>
+        </li>
+        <li>
+            <NavLink href="/blog" class="nav-button">
+                <i class="fas fa-book-open"></i> Blog
+            </NavLink>
+        </li>
+
+        <!-- Admin Section (Only Visible to Admins) -->
+        @if (isAdmin)
+        {
+            <li>
+                <NavLink href="/create-blog" class="nav-button">
+                    <i class="fas fa-plus"></i> Create Blog
+                </NavLink>
+            </li>
+        }
+
+        <!-- User Profile & Logout (Right-Aligned) -->
+        @if (isLoggedIn)
+        {
+            <li class="nav-right"> <!-- TODO: css for it -->
+                <span class="nav-button">
+                    <i class="fas fa-user"></i> My Profile: @userName
+                </span>
+            </li>
+            <li class="nav-right">
+                <button class="nav-button logout-button" @onclick="HandleLogout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </li>
+        }
+        else
+        {
+            <li class="nav-right">
+                <NavLink href="/login" class="nav-button">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </NavLink>
+            </li>
+            @* <li class="nav-right">
+                <NavLink href="/register" class="nav-button">
+                    <i class="fas fa-user-plus"></i> Register
+                </NavLink>
+            </li> *@
+        }
+
+        <!-- GitHub Link at the End -->
+        <li class="nav-right">
+            <a href="https://github.com/a3emond/maze-project" class="nav-button github-button" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-github"></i> GitHub
+            </a>
+        </li>
+    </ul>
+</nav>
+
+@code {
+    private bool isLoggedIn;
+    private bool isAdmin;
+    private string userName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthStateProvider.AuthenticationStateChanged += HandleAuthStateChanged;
+        await UpdateAuthStateAsync();
+    }
+
+    private async Task UpdateAuthStateAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        isLoggedIn = user.Identity?.IsAuthenticated ?? false;
+        userName = isLoggedIn ? user.Identity?.Name ?? "User" : string.Empty;
+
+        // ✅ Check if the user has the "Admin" role manually using claims
+        isAdmin = isLoggedIn && user.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+
+        StateHasChanged(); // 🔹 Ensure UI updates dynamically
+    }
+
+    private async void HandleAuthStateChanged(Task<AuthenticationState> authStateTask)
+    {
+        await UpdateAuthStateAsync();
+    }
+
+    private void HandleLogout()
+    {
+        NavManager.NavigateTo("/logout");
+    }
+}
