@@ -16,75 +16,148 @@ public class BlogService
     /// </summary>
     public async Task<List<BlogPost>> GetAllBlogsAsync()
     {
-        var blogPosts = await _context.BlogPosts
+        return await _context.BlogPosts
             .Include(b => b.Author)
             .Include(b => b.Media) // Fetch related media
+            .OrderByDescending(b => b.CreatedAt)
             .ToListAsync();
-
-        // Convert media type from string to enum
-        foreach (var post in blogPosts)
-        {
-            foreach (var media in post.Media)
-            {
-                if (Enum.TryParse(typeof(MediaType), media.Type.ToString(), true, out var parsedType))
-                {
-                    media.Type = (MediaType)parsedType;
-                }
-                else
-                {
-                    media.Type = MediaType.Image; // Default fallback
-                }
-            }
-        }
-
-        return blogPosts;
     }
 
     /// <summary>
-    /// Creates a new blog post and saves it to the database.
+    /// Retrieves a single blog post by ID with associated media and author.
     /// </summary>
-    public async Task CreateBlogAsync(BlogPostDto newBlog)
+    public async Task<BlogPost?> GetBlogByIdAsync(int id)
     {
-        // Convert DTO to BlogPost entity
+        return await _context.BlogPosts
+            .Include(b => b.Author)
+            .Include(b => b.Media)
+            .FirstOrDefaultAsync(b => b.Id == id);
+    }
+
+    /// <summary>
+    /// Creates a new blog post without media (media is attached separately).
+    /// </summary>
+    public async Task<BlogPost> CreateBlogAsync(BlogPostDto newBlog)
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(newBlog.Title))
+            throw new ArgumentException("Blog post title cannot be empty.");
+        if (string.IsNullOrWhiteSpace(newBlog.Content))
+            throw new ArgumentException("Blog post content cannot be empty.");
+
         var blogPost = new BlogPost
         {
             Title = newBlog.Title,
             Content = newBlog.Content,
-            AuthorId = newBlog.AuthorId, // Ensure this comes from the authenticated user
-            CreatedAt = DateTime.UtcNow,
-            Media = new List<Media>
-            {
-                new Media
-                {
-                    Url = newBlog.MediaUrl,
-                    ThumbnailUrl = newBlog.ThumbnailUrl ?? newBlog.MediaUrl, // Use the same URL if no thumbnail
-                    Type = newBlog.MediaType
-                }
-            }
+            AuthorId = newBlog.AuthorId,
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.BlogPosts.Add(blogPost);
         await _context.SaveChangesAsync();
+
+        return blogPost;
     }
 
     /// <summary>
-    /// Uploads media and returns its URL and type.
+    /// Retrieves all available media that is not attached to any blog post.
     /// </summary>
-    public async Task<MediaUploadResult> UploadMediaAsync(Stream fileStream, string fileName, string contentType)
+    public async Task<List<Media>> GetAvailableMediaAsync()  // TODO: use as a fallback with http request
     {
-        // Simulate file upload (replace this with actual storage logic)
-        var filePath = Path.Combine("wwwroot/uploads", fileName);
+        return await _context.Media
+            .ToListAsync();
+    }
 
-        using (var file = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+    /// <summary>
+    /// Uploads media independently and returns its details.
+    /// </summary>
+    /// **** not used in the current implementation **** ---> http request in mediaController
+    public async Task<MediaUploadResult> UploadMediaAsync(Stream fileStream, string fileName, string contentType) // TODO: use as a fallback with http request
+    {
+        var uploadFolder = Path.Combine("wwwroot", "uploads");
+
+        if (!Directory.Exists(uploadFolder))
+            Directory.CreateDirectory(uploadFolder);
+
+        var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
+        var filePath = Path.Combine(uploadFolder, uniqueFileName);
+
+        await using (var file = new FileStream(filePath, FileMode.Create, FileAccess.Write))
         {
             await fileStream.CopyToAsync(file);
         }
 
+        var mediaType = DetermineMediaType(contentType);
+        var media = new Media
+        {
+            Url = $"/uploads/{uniqueFileName}",
+            Type = mediaType
+        };
+
+        _context.Media.Add(media);
+        await _context.SaveChangesAsync();
+
         return new MediaUploadResult
         {
-            Url = $"/uploads/{fileName}",
-            Type = DetermineMediaType(contentType) // Infer media type based on content type
+            Id = media.Id,
+            Url = media.Url,
+            Type = media.Type
         };
+    }
+
+    /// <summary>
+    /// Attaches selected media to an existing blog post.
+    /// </summary>
+    public async Task AttachMediaToBlogPostAsync(int blogPostId, List<int> mediaIds)
+    {
+        var blogPost = await _context.BlogPosts.FindAsync(blogPostId);
+        if (blogPost == null)
+            throw new KeyNotFoundException($"Blog post with ID {blogPostId} not found.");
+
+        var mediaList = await _context.Media
+            .Where(m => mediaIds.Contains(m.Id))
+            .ToListAsync();
+
+        if (!mediaList.Any())
+            throw new ArgumentException("No valid media found.");
+
+
+        await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Deletes a blog post and detaches its media.
+    /// </summary>
+    public async Task DeleteBlogAsync(int blogPostId)
+    {
+        var blogPost = await _context.BlogPosts
+            .Include(b => b.Media)
+            .FirstOrDefaultAsync(b => b.Id == blogPostId);
+
+        if (blogPost == null)
+            throw new KeyNotFoundException($"Blog post with ID {blogPostId} not found.");
+
+        // Keep media but detach from the blog post
+
+        _context.BlogPosts.Remove(blogPost);
+        await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Deletes orphaned media (not linked to any blog post).
+    /// </summary>
+    public async Task<int> CleanupOrphanedMediaAsync()
+    {
+        var orphanedMedia = await _context.Media
+            .ToListAsync();
+
+        if (!orphanedMedia.Any())
+            return 0;
+
+        _context.Media.RemoveRange(orphanedMedia);
+        await _context.SaveChangesAsync();
+
+        return orphanedMedia.Count;
     }
 
     /// <summary>
@@ -102,24 +175,20 @@ public class BlogService
     }
 }
 
-/// <summary>
-/// DTO for creating blog posts.
-/// </summary>
+// DTO for creating a new blog post
 public class BlogPostDto
 {
-    public string Title { get; set; } = string.Empty;
-    public string Content { get; set; } = string.Empty;
-    public string AuthorId { get; set; } = string.Empty; // To associate with the logged-in user
-    public string MediaUrl { get; set; } = string.Empty;
-    public string ThumbnailUrl { get; set; } = string.Empty;
-    public MediaType MediaType { get; set; }
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Content { get; set; } = "";
+    public string AuthorId { get; set; } = "";
 }
 
-/// <summary>
-/// Represents the result of a media upload.
-/// </summary>
+// DTO for uploading media
 public class MediaUploadResult
 {
-    public string Url { get; set; } = string.Empty;
+    public int Id { get; set; }
+    public string Url { get; set; } = "";
+    public string? ThumbnailUrl { get; set; }
     public MediaType Type { get; set; }
 }

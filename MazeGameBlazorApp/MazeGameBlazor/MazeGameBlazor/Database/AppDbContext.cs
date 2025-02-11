@@ -7,9 +7,7 @@ namespace MazeGameBlazor.Database
 {
     public class AppDbContext : IdentityDbContext<User, Role, string>
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<BlogPost> BlogPosts { get; set; }
         public DbSet<Comment> Comments { get; set; }
@@ -20,45 +18,39 @@ namespace MazeGameBlazor.Database
         {
             base.OnModelCreating(modelBuilder); // Required for Identity configuration
 
-            // One-to-Many: User <-> BlogPost
+            // ✅ One-to-Many: User <-> BlogPost
             modelBuilder.Entity<BlogPost>()
                 .HasOne(bp => bp.Author)
                 .WithMany(u => u.BlogPosts)
-                .HasForeignKey(bp => bp.AuthorId);
+                .HasForeignKey(bp => bp.AuthorId)
+                .IsRequired(); // Ensures every blog post has an author
 
-            // One-to-Many: BlogPost <-> Comment
+            // ✅ One-to-Many: BlogPost <-> Comment (Cascade Delete)
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.BlogPost)
                 .WithMany(bp => bp.Comments)
                 .HasForeignKey(c => c.BlogPostId)
                 .OnDelete(DeleteBehavior.Cascade); // Delete comments if a BlogPost is deleted
 
-            // One-to-Many: BlogPost <-> Media
-            modelBuilder.Entity<Media>(entity =>
-            {
-                // Store enum as a string in the database
-                entity.Property(m => m.Type)
-                      .HasConversion<string>();
-
-                // Configure the one-to-many relationship with BlogPost
-                entity.HasOne(m => m.BlogPost)
-                      .WithMany(bp => bp.Media)
-                      .HasForeignKey(m => m.BlogPostId);
-            });
-
-            // One-to-Many: BlogPost <-> Likes
+            // ✅ One-to-Many: BlogPost <-> Likes (Cascade Delete)
             modelBuilder.Entity<Like>()
                 .HasOne(l => l.BlogPost)
                 .WithMany(bp => bp.Likes)
                 .HasForeignKey(l => l.BlogPostId)
-                .OnDelete(DeleteBehavior.Restrict); // Avoid cascading delete to prevent conflicts
+                .OnDelete(DeleteBehavior.Cascade); // Delete likes if a BlogPost is deleted
 
-            // One-to-Many: User <-> Likes
+            // ✅ One-to-Many: User <-> Likes (Restrict Deletion)
             modelBuilder.Entity<Like>()
                 .HasOne(l => l.User)
                 .WithMany(u => u.Likes)
                 .HasForeignKey(l => l.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // Avoid cascading delete to prevent conflicts
+                .OnDelete(DeleteBehavior.Restrict); // Prevent deleting users with likes
+
+            // ✅ Store MediaType Enum as String
+            modelBuilder.Entity<Media>()
+                .Property(m => m.Type)
+                .HasConversion<string>()
+                .IsRequired(); // Prevents NULL values
         }
     }
 }

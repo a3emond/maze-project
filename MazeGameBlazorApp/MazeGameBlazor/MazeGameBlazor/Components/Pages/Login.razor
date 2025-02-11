@@ -4,22 +4,33 @@
 @inject AuthService AuthService
 <h3>Login</h3>
 
+
 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm" id="loginForm">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
 
     <div>
         <label>Email:</label>
-        <InputText @bind-Value="loginModel.Email" />
+        <InputText @bind-Value="loginModel.Email"/>
     </div>
 
     <div>
         <label>Password:</label>
-        <InputText @bind-Value="loginModel.Password" InputType="password" />
+        <InputText @bind-Value="loginModel.Password" InputType="password"/>
     </div>
 
     <button type="submit">Login</button>
 </EditForm>
+
+
+    
+<div style="text-align:center;" id="register-button">
+    <br/><br/><br/>
+    <span>Don't have an account yet? ----->&nbsp;</span>
+    <NavLink href="/register" class="nav-button" style="background-color:blueviolet; color:white; padding:1rem; border-radius:0.5rem">
+        <i class="fas fa-user-plus"></i> Register
+    </NavLink>
+</div>
 
 @if (!string.IsNullOrEmpty(message))
 {
@@ -33,6 +44,7 @@
         <!-- Hide form-->
         <script>
             document.getElementById("loginForm").style.display = "none";
+            document.getElementById("register-button").style.display = "none";
         </script>
     }
 }
