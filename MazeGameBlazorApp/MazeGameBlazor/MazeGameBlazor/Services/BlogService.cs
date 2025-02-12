@@ -1,14 +1,26 @@
 ﻿using MazeGameBlazor.Database;
 using MazeGameBlazor.Database.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Components.Authorization;
 
 public class BlogService
 {
     private readonly AppDbContext _context;
+    private readonly AuthenticationStateProvider _authStateProvider;
+
+    public BlogService(AppDbContext context, AuthenticationStateProvider authStateProvider)
+    {
+        _context = context;
+        _authStateProvider = authStateProvider;
+    }
 
     public BlogService(AppDbContext context)
     {
         _context = context;
+    }
+
+    public BlogService()
+    {
     }
 
     /// <summary>
@@ -32,6 +44,16 @@ public class BlogService
             .Include(b => b.Author)
             .Include(b => b.Media)
             .FirstOrDefaultAsync(b => b.Id == id);
+    }
+
+    // get latest blogpost
+    public async Task<BlogPost?> GetLatestBlogPostAsync()
+    {
+        return await _context.BlogPosts
+            .Include(b => b.Author)
+            .Include(b => b.Media)
+            .OrderByDescending(b => b.CreatedAt)
+            .FirstOrDefaultAsync();
     }
 
     /// <summary>
@@ -60,119 +82,67 @@ public class BlogService
     }
 
     /// <summary>
-    /// Retrieves all available media that is not attached to any blog post.
+    /// like a blog post.
     /// </summary>
-    public async Task<List<Media>> GetAvailableMediaAsync()  // TODO: use as a fallback with http request
+    public async Task<int> LikePostAsync(int blogPostId)
     {
-        return await _context.Media
-            .ToListAsync();
-    }
+        // TODO: handle Authentication and get the user ID
 
-    /// <summary>
-    /// Uploads media independently and returns its details.
-    /// </summary>
-    /// **** not used in the current implementation **** ---> http request in mediaController
-    public async Task<MediaUploadResult> UploadMediaAsync(Stream fileStream, string fileName, string contentType) // TODO: use as a fallback with http request
-    {
-        var uploadFolder = Path.Combine("wwwroot", "uploads");
-
-        if (!Directory.Exists(uploadFolder))
-            Directory.CreateDirectory(uploadFolder);
-
-        var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
-        var filePath = Path.Combine(uploadFolder, uniqueFileName);
-
-        await using (var file = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-        {
-            await fileStream.CopyToAsync(file);
-        }
-
-        var mediaType = DetermineMediaType(contentType);
-        var media = new Media
-        {
-            Url = $"/uploads/{uniqueFileName}",
-            Type = mediaType
-        };
-
-        _context.Media.Add(media);
-        await _context.SaveChangesAsync();
-
-        return new MediaUploadResult
-        {
-            Id = media.Id,
-            Url = media.Url,
-            Type = media.Type
-        };
-    }
-
-    /// <summary>
-    /// Attaches selected media to an existing blog post.
-    /// </summary>
-    public async Task AttachMediaToBlogPostAsync(int blogPostId, List<int> mediaIds)
-    {
         var blogPost = await _context.BlogPosts.FindAsync(blogPostId);
         if (blogPost == null)
             throw new KeyNotFoundException($"Blog post with ID {blogPostId} not found.");
 
-        var mediaList = await _context.Media
-            .Where(m => mediaIds.Contains(m.Id))
-            .ToListAsync();
+        string userId = "guest"; // Default value for guest users
 
-        if (!mediaList.Any())
-            throw new ArgumentException("No valid media found.");
-
-
-        await _context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Deletes a blog post and detaches its media.
-    /// </summary>
-    public async Task DeleteBlogAsync(int blogPostId)
-    {
-        var blogPost = await _context.BlogPosts
-            .Include(b => b.Media)
-            .FirstOrDefaultAsync(b => b.Id == blogPostId);
-
-        if (blogPost == null)
-            throw new KeyNotFoundException($"Blog post with ID {blogPostId} not found.");
-
-        // Keep media but detach from the blog post
-
-        _context.BlogPosts.Remove(blogPost);
-        await _context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Deletes orphaned media (not linked to any blog post).
-    /// </summary>
-    public async Task<int> CleanupOrphanedMediaAsync()
-    {
-        var orphanedMedia = await _context.Media
-            .ToListAsync();
-
-        if (!orphanedMedia.Any())
-            return 0;
-
-        _context.Media.RemoveRange(orphanedMedia);
-        await _context.SaveChangesAsync();
-
-        return orphanedMedia.Count;
-    }
-
-    /// <summary>
-    /// Determines the media type based on content type.
-    /// </summary>
-    private MediaType DetermineMediaType(string contentType)
-    {
-        return contentType switch
+        var like = new Like
         {
-            "image/jpeg" or "image/png" or "image/gif" => MediaType.Image,
-            "video/mp4" or "video/webm" => MediaType.Video,
-            "audio/mpeg" or "audio/wav" => MediaType.Audio,
-            _ => MediaType.Document
+            BlogPostId = blogPostId,
+            UserId = userId
         };
+
+        blogPost.LikeCount++; // Increment like count
+        await _context.SaveChangesAsync();
+
+        return blogPost.LikeCount;
     }
+
+
+
+    /// <summary>
+    ///  Gets all comments for a blog post.
+    /// </summary>
+    public async Task<List<Comment>> GetCommentsAsync(int blogPostId)
+    {
+        return await _context.Comments
+            .Where(c => c.BlogPostId == blogPostId)
+            .OrderByDescending(c => c.Id)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    ///  Adds a new comment to a blog post.
+    /// </summary>
+    public async Task<Comment> AddCommentAsync(int blogPostId, string author, string content)
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(content))
+            throw new ArgumentException("Comment content cannot be empty.");
+
+        var comment = new Comment
+        {
+            BlogPostId = blogPostId,
+            Author = author,
+            Content = content
+        };
+
+        _context.Comments.Add(comment);
+        await _context.SaveChangesAsync();
+        return comment;
+    }
+
+
+    
+    
 }
 
 // DTO for creating a new blog post
