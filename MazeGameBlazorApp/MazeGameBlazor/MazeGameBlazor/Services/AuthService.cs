@@ -26,7 +26,8 @@ namespace MazeGameBlazor.Services
             var user = new User
             {
                 UserName = model.UserName,
-                Email = model.Email
+                Email = model.Email,
+                EmailConfirmed = true,
             };
 
             await _userManager.CreateAsync(user, model.Password);
