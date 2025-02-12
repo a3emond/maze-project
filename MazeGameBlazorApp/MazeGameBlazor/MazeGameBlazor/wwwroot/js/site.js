@@ -1,3 +1,6 @@
 ﻿window.toggleNavbar = function () {
-    document.getElementById("navMenu").classList.toggle("open");
+    const navMenu = document.getElementById("navMenu");
+    if (navMenu) {
+        navMenu.classList.toggle("open");
+    }
 };
