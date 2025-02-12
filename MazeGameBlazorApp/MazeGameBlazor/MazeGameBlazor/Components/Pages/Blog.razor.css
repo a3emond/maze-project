@@ -1,0 +1,84 @@
+﻿.blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.blog-card-preview {
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 10px;
+    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background: #1e1e1e;
+    color: white;
+}
+
+.blog-media {
+    width: 100%; /* Make it responsive */
+    height: 150px; /* Keep it uniform */
+    object-fit: cover; /* Ensures it fills the space nicely */
+    border-radius: 8px;
+}
+
+    .blog-card-preview:hover {
+        transform: scale(1.05);
+    }
+
+.blog-preview-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+/* Blog Modal */
+.blog-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.blog-preview-video {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+
+.blog-modal-content {
+    background: #333;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 600px;
+    position: relative;
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: red;
+    color: white;
+    border: none;
+    font-size: 18px;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+    .close-button:hover {
+        background: darkred;
+    }

@@ -4,41 +4,50 @@
 @inject BlogService BlogService
 <PageTitle>Home</PageTitle>
 
-<a href="https://github.com/a3emond/maze-project" target="_blank"> Have a look on GitHub!</a>
+<div class="home-container">
+    <header class="hero-section">
+        <h1>Welcome to My Algorithm Project!</h1>
+        <p>Explore the latest developments and updates about the maze game project.</p>
+        <a href="https://github.com/a3emond/maze-project" target="_blank" class="github-button">
+            <i class="fab fa-github"></i> View on GitHub
+        </a>
+    </header>
 
-<!-- Welcome message -->
-<h1>Welcome to My Algorithm Project!</h1>
+    <!-- Latest News Section (Last Blog Entry) -->
+    <section class="news-section">
+        <h2>Latest News</h2>
 
-<!-- Latest News Section (Last Blog Entry) -->
-<h2>Latest News</h2>
+        @if (post != null)
+        {
+            <div class="news-card">
+                <BlogCard Id="@post.Id"
+                          Title="@post.Title"
+                          Content="@post.Content"
+                          Author="@post.Author?.UserName"
+                          CreatedAt="@post.CreatedAt"
+                          LikeCount="@post.LikeCount"
+                          MediaType="@mediaType"
+                          MediaUrl="@mediaUrl" />
+            </div>
+        }
+        else
+        {
+            <p class="no-news">No latest blog post available.</p>
+        }
+    </section>
 
-@if (post != null)
-{
-    <div class="news">
-        <BlogCard Id="@post.Id"
-        Title="@post.Title"
-        Content="@post.Content"
-        Author="@post.Author?.UserName"
-        CreatedAt="@post.CreatedAt"
-        LikeCount="@post.LikeCount"
-        MediaType="@mediaType"
-        MediaUrl="@mediaUrl" />
-    </div>
-}
-else
-{
-    <p>No latest blog post available.</p>
-}
-
-<!-- Game description -->
-<h2>Game Description</h2>
-<p>
-    This is a maze game where you have to find the exit. You can move using the arrow keys on your keyboard.
-    The game is built using the Blazor framework and C# programming language.
-</p>
+    <!-- Game Description -->
+    <section class="game-section">
+        <h2>Game Description</h2>
+        <p>
+            This is a maze game where you have to find the exit. You can move using the arrow keys on your keyboard.
+            The game is built using the Blazor framework and C# programming language.
+        </p>
+        <a href="/play" class="play-button"><i class="fas fa-play"></i> Play Now</a>
+    </section>
+</div>
 
 @code {
-    // Get the latest blog post
     private BlogPost? post;
     private MediaType mediaType = MediaType.Image;
     private string mediaUrl = "";
@@ -73,5 +82,4 @@ else
             Console.WriteLine($"Error fetching blog post: {ex.Message}");
         }
     }
-
 }

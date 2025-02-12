@@ -1,0 +1,86 @@
+﻿/* General Page Styling */
+.home-container {
+    max-width: 900px;
+    margin: auto;
+    padding: 2rem;
+    color: white;
+}
+
+/* Hero Section */
+.hero-section {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: linear-gradient(45deg, #6a11cb, #2575fc);
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+    .hero-section h1 {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    .hero-section p {
+        font-size: 1.2rem;
+        margin-top: 0.5rem;
+    }
+
+.github-button {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 10px 20px;
+    background: #222;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s ease-in-out;
+}
+
+    .github-button:hover {
+        background: #444;
+    }
+
+/* News Section */
+.news-section h2, .game-section h2 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.news-card {
+    background: #333;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease-in-out;
+}
+
+    .news-card:hover {
+        transform: scale(1.02);
+    }
+
+.no-news {
+    color: #ff4d4d;
+}
+
+/* Game Section */
+.game-section {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.play-button {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 12px 20px;
+    background: #ff4d4d;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s ease-in-out;
+}
+
+    .play-button:hover {
+        background: #e63e3e;
+    }

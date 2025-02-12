@@ -1,54 +1,61 @@
 ﻿@page "/register"
 @using MazeGameBlazor.Services
-@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
 @inject AuthService AuthService
 
-<h3>Register</h3>
+<div class="auth-container">
+    <h3 class="form-title">Create an Account</h3>
 
-<EditForm Model="@registerModel" OnValidSubmit="HandleRegistration" FormName="registerForm">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+    <EditForm Model="@registerModel" OnValidSubmit="HandleRegistration" FormName="registerForm" id="registerForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="validation-summary" />
 
-    <div>
-        <label>Username:</label>
-        <InputText @bind-Value="registerModel.UserName" />
-    </div>
+        <div class="input-group">
+            <label>Username:</label>
+            <InputText @bind-Value="registerModel.UserName" class="input-field" />
+        </div>
 
-    <div>
-        <label>Email:</label>
-        <InputText @bind-Value="registerModel.Email" />
-    </div>
+        <div class="input-group">
+            <label>Email:</label>
+            <InputText @bind-Value="registerModel.Email" class="input-field" />
+        </div>
 
-    <div>
-        <label>Password:</label>
-        <InputText @bind-Value="registerModel.Password" InputType="password" />
-    </div>
+        <div class="input-group">
+            <label>Password:</label>
+            <InputText @bind-Value="registerModel.Password" InputType="password" class="input-field" />
+        </div>
 
-    <div>
-        <label>Confirm Password:</label>
-        <InputText @bind-Value="registerModel.ConfirmPassword" InputType="password" />
-    </div>
+        <div class="input-group">
+            <label>Confirm Password:</label>
+            <InputText @bind-Value="registerModel.ConfirmPassword" InputType="password" class="input-field" />
+        </div>
 
-    <button type="submit">Register</button>
-</EditForm>
+        <button type="submit" class="register-button"><i class="fas fa-user-plus"></i> Register</button>
+    </EditForm>
 
-@if (!string.IsNullOrEmpty(message))
-{
-    <p>@message</p>
-
-    @if (registrationSuccessful)
+    @if (!string.IsNullOrEmpty(message))
     {
-        <p>
-            <a href="/login">Click here to go to the login page</a>
-        </p>
+        <p class="status-message">@message</p>
+
+        @if (registrationSuccessful)
+        {
+            <p>
+                <a href="/login" class="login-link"><i class="fas fa-sign-in-alt"></i> Click here to login</a>
+            </p>
+        }
     }
-}
+
+    <div class="form-footer">
+        <p>Already have an account?</p>
+        <NavLink href="/login" class="login-link">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </NavLink>
+    </div>
+</div>
 
 @code {
     [SupplyParameterFromForm]
-    private RegisterModel registerModel { get; set; }
-    protected override void OnInitialized() => registerModel ??= new RegisterModel();
-
+    private RegisterModel registerModel { get; set; } = new();
     private string? message;
     private bool registrationSuccessful = false;
 
@@ -67,7 +74,7 @@
             if (result.Succeeded)
             {
                 registrationSuccessful = true;
-                message = "Registration successful! Use the link below to go to the login page.";
+                message = "Registration successful! Use the link below to log in.";
             }
             else
             {

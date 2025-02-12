@@ -1,0 +1,142 @@
+﻿@page "/my-account"
+@using MazeGameBlazor.Database
+@using MazeGameBlazor.Database.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<User> UserManager
+@inject SignInManager<User> SignInManager
+@inject NavigationManager NavManager
+
+<h3>My Account</h3>
+
+@if (user == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@userProfile" OnValidSubmit="UpdateProfile" FormName="UpdateProfileForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="input-group">
+            <label>Username:</label>
+            <InputText @bind-Value="userProfile.UserName" class="input-field" />
+        </div>
+
+        <div class="input-group">
+            <label>Email:</label>
+            <InputText @bind-Value="userProfile.Email" class="input-field" />
+        </div>
+
+        <div class="input-group">
+            <label>New Password (leave blank to keep current):</label>
+            <InputText @bind-Value="userProfile.NewPassword" InputType="password" class="input-field" />
+        </div>
+
+        <button type="submit" class="update-button">Update Profile</button>
+    </EditForm>
+
+    <button @onclick="Logout" class="logout-button">Logout</button>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p class="status-message">@message</p>
+    }
+}
+
+@code {
+    private User? user;
+    [SupplyParameterFromForm] 
+    private UserProfileModel userProfile { get; set; } = new();
+    private string message = "";
+    private AppDbContext _context;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var currentUser = authState.User;
+
+        if (currentUser.Identity is { IsAuthenticated: true })
+        {
+            user = await UserManager.FindByNameAsync(currentUser.Identity.Name);
+            if (user != null)
+            {
+                userProfile.UserName = user.UserName;
+                userProfile.Email = user.Email;
+            }
+        }
+        else
+        {
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+    private async Task UpdateProfile()
+    {
+        if (user == null) return;
+
+        Console.WriteLine($"Before update -> Username: {user.UserName}, Email: {user.Email}");
+
+        bool isUsernameChanged = user.UserName != userProfile.UserName;
+        bool isEmailChanged = user.Email != userProfile.Email;
+
+        if (isUsernameChanged || isEmailChanged)
+        {
+            try
+            {
+                var userId = user.Id;
+                var normalizedUserName = userProfile.UserName.ToUpper();
+                var normalizedEmail = userProfile.Email.ToUpper();
+
+                // Use raw SQL to update the user
+                string sql = @"
+                UPDATE AspNetUsers 
+                SET UserName = @p0, NormalizedUserName = @p1, 
+                    Email = @p2, NormalizedEmail = @p3, 
+                    ConcurrencyStamp = @p4
+                WHERE Id = @p5";
+
+                await _context.Database.ExecuteSqlRawAsync(
+                    sql,
+                    userProfile.UserName, normalizedUserName,
+                    userProfile.Email, normalizedEmail,
+                    Guid.NewGuid().ToString(), userId
+                );
+
+                Console.WriteLine($"After update -> Username: {userProfile.UserName}, Email: {userProfile.Email}");
+
+                // 🔹 Force user reload (Important!)
+                user = await UserManager.FindByIdAsync(userId);
+
+                // 🔹 Refresh authentication session
+                await SignInManager.RefreshSignInAsync(user);
+
+                message = "Profile updated successfully!";
+            }
+            catch (Exception ex)
+            {
+                message = "Error updating profile.";
+                Console.WriteLine($"SQL Update Failed: {ex.Message}");
+            }
+        }
+    }
+
+
+
+
+
+
+    private void Logout()
+    {
+        NavManager.NavigateTo("/logout", forceLoad: true);
+    }
+
+    public class UserProfileModel
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? NewPassword { get; set; }
+    }
+}

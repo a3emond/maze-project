@@ -1,15 +1,7 @@
 ﻿@page "/blog"
+@rendermode InteractiveServer
 @using MazeGameBlazor.Database.Models
 @inject BlogService BlogService
-
-@code {
-    private List<BlogPost> BlogPosts = new();
-
-    protected override async Task OnInitializedAsync()
-    {
-        BlogPosts = await BlogService.GetAllBlogsAsync();
-    }
-}
 
 <h2>My Blog</h2>
 
@@ -19,21 +11,57 @@
 }
 else
 {
-    @foreach (var post in BlogPosts)
-    {
-        var firstMedia = post.Media;
-        var mediaType = firstMedia?.Type ?? MediaType.Image;
-        var mediaUrl = firstMedia?.Url ?? "/images/default.jpg";
+    <div class="blog-grid">
+        @foreach (var post in BlogPosts)
+        {
+            var firstMedia = post.Media;
+            var mediaType = firstMedia?.Type ?? MediaType.Image;
+            var mediaUrl = firstMedia?.Url ?? "/images/default.jpg";
 
-        <BlogCard 
-            Id="@post.Id"
-            Title="@post.Title"
-            Content="@post.Content"
-            Author="@post.Author.UserName"
-            CreatedAt="@post.CreatedAt"
-            LikeCount="@post.LikeCount"
-            MediaType="@mediaType"
-            MediaUrl="@mediaUrl"
-        />
+            <div class="blog-card-preview" @onclick="() => selectedPost = post">
+                <h3>@post.Title</h3>
+                <p>By @post.Author.UserName | @post.CreatedAt.ToString("MMMM dd, yyyy")</p>
+
+                @if (mediaType == MediaType.Video)
+                {
+                    <video controls class="blog-media">
+                        <source src="@($"api/media/stream/{Path.GetFileName(mediaUrl)}")" type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
+                }
+                else
+                {
+                    <img src="@mediaUrl" alt="@post.Title" class="blog-preview-image" />
+                }
+            </div>
+        }
+    </div>
+}
+
+@if (selectedPost != null)
+{
+    <div class="blog-modal">
+        <div class="blog-modal-content">
+            <button class="close-button" @onclick="() => selectedPost = null">×</button>
+
+            <BlogCard Id="@selectedPost.Id"
+                      Title="@selectedPost.Title"
+                      Content="@selectedPost.Content"
+                      Author="@selectedPost.Author.UserName"
+                      CreatedAt="@selectedPost.CreatedAt"
+                      LikeCount="@selectedPost.LikeCount"
+                      MediaType="@(selectedPost.Media?.Type ?? MediaType.Image)"
+                      MediaUrl="@(selectedPost.Media?.Url ?? "/images/default.jpg")" />
+        </div>
+    </div>
+}
+
+@code {
+    private List<BlogPost> BlogPosts = new();
+    private BlogPost? selectedPost = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        BlogPosts = await BlogService.GetAllBlogsAsync();
     }
 }

@@ -1,0 +1,58 @@
+﻿/* My Account Page */
+.input-group {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+    .input-group label {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 5px;
+        color: #fff;
+    }
+
+.input-field {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background-color: #2a2a2a;
+    color: white;
+}
+
+.update-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 100%;
+    transition: background 0.2s ease-in-out;
+}
+
+    .update-button:hover {
+        background-color: #0056b3;
+    }
+
+.logout-button {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+    .logout-button:hover {
+        background-color: #e63e3e;
+    }
+
+.status-message {
+    margin-top: 15px;
+    font-size: 14px;
+    color: white;
+}

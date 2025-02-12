@@ -70,6 +70,14 @@ h1:focus {
     --gradient-accent: linear-gradient(135deg, #ff477e, #ff6b9a);
 }
 
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: var(--background-main);
+    color: var(--text-primary);
+}
+
 .main-layout {
     display: flex;
     flex-direction: column;

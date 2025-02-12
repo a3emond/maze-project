@@ -1,6 +1,5 @@
 ﻿@rendermode InteractiveServer
 @using System.Security.Claims
-@using Microsoft.AspNetCore.Components.Authorization
 @using MazeGameBlazor.Services
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavManager
@@ -15,7 +14,7 @@
             </NavLink>
         </li>
         <li>
-            <NavLink href="/game" class="nav-button">
+            <NavLink href="/play" class="nav-button">
                 <i class="fas fa-gamepad"></i> Play Game
             </NavLink>
         </li>
@@ -38,10 +37,10 @@
         <!-- User Profile & Logout (Right-Aligned) -->
         @if (isLoggedIn)
         {
-            <li class="nav-right"> <!-- TODO: css for it -->
-                <span class="nav-button">
+            <li class="nav-right"> 
+                <NavLink href="/my-account" class="nav-button">
                     <i class="fas fa-user"></i> My Profile: @userName
-                </span>
+                </NavLink>
             </li>
             <li class="nav-right">
                 <button class="nav-button logout-button" @onclick="HandleLogout">
@@ -56,11 +55,7 @@
                     <i class="fas fa-sign-in-alt"></i> Login
                 </NavLink>
             </li>
-            @* <li class="nav-right">
-                <NavLink href="/register" class="nav-button">
-                    <i class="fas fa-user-plus"></i> Register
-                </NavLink>
-            </li> *@
+
         }
 
         <!-- GitHub Link at the End -->

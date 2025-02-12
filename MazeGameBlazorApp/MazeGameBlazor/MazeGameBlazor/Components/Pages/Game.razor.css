@@ -1,0 +1,104 @@
+﻿/* Game Page Container */
+.game-container {
+    max-width: 900px;
+    margin: auto;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Game Header */
+.game-header {
+    background: linear-gradient(45deg, #ff4d4d, #6a11cb);
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+    .game-header h1 {
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+    }
+
+    .game-header p {
+        font-size: 1.1rem;
+        margin-top: 0.5rem;
+        color: #ddd;
+    }
+
+/* Game Screen */
+.game-screen {
+    position: relative;
+    background: #222;
+    border-radius: 10px;
+    width: 100%;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 4px solid #444;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+#mazeCanvas {
+    width: 100%;
+    height: 100%;
+    background: black;
+}
+
+/* Game Overlay (for game status) */
+.game-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+
+/* Controls & Actions */
+.game-controls {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.control-button {
+    padding: 12px 20px;
+    background: #ff4d4d;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+    .control-button:hover {
+        background: #e63e3e;
+    }
+
+/* Game Info */
+.game-info {
+    margin-top: 2rem;
+    background: #333;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+    .game-info h3 {
+        color: #ff4d4d;
+    }
+
+    .game-info p {
+        color: white;
+        font-size: 1.1rem;
+    }

@@ -1,0 +1,39 @@
+﻿@page "/play"
+@rendermode InteractiveServer
+@* @using MazeGameBlazor.GameLogic *@
+<PageTitle>Play the Maze Game</PageTitle>
+
+<div class="game-container">
+    <!-- Game Header -->
+    <header class="game-header">
+        <h1>Maze Game</h1>
+        <p>Find the exit and avoid traps! Use the arrow keys to move.</p>
+    </header>
+
+    <!-- Game Screen -->
+    <div class="game-screen">
+        <canvas id="mazeCanvas"></canvas>
+        <div class="game-overlay">
+            <p id="gameStatus">Ready?</p>
+        </div>
+    </div>
+
+    <!-- Controls & Actions -->
+    <div class="game-controls">
+        <button class="control-button" id="startGame"><i class="fas fa-play"></i> Start</button>
+        <button class="control-button" id="restartGame"><i class="fas fa-redo"></i> Restart</button>
+    </div>
+
+    <!-- Game Info -->
+    <section class="game-info">
+        <h3>Game Instructions</h3>
+        <p>
+            Use the **arrow keys** to navigate through the maze.<br />
+            Avoid obstacles and reach the **exit** as fast as possible! 🏆
+        </p>
+    </section>
+</div>
+
+@code {
+    // This is where the game logic will be integrated later
+}
