@@ -1,9 +1,7 @@
-using System.Collections.Immutable;
 using MazeGameBlazor.Components;
 using MazeGameBlazor.Database;
 using MazeGameBlazor.Database.Models;
 using MazeGameBlazor.Services;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -94,6 +92,22 @@ namespace MazeGameBlazor
                 },
             });
 
+            //// add a default user with guest as id
+            //using (var scope = app.Services.CreateScope())
+            //{
+            //    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            //    var user = await userManager.FindByIdAsync("guest");
+            //    if (user == null)
+            //    {
+            //        user = new User
+            //        {
+            //            Id = "guest",
+            //            UserName = "guest",
+            //            Email = "guest@guest.ca"
+            //        };
+            //        await userManager.CreateAsync(user);
+            //    }
+            //}
 
             // Add Default Roles and Admin User
             //using (var scope = app.Services.CreateScope())

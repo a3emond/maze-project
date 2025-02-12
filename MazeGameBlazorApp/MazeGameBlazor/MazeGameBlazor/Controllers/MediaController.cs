@@ -16,6 +16,19 @@ public class MediaController : ControllerBase
         _dbContext = dbContext;
     }
 
+    [HttpGet("stream/{filename}")]
+    public async Task<IActionResult> StreamMedia(string filename)
+    {
+        var filePath = Path.Combine(_environment.WebRootPath, "uploads", filename);
+        if (!System.IO.File.Exists(filePath))
+            return NotFound("Media file not found.");
+
+        var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+
+        return File(stream, "video/mp4", enableRangeProcessing: true); // ✅ Enables seeking
+    }
+
+
     //  Step 1: Upload Media Independently (No BlogPostId Required)
     [HttpPost("upload")]
     public async Task<IActionResult> UploadMedia(IFormFile file)

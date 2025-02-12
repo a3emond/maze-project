@@ -1,4 +1,8 @@
 ﻿@using MazeGameBlazor.Database.Models
+@inject BlogService BlogService
+@inject AuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
+
 @code {
     [Parameter] public int Id { get; set; }
     [Parameter] public string Title { get; set; } = "";
@@ -9,6 +13,56 @@
     [Parameter] public MediaType MediaType { get; set; }
     [Parameter] public string MediaUrl { get; set; } = "";
     [Parameter] public string ThumbnailUrl { get; set; } = "";
+
+    private bool IsLiked = false;
+    private List<Comment> Comments = new();
+    private string NewComment = "";
+    private string CommentAuthor = ""; 
+
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadComments();
+    }
+    
+    // get author name from authentication state
+    protected override async Task OnParametersSetAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity.IsAuthenticated)
+        {
+            CommentAuthor = user.Identity.Name;
+        }
+        else
+        {
+            CommentAuthor = "Guest"; 
+        }
+    }
+
+    private async Task LoadComments()
+    {
+        Comments = await BlogService.GetCommentsAsync(Id);
+    }
+
+    private async Task SubmitComment()
+    {
+        if (!string.IsNullOrWhiteSpace(NewComment))
+        {
+            await BlogService.AddCommentAsync(Id, CommentAuthor, NewComment);
+            NewComment = ""; // Clear input after submission
+            await LoadComments(); // Refresh comments
+        }
+    }
+
+    private async Task LikePost()
+    {
+        if (!IsLiked)
+        {
+            IsLiked = true;
+            LikeCount = await BlogService.LikePostAsync(Id);
+        }
+    }
 }
 
 <div class="blog-card">
@@ -19,7 +73,7 @@
             break;
         case MediaType.Video:
             <video controls class="blog-media">
-                <source src="@MediaUrl" type="video/mp4" />
+                <source src="@($"api/media/stream/{Path.GetFileName(MediaUrl)}")" type="video/mp4" />
                 Your browser does not support the video tag.
             </video>
             break;
@@ -40,44 +94,33 @@
         <h3>@Title</h3>
         <p class="blog-meta">By @Author | @CreatedAt.ToString("MMMM dd, yyyy")</p>
         <p>@Content</p>
-        <p><strong>@LikeCount</strong> ❤️</p>
+
+        <!-- Like Button -->
+        <button @onclick="LikePost" class="like-button">
+            ❤️ <strong>@LikeCount</strong>
+        </button>
+
         <a href="/blog/@Id">Read More</a>
+    </div>
+
+    <!-- Comment Section -->
+    <div class="comment-section">
+        <h4>Comments</h4>
+
+        <div class="comments">
+            @foreach (var comment in Comments)
+            {
+                <div class="comment">
+                    <strong>@comment.Author</strong>: @comment.Content
+                </div>
+            }
+        </div>
+
+        <div class="add-comment">
+            <input type="text" @bind="NewComment" placeholder="Write a comment..." />
+            <button @onclick="SubmitComment" class="comment-button">Comment</button>
+        </div>
     </div>
 </div>
 
-<style>
-    .blog-card {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        overflow: hidden;
-        margin: 10px 0;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s ease-in-out;
-    }
 
-        .blog-card:hover {
-            transform: scale(1.02);
-        }
-
-    .blog-media {
-        width: 100%;
-        max-height: 300px;
-        object-fit: cover;
-    }
-
-    .document-link {
-        font-size: 1em;
-        color: blue;
-        text-decoration: underline;
-        cursor: pointer;
-    }
-
-    .blog-content {
-        padding: 15px;
-    }
-
-    .blog-meta {
-        font-size: 0.8em;
-        color: gray;
-    }
-</style>
