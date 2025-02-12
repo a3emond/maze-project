@@ -2,52 +2,54 @@
 @using MazeGameBlazor.Services
 @inject NavigationManager NavManager
 @inject AuthService AuthService
-<h3>Login</h3>
 
+<div class="login-container">
+    <div class="login-card">
+        <h3>Login</h3>
 
-<EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm" id="loginForm">
-    <DataAnnotationsValidator/>
-    <ValidationSummary/>
+        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm" id="loginForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-    <div>
-        <label>Email:</label>
-        <InputText @bind-Value="loginModel.Email"/>
+            <div class="input-group">
+                <label>Email:</label>
+                <InputText @bind-Value="loginModel.Email" class="input-field" />
+            </div>
+
+            <div class="input-group">
+                <label>Password:</label>
+                <InputText @bind-Value="loginModel.Password" InputType="password" class="input-field" />
+            </div>
+
+            <button type="submit" class="login-button">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+        </EditForm>
+
+        <div class="register-section" id="register-button">
+            <p>Don't have an account yet?</p>
+            <NavLink href="/register" class="register-button">
+                <i class="fas fa-user-plus"></i> Register
+            </NavLink>
+        </div>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <p class="login-message">@message</p>
+
+            @if (loginSuccessful)
+            {
+                <p>
+                    <a href="/">Click here to go to the home page</a>
+                </p>
+                <script>
+                    document.getElementById("loginForm").style.display = "none";
+                    document.getElementById("register-button").style.display = "none";
+                </script>
+            }
+        }
     </div>
-
-    <div>
-        <label>Password:</label>
-        <InputText @bind-Value="loginModel.Password" InputType="password"/>
-    </div>
-
-    <button type="submit">Login</button>
-</EditForm>
-
-
-    
-<div style="text-align:center;" id="register-button">
-    <br/><br/><br/>
-    <span>Don't have an account yet? ----->&nbsp;</span>
-    <NavLink href="/register" class="nav-button" style="background-color:blueviolet; color:white; padding:1rem; border-radius:0.5rem">
-        <i class="fas fa-user-plus"></i> Register
-    </NavLink>
 </div>
-
-@if (!string.IsNullOrEmpty(message))
-{
-    <p>@message</p>
-
-    @if (loginSuccessful)
-    {
-        <p>
-            <a href="/">Click here to go to the home page</a>
-        </p>
-        <!-- Hide form-->
-        <script>
-            document.getElementById("loginForm").style.display = "none";
-            document.getElementById("register-button").style.display = "none";
-        </script>
-    }
-}
 
 @code {
     [SupplyParameterFromForm]
@@ -77,7 +79,6 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Login error: {ex.Message}");
-            Console.WriteLine($"Login error stack trace: {ex.StackTrace}");
             loginSuccessful = false;
             message = $"Error: {ex.Message}";
         }
