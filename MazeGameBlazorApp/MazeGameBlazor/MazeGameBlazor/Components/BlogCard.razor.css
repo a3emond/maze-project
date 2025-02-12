@@ -1,23 +1,28 @@
-﻿.blog-card {
+﻿/* General Blog Card */
+.blog-card {
     border: 1px solid #ddd;
     border-radius: 8px;
     overflow: hidden;
-    margin: 10px 0;
+    margin: 10px auto; /* Centered for small screens */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease-in-out;
+    max-width: 600px; /* Prevents excessive stretching on large screens */
+    width: 95%; /* Uses most of the screen on mobile */
 }
 
-.blog-card:hover {
-    transform: scale(1.02);
-}
+    .blog-card:hover {
+        transform: scale(1.02);
+    }
 
+/* Blog Media */
 .blog-media {
     width: 100%;
     height: auto;
-    max-height: none;
-    object-fit: contain;
+    max-height: 250px; /* Ensures images/videos don't take too much space */
+    object-fit: cover; /* Keeps media properly sized */
 }
 
+/* Blog Content */
 .blog-content {
     padding: 15px;
 }
@@ -32,11 +37,14 @@
     background-color: #ff4d4d;
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 10px 14px; /* Larger tap area */
     font-size: 1em;
     cursor: pointer;
     border-radius: 5px;
     margin-top: 10px;
+    width: 100%; /* Full width on small screens */
+    max-width: 200px;
+    text-align: center;
     transition: background 0.2s ease-in-out;
 }
 
@@ -48,32 +56,57 @@
 .comment-section {
     padding: 15px;
     margin-top: 15px;
-    background-color: #1e1e1e; /* Darker background to match theme */
+    background-color: #1e1e1e; /* Dark background */
     border-radius: 5px;
     color: white;
+    max-width: 600px;
+    width: 95%;
+    margin: 0 auto; /* Centers it */
 }
 
 /* Comment List */
 .comments {
-    max-height: 300px; /* Ensure visibility while allowing scrolling */
+    max-height: 250px; /* Keeps the comment section from growing too big */
     overflow-y: auto;
     padding: 10px;
-    background-color: #252526; /* Slightly lighter than section */
+    background-color: #252526;
     border-radius: 5px;
-    border: 1px solid #444; /* Subtle border */
+    border: 1px solid #444;
+    scrollbar-width: thin;
+    scrollbar-color: #555 #252526;
 }
+
+    /* Custom Scrollbars */
+    .comments::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .comments::-webkit-scrollbar-track {
+        background: #252526;
+    }
+
+    .comments::-webkit-scrollbar-thumb {
+        background: #555;
+        border-radius: 4px;
+    }
+
+        .comments::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
 
 /* Individual Comment */
 .comment {
     padding: 10px;
     margin-bottom: 5px;
-    border-bottom: 1px solid #444; /* Divider between comments */
+    border-bottom: 1px solid #444;
     background-color: #2a2a2a;
     border-radius: 4px;
+    word-wrap: break-word; /* Ensures long text wraps instead of overflowing */
 }
 
+    /* Highlight Admin/GUEST Comments */
     .comment strong {
-        color: #f5c518; /* Highlight author name */
+        color: #f5c518;
     }
 
 /* Comment Input Area */
@@ -82,28 +115,62 @@
     gap: 10px;
     align-items: center;
     margin-top: 10px;
+    flex-wrap: wrap;
 }
 
     .add-comment input {
         flex-grow: 1;
-        padding: 8px;
+        padding: 10px;
         border-radius: 5px;
         border: 1px solid #555;
         background-color: #333;
         color: white;
+        width: 100%;
+        max-width: 400px;
     }
 
+/* Comment Button */
 .comment-button {
     background-color: #007bff;
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 10px 14px;
     cursor: pointer;
     border-radius: 5px;
     transition: background 0.2s ease-in-out;
+    width: 100%;
+    max-width: 150px;
 }
 
     .comment-button:hover {
         background-color: #0056b3;
     }
 
+/* ✅ Responsive Fixes for Narrow Screens */
+@media screen and (max-width: 600px) {
+    .blog-card, .comment-section {
+        width: 98%; /* Uses most of the screen width */
+    }
+
+    .blog-content {
+        padding: 12px;
+    }
+
+    .comments {
+        max-height: 200px;
+    }
+
+    .add-comment {
+        flex-direction: column; /* Stacks input and button */
+        gap: 8px;
+    }
+
+        .add-comment input {
+            width: 100%; /* Full width input field */
+            max-width: none;
+        }
+
+    .like-button, .comment-button {
+        width: 100%; /* Full width for better touch accessibility */
+    }
+}
