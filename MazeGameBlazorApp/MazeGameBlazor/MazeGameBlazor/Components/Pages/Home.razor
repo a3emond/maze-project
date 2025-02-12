@@ -1,7 +1,7 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 @using MazeGameBlazor.Database.Models
-@inject IHttpClientFactory HttpClientFactory
-
+@inject BlogService BlogService
 <PageTitle>Home</PageTitle>
 
 <a href="https://github.com/a3emond/maze-project" target="_blank"> Have a look on GitHub!</a>
@@ -41,27 +41,37 @@ else
     // Get the latest blog post
     private BlogPost? post;
     private MediaType mediaType = MediaType.Image;
-    private string mediaUrl = "/images/default.jpg";
+    private string mediaUrl = "";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            var httpClient = HttpClientFactory.CreateClient();
-            post = await httpClient.GetFromJsonAsync<BlogPost>("https://localhost:7208/api/blog/latest");
+            post = await BlogService.GetLatestBlogPostAsync();
 
-            // Ensure post and Media are not null
-            if (post?.Media != null)
+            if (post == null)
             {
-                var firstMedia = post.Media;
-                mediaType = firstMedia?.Type ?? MediaType.Image;
-                mediaUrl = firstMedia?.Url ?? "/images/default.jpg";
+                Console.WriteLine("No blog post found.");
+                return;
+            }
+
+            Console.WriteLine($"Post Title: {post.Title}, Media: {post.Media}");
+
+            if (post.Media != null)
+            {
+                mediaType = post.Media.Type;
+                mediaUrl = post.Media.Url;
+                Console.WriteLine($"Media Type: {mediaType}, Media URL: {mediaUrl}");
+            }
+            else
+            {
+                Console.WriteLine("No media found for this post.");
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error fetching blog post: {ex.Message}");
-            post = null; // Ensure post stays null if the request fails
         }
     }
+
 }
