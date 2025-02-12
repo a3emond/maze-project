@@ -4,10 +4,20 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavManager
 @inject AuthService AuthService
+@inject IJSRuntime JS
 
-<nav class="navbar">
-    <ul>
-        <!-- Standard Navigation -->
+<header class="navbar">
+    <!-- Logo -->
+    <a href="/" class="navbar-logo">
+        <img src="logo.webp" alt="Maze Game Logo" class="logo-img" />
+    </a>
+
+
+    <!-- Hamburger Menu Button (Visible on Mobile) -->
+    <button class="navbar-toggle" @onclick="ToggleMenu">☰</button>
+
+    <!-- Navigation Menu -->
+    <ul class="navbar-menu" id="navMenu">
         <li>
             <NavLink href="/" Match="NavLinkMatch.All" class="nav-button">
                 <i class="fas fa-home"></i> Home
@@ -24,7 +34,6 @@
             </NavLink>
         </li>
 
-        <!-- Admin Section (Only Visible to Admins) -->
         @if (isAdmin)
         {
             <li>
@@ -34,15 +43,14 @@
             </li>
         }
 
-        <!-- User Profile & Logout (Right-Aligned) -->
         @if (isLoggedIn)
         {
-            <li class="nav-right"> 
+            <li>
                 <NavLink href="/my-account" class="nav-button">
                     <i class="fas fa-user"></i> My Profile: @userName
                 </NavLink>
             </li>
-            <li class="nav-right">
+            <li>
                 <button class="nav-button logout-button" @onclick="HandleLogout">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
@@ -50,22 +58,20 @@
         }
         else
         {
-            <li class="nav-right">
+            <li>
                 <NavLink href="/login" class="nav-button">
                     <i class="fas fa-sign-in-alt"></i> Login
                 </NavLink>
             </li>
-
         }
 
-        <!-- GitHub Link at the End -->
-        <li class="nav-right">
+        <li>
             <a href="https://github.com/a3emond/maze-project" class="nav-button github-button" target="_blank" rel="noopener noreferrer">
                 <i class="fab fa-github"></i> GitHub
             </a>
         </li>
     </ul>
-</nav>
+</header>
 
 @code {
     private bool isLoggedIn;
@@ -86,10 +92,9 @@
         isLoggedIn = user.Identity?.IsAuthenticated ?? false;
         userName = isLoggedIn ? user.Identity?.Name ?? "User" : string.Empty;
 
-        // ✅ Check if the user has the "Admin" role manually using claims
         isAdmin = isLoggedIn && user.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
 
-        StateHasChanged(); // 🔹 Ensure UI updates dynamically
+        StateHasChanged();
     }
 
     private async void HandleAuthStateChanged(Task<AuthenticationState> authStateTask)
@@ -100,5 +105,10 @@
     private void HandleLogout()
     {
         NavManager.NavigateTo("/logout");
+    }
+
+    private async Task ToggleMenu()
+    {
+        await JS.InvokeVoidAsync("toggleNavbar");
     }
 }

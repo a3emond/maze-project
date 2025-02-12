@@ -110,33 +110,50 @@ body {
         color: var(--text-secondary);
     }
 
-/* Navbar */
+/* Navbar Styling */
 .navbar {
     background-color: var(--background-secondary);
     color: var(--text-primary);
     padding: 1rem;
     box-shadow: 0 2px 4px var(--shadow-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
 }
 
-    .navbar ul {
-        display: flex;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        justify-content: center;
-        gap: 1rem;
+/* Logo Section */
+.navbar-logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+    .navbar-logo img {
+        height: 50px; /* Adjust as needed */
+        width: auto;
+        display: block;
     }
 
-    .navbar li {
+
+/* Navigation Menu */
+.navbar-menu {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 1rem;
+}
+
+    .navbar-menu li {
         margin: 0;
     }
 
-    /* Button-like NavLinks */
-    .navbar .nav-button {
+    .navbar-menu a {
         display: inline-block;
         background-color: var(--button-primary-bg);
         color: var(--text-primary);
-        padding: 0.8rem 1.5rem;
+        padding: 0.8rem 1.2rem;
         border-radius: 8px;
         font-size: 1rem;
         font-weight: 500;
@@ -146,17 +163,59 @@ body {
         transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
     }
 
-        .navbar .nav-button:hover {
+        .navbar-menu a:hover {
             background-color: var(--button-primary-hover-bg);
             transform: translateY(-2px);
             box-shadow: 0 4px 8px var(--shadow-color);
         }
 
-        .navbar .nav-button.active {
-            background-color: var(--accent-secondary);
-            font-weight: bold;
-            box-shadow: 0 4px 6px var(--shadow-color);
+    .navbar-menu .active {
+        background-color: var(--accent-secondary);
+        font-weight: bold;
+        box-shadow: 0 4px 6px var(--shadow-color);
+    }
+
+/* Hamburger Menu (Hidden on Desktop) */
+.navbar-toggle {
+    display: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: var(--text-primary);
+    background: none;
+    border: none;
+    outline: none;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    .navbar-menu {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: var(--background-secondary);
+        box-shadow: 0 2px 6px var(--shadow-color);
+        padding: 1rem;
+        border-radius: 0 0 8px 8px;
+    }
+
+        .navbar-menu.open {
+            display: flex;
         }
+
+        .navbar-menu a {
+            display: block;
+            padding: 1rem;
+            text-align: center;
+        }
+
+    .navbar-toggle {
+        display: block;
+    }
+}
+
 
 /* Main Content */
 .content {
