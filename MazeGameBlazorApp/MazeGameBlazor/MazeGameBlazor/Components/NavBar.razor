@@ -12,7 +12,6 @@
         <img src="logo.webp" alt="Maze Game Logo" class="logo-img" />
     </a>
 
-
     <!-- Hamburger Menu Button (Visible on Mobile) -->
     <button class="navbar-toggle" @onclick="ToggleMenu">☰</button>
 
@@ -78,12 +77,19 @@
     private bool isAdmin;
     private string userName = string.Empty;
 
+    /// <summary>
+    /// Lifecycle method: Runs when the component initializes.
+    /// Subscribes to authentication state changes and updates the UI.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         AuthStateProvider.AuthenticationStateChanged += HandleAuthStateChanged;
         await UpdateAuthStateAsync();
     }
 
+    /// <summary>
+    /// Updates the authentication state, checking if the user is logged in and if they are an admin.
+    /// </summary>
     private async Task UpdateAuthStateAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -97,16 +103,25 @@
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Handles authentication state changes and updates the UI accordingly.
+    /// </summary>
     private async void HandleAuthStateChanged(Task<AuthenticationState> authStateTask)
     {
         await UpdateAuthStateAsync();
     }
 
+    /// <summary>
+    /// Logs out the user by navigating to the logout page.
+    /// </summary>
     private void HandleLogout()
     {
         NavManager.NavigateTo("/logout");
     }
 
+    /// <summary>
+    /// Toggles the mobile navigation menu by invoking a JavaScript function.
+    /// </summary>
     private async Task ToggleMenu()
     {
         await JS.InvokeVoidAsync("toggleNavbar");

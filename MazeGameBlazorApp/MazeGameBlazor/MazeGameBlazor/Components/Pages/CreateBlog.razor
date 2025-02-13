@@ -3,7 +3,7 @@
 @inject NavigationManager Navigation
 @inject BlogService BlogService
 @inject IHttpClientFactory HttpClientFactory
-@inject AuthenticationStateProvider AuthStateProvider 
+@inject AuthenticationStateProvider AuthStateProvider
 
 <h2>Create Blog Entry</h2>
 
@@ -83,11 +83,18 @@
     private Stream? SelectedFileStream { get; set; }
     private string SelectedFileContentType { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Lifecycle method: Runs when the component initializes.
+    /// Fetches available media from the server.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await LoadAvailableMedia();
     }
 
+    /// <summary>
+    /// Handles form submission and creates a new blog post.
+    /// </summary>
     private async Task HandleValidSubmit()
     {
         try
@@ -125,12 +132,18 @@
         }
     }
 
+    /// <summary>
+    /// Fetches available media files for selection.
+    /// </summary>
     private async Task LoadAvailableMedia()
     {
         var httpClient = HttpClientFactory.CreateClient();
         AvailableMedia = await httpClient.GetFromJsonAsync<List<MediaUploadResult>>("https://localhost:7208/api/media");
     }
 
+    /// <summary>
+    /// Adds media to the selected blog post.
+    /// </summary>
     private void AddMediaToPost(MediaUploadResult media)
     {
         if (!SelectedMediaIds.Contains(media.Id))
@@ -140,6 +153,9 @@
         }
     }
 
+    /// <summary>
+    /// Removes media from the selected blog post.
+    /// </summary>
     private void RemoveMediaFromPost(MediaUploadResult media)
     {
         if (SelectedMediaIds.Contains(media.Id))
@@ -149,6 +165,9 @@
         }
     }
 
+    /// <summary>
+    /// Attaches media to a created blog post.
+    /// </summary>
     private async Task AttachMediaToBlogPost(int blogPostId, List<int> mediaIds)
     {
         var httpClient = HttpClientFactory.CreateClient();
@@ -156,6 +175,9 @@
         await httpClient.PostAsJsonAsync("https://localhost:7208/api/media/attach", requestData);
     }
 
+    /// <summary>
+    /// Handles file selection for uploading media.
+    /// </summary>
     private async Task HandleFileSelection(InputFileChangeEventArgs e)
     {
         var file = e.File;
@@ -170,6 +192,9 @@
         }
     }
 
+    /// <summary>
+    /// Uploads the selected file to the server.
+    /// </summary>
     private async Task UploadFile()
     {
         if (SelectedFileStream == null || string.IsNullOrEmpty(SelectedFileName))

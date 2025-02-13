@@ -53,6 +53,10 @@ else
     private string message = "";
     private AppDbContext _context;
 
+    /// <summary>
+    /// Lifecycle method: Runs when the component initializes.
+    /// Loads the authenticated user's profile.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -73,6 +77,9 @@ else
         }
     }
 
+    /// <summary>
+    /// Updates the user's profile (username and email).
+    /// </summary>
     private async Task UpdateProfile()
     {
         if (user == null) return;
@@ -107,10 +114,10 @@ else
 
                 Console.WriteLine($"After update -> Username: {userProfile.UserName}, Email: {userProfile.Email}");
 
-                // 🔹 Force user reload (Important!)
+                // Force user reload (Important!)
                 user = await UserManager.FindByIdAsync(userId);
 
-                // 🔹 Refresh authentication session
+                // Refresh authentication session
                 await SignInManager.RefreshSignInAsync(user);
 
                 message = "Profile updated successfully!";
@@ -123,16 +130,17 @@ else
         }
     }
 
-
-
-
-
-
+    /// <summary>
+    /// Logs out the user and redirects to the logout page.
+    /// </summary>
     private void Logout()
     {
         NavManager.NavigateTo("/logout", forceLoad: true);
     }
 
+    /// <summary>
+    /// Represents a user's profile details for editing.
+    /// </summary>
     public class UserProfileModel
     {
         public string UserName { get; set; } = string.Empty;

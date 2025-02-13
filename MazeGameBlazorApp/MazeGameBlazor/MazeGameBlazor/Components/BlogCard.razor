@@ -4,57 +4,68 @@
 @rendermode InteractiveServer
 
 @code {
+    // Parameters (Passed from Parent Component)
     [Parameter] public int Id { get; set; }
-    [Parameter] public string Title { get; set; } = "";
-    [Parameter] public string Content { get; set; } = "";
-    [Parameter] public string Author { get; set; } = "";
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Content { get; set; } = string.Empty;
+    [Parameter] public string Author { get; set; } = string.Empty;
     [Parameter] public DateTime CreatedAt { get; set; }
     [Parameter] public int LikeCount { get; set; }
     [Parameter] public MediaType MediaType { get; set; }
-    [Parameter] public string MediaUrl { get; set; } = "";
-    [Parameter] public string ThumbnailUrl { get; set; } = "";
+    [Parameter] public string MediaUrl { get; set; } = string.Empty;
+    [Parameter] public string ThumbnailUrl { get; set; } = string.Empty;
 
+    // Private State Variables
     private bool IsLiked = false;
     private List<Comment> Comments = new();
-    private string NewComment = "";
-    private string CommentAuthor = ""; 
+    private string NewComment = string.Empty;
+    private string CommentAuthor = string.Empty;
 
-    
+    /// <summary>
+    /// Lifecycle method: Runs when the component is initialized.
+    /// Loads comments for the blog post.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await LoadComments();
     }
-    
-    // get author name from authentication state
+
+    /// <summary>
+    /// Lifecycle method: Runs when parameters are set or updated.
+    /// Retrieves the authenticated user's name (if logged in).
+    /// </summary>
     protected override async Task OnParametersSetAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        if (user.Identity.IsAuthenticated)
-        {
-            CommentAuthor = user.Identity.Name;
-        }
-        else
-        {
-            CommentAuthor = "Guest"; 
-        }
+
+        CommentAuthor = user.Identity?.IsAuthenticated == true ? user.Identity.Name ?? "User" : "Guest";
     }
 
+    /// <summary>
+    /// Fetches comments for the blog post.
+    /// </summary>
     private async Task LoadComments()
     {
         Comments = await BlogService.GetCommentsAsync(Id);
     }
 
+    /// <summary>
+    /// Submits a new comment to the blog post.
+    /// </summary>
     private async Task SubmitComment()
     {
         if (!string.IsNullOrWhiteSpace(NewComment))
         {
             await BlogService.AddCommentAsync(Id, CommentAuthor, NewComment);
-            NewComment = ""; // Clear input after submission
+            NewComment = string.Empty; // Clear input after submission
             await LoadComments(); // Refresh comments
         }
     }
 
+    /// <summary>
+    /// Likes the blog post if not already liked.
+    /// </summary>
     private async Task LikePost()
     {
         if (!IsLiked)
@@ -65,7 +76,9 @@
     }
 }
 
+<!-- Blog Post Card -->
 <div class="blog-card">
+    <!-- Media Preview -->
     @switch (MediaType)
     {
         case MediaType.Image:
@@ -90,6 +103,8 @@
             <p class="blog-media">Unsupported media type.</p>
             break;
     }
+
+    <!-- Blog Content -->
     <div class="blog-content">
         <h3>@Title</h3>
         <p class="blog-meta">By @Author | @CreatedAt.ToString("MMMM dd, yyyy")</p>
@@ -99,14 +114,13 @@
         <button @onclick="LikePost" class="like-button">
             ❤️ <strong>@LikeCount</strong>
         </button>
-
-        <!--<a href="/blog/@Id">Read More</a>--> <!-- TODO: endpoint for full documentation -->
     </div>
 
     <!-- Comment Section -->
     <div class="comment-section">
         <h4>Comments</h4>
 
+        <!-- Display Comments -->
         <div class="comments">
             @foreach (var comment in Comments)
             {
@@ -116,11 +130,10 @@
             }
         </div>
 
+        <!-- Add New Comment -->
         <div class="add-comment">
             <input type="text" @bind="NewComment" placeholder="Write a comment..." />
             <button @onclick="SubmitComment" class="comment-button">Comment</button>
         </div>
     </div>
 </div>
-
-

@@ -18,9 +18,9 @@ else
             var mediaType = firstMedia?.Type ?? MediaType.Image;
             var mediaUrl = firstMedia?.Url ?? "/images/default.jpg";
 
-            <div class="blog-card-preview" @onclick="() => selectedPost = post">
+            <div class="blog-card-preview" @onclick="() => OpenBlogPost(post)">
                 <h3>@post.Title</h3>
-                <p>By @post.Author.UserName | @post.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                <p>By @post.Author?.UserName | @post.CreatedAt.ToString("MMMM dd, yyyy")</p>
 
                 @if (mediaType == MediaType.Video)
                 {
@@ -42,12 +42,12 @@ else
 {
     <div class="blog-modal">
         <div class="blog-modal-content">
-            <button class="close-button" @onclick="() => selectedPost = null">×</button>
+            <button class="close-button" @onclick="CloseBlogPost">×</button>
 
             <BlogCard Id="@selectedPost.Id"
                       Title="@selectedPost.Title"
                       Content="@selectedPost.Content"
-                      Author="@selectedPost.Author.UserName"
+                      Author="@selectedPost.Author?.UserName"
                       CreatedAt="@selectedPost.CreatedAt"
                       LikeCount="@selectedPost.LikeCount"
                       MediaType="@(selectedPost.Media?.Type ?? MediaType.Image)"
@@ -60,8 +60,28 @@ else
     private List<BlogPost> BlogPosts = new();
     private BlogPost? selectedPost = null;
 
+    /// <summary>
+    /// Lifecycle method: Runs when the component initializes.
+    /// Fetches all blog posts from the database.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         BlogPosts = await BlogService.GetAllBlogsAsync();
+    }
+
+    /// <summary>
+    /// Opens the selected blog post in a modal.
+    /// </summary>
+    private void OpenBlogPost(BlogPost post)
+    {
+        selectedPost = post;
+    }
+
+    /// <summary>
+    /// Closes the currently opened blog post modal.
+    /// </summary>
+    private void CloseBlogPost()
+    {
+        selectedPost = null;
     }
 }

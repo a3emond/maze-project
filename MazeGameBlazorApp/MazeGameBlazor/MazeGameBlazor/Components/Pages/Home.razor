@@ -2,9 +2,11 @@
 @rendermode InteractiveServer
 @using MazeGameBlazor.Database.Models
 @inject BlogService BlogService
+
 <PageTitle>Home</PageTitle>
 
 <div class="home-container">
+    <!-- Hero Section -->
     <header class="hero-section">
         <h1>Welcome to My Algorithm Project!</h1>
         <p>Explore the latest developments and updates about the maze game project.</p>
@@ -50,8 +52,12 @@
 @code {
     private BlogPost? post;
     private MediaType mediaType = MediaType.Image;
-    private string mediaUrl = "";
+    private string mediaUrl = string.Empty;
 
+    /// <summary>
+    /// Lifecycle method: Runs when the component initializes.
+    /// Fetches the latest blog post and its associated media.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         try

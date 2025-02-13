@@ -6,6 +6,7 @@
 <div class="auth-container">
     <h3 class="form-title">Create an Account</h3>
 
+    <!-- Registration Form -->
     <EditForm Model="@registerModel" OnValidSubmit="HandleRegistration" FormName="registerForm" id="registerForm">
         <DataAnnotationsValidator />
         <ValidationSummary class="validation-summary" />
@@ -33,6 +34,7 @@
         <button type="submit" class="register-button"><i class="fas fa-user-plus"></i> Register</button>
     </EditForm>
 
+    <!-- Registration Message -->
     @if (!string.IsNullOrEmpty(message))
     {
         <p class="status-message">@message</p>
@@ -45,6 +47,7 @@
         }
     }
 
+    <!-- Redirect to Login -->
     <div class="form-footer">
         <p>Already have an account?</p>
         <NavLink href="/login" class="login-link">
@@ -54,11 +57,18 @@
 </div>
 
 @code {
+    /// <summary>
+    /// Model for user registration.
+    /// </summary>
     [SupplyParameterFromForm]
     private RegisterModel registerModel { get; set; } = new();
+
     private string? message;
     private bool registrationSuccessful = false;
 
+    /// <summary>
+    /// Handles user registration.
+    /// </summary>
     private async Task HandleRegistration()
     {
         if (registerModel.Password != registerModel.ConfirmPassword)
@@ -89,6 +99,9 @@
         }
     }
 
+    /// <summary>
+    /// Represents a new user's registration details.
+    /// </summary>
     public class RegisterModel
     {
         public string UserName { get; set; } = string.Empty;

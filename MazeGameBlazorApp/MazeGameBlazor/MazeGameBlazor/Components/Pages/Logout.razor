@@ -18,17 +18,24 @@
     private bool isLogoutComplete = false;
     private string logoutMessage = "Logging out...";
 
+    /// <summary>
+    /// Lifecycle method: Runs when the component initializes.
+    /// Calls the logout function.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await PerformLogoutAsync();
     }
 
+    /// <summary>
+    /// Logs out the user and updates the UI accordingly.
+    /// </summary>
     private async Task PerformLogoutAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        if (user.Identity.IsAuthenticated)
+        if (user.Identity?.IsAuthenticated == true)
         {
             try
             {
@@ -37,7 +44,6 @@
 
                 // Update the message once logout is complete
                 logoutMessage = "You have been logged out. Thank you!";
-                
             }
             catch (Exception e)
             {
