@@ -10,12 +10,22 @@ public class MediaController : ControllerBase
     private readonly IWebHostEnvironment _environment;
     private readonly AppDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MediaController"/> class.
+    /// </summary>
+    /// <param name="environment">Web hosting environment.</param>
+    /// <param name="dbContext">Database context.</param>
     public MediaController(IWebHostEnvironment environment, AppDbContext dbContext)
     {
-        _environment = environment;
-        _dbContext = dbContext;
+        _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }
 
+    /// <summary>
+    /// Streams a media file for playback.
+    /// </summary>
+    /// <param name="filename">The name of the media file.</param>
+    /// <returns>The media file stream or a not found result.</returns>
     [HttpGet("stream/{filename}")]
     public async Task<IActionResult> StreamMedia(string filename)
     {
@@ -24,40 +34,34 @@ public class MediaController : ControllerBase
             return NotFound("Media file not found.");
 
         var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-
-        return File(stream, "video/mp4", enableRangeProcessing: true); // ✅ Enables seeking
+        return File(stream, "video/mp4", enableRangeProcessing: true); // Enables seeking
     }
 
-
-    //  Step 1: Upload Media Independently (No BlogPostId Required)
+    /// <summary>
+    /// Uploads a media file to the server and stores metadata in the database.
+    /// </summary>
+    /// <param name="file">The uploaded file.</param>
+    /// <returns>Details of the uploaded media.</returns>
     [HttpPost("upload")]
     public async Task<IActionResult> UploadMedia(IFormFile file)
     {
-        // Validate file
         if (file == null || file.Length == 0)
             return BadRequest("No file uploaded.");
 
         try
         {
-            // Ensure uploads folder exists
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
-            // Generate a unique file name to prevent overwriting
             var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-            // Save the uploaded file to the server
-            await using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
+            await using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream);
 
-            // Determine the media type
             var mediaType = DetermineMediaType(file.ContentType);
 
-            // Save media details to database
             var media = new Media
             {
                 Url = $"/uploads/{uniqueFileName}",
@@ -67,13 +71,7 @@ public class MediaController : ControllerBase
             _dbContext.Media.Add(media);
             await _dbContext.SaveChangesAsync();
 
-            // Return uploaded media details
-            return Ok(new
-            {
-                media.Id,
-                media.Url,
-                media.Type
-            });
+            return Ok(new { media.Id, media.Url, media.Type });
         }
         catch (Exception ex)
         {
@@ -81,17 +79,22 @@ public class MediaController : ControllerBase
         }
     }
 
-    //  Step 2: Retrieve All Available Media (For Media Selection)
+    /// <summary>
+    /// Retrieves all media files available in the database.
+    /// </summary>
+    /// <returns>A list of media objects.</returns>
     [HttpGet]
     public async Task<IActionResult> GetAvailableMedia()
     {
-        var mediaList = await _dbContext.Media
-            .ToListAsync();
-
+        var mediaList = await _dbContext.Media.ToListAsync();
         return Ok(mediaList);
     }
 
-    //  Step 3: Attach Media to Blog Post (After Blog Post is Created)
+    /// <summary>
+    /// Attaches media files to a blog post.
+    /// </summary>
+    /// <param name="request">The request containing the blog post ID and media IDs.</param>
+    /// <returns>A success message if media is attached.</returns>
     [HttpPost("attach")]
     public async Task<IActionResult> AttachMediaToBlogPost([FromBody] AttachMediaRequest request)
     {
@@ -106,13 +109,15 @@ public class MediaController : ControllerBase
         if (!mediaList.Any())
             return NotFound("No valid media found.");
 
-
         await _dbContext.SaveChangesAsync();
-
         return Ok("Media successfully attached to blog post.");
     }
 
-    //  Helper: Determine Media Type
+    /// <summary>
+    /// Determines the type of media based on the content type.
+    /// </summary>
+    /// <param name="contentType">The MIME type of the file.</param>
+    /// <returns>The corresponding media type.</returns>
     private MediaType DetermineMediaType(string contentType)
     {
         return contentType switch
@@ -125,9 +130,11 @@ public class MediaController : ControllerBase
     }
 }
 
-//  Model for Media Attachment Request
+/// <summary>
+/// Model representing a request to attach media to a blog post.
+/// </summary>
 public class AttachMediaRequest
 {
     public int BlogPostId { get; set; }
-    public List<int> MediaIds { get; set; }
+    public List<int> MediaIds { get; set; } = new();
 }

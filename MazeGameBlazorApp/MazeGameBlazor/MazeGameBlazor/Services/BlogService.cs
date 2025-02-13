@@ -8,29 +8,26 @@ public class BlogService
     private readonly AppDbContext _context;
     private readonly AuthenticationStateProvider _authStateProvider;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BlogService"/> class.
+    /// </summary>
+    /// <param name="context">The database context.</param>
+    /// <param name="authStateProvider">The authentication state provider.</param>
     public BlogService(AppDbContext context, AuthenticationStateProvider authStateProvider)
     {
-        _context = context;
-        _authStateProvider = authStateProvider;
-    }
-
-    public BlogService(AppDbContext context)
-    {
-        _context = context;
-    }
-
-    public BlogService()
-    {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _authStateProvider = authStateProvider ?? throw new ArgumentNullException(nameof(authStateProvider));
     }
 
     /// <summary>
     /// Retrieves all blog posts with their associated media and author.
     /// </summary>
+    /// <returns>A list of all blog posts.</returns>
     public async Task<List<BlogPost>> GetAllBlogsAsync()
     {
         return await _context.BlogPosts
             .Include(b => b.Author)
-            .Include(b => b.Media) // Fetch related media
+            .Include(b => b.Media)
             .OrderByDescending(b => b.CreatedAt)
             .ToListAsync();
     }
@@ -38,6 +35,8 @@ public class BlogService
     /// <summary>
     /// Retrieves a single blog post by ID with associated media and author.
     /// </summary>
+    /// <param name="id">The ID of the blog post.</param>
+    /// <returns>The corresponding <see cref="BlogPost"/> or null if not found.</returns>
     public async Task<BlogPost?> GetBlogByIdAsync(int id)
     {
         return await _context.BlogPosts
@@ -46,7 +45,10 @@ public class BlogService
             .FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    // get latest blogpost
+    /// <summary>
+    /// Gets the latest blog post.
+    /// </summary>
+    /// <returns>The most recent <see cref="BlogPost"/>, or null if no posts exist.</returns>
     public async Task<BlogPost?> GetLatestBlogPostAsync()
     {
         return await _context.BlogPosts
@@ -57,15 +59,15 @@ public class BlogService
     }
 
     /// <summary>
-    /// Creates a new blog post without media (media is attached separately).
+    /// Creates a new blog post.
     /// </summary>
+    /// <param name="newBlog">The blog post details.</param>
+    /// <returns>The created <see cref="BlogPost"/>.</returns>
     public async Task<BlogPost> CreateBlogAsync(BlogPostDto newBlog)
     {
-        // Validate input
-        if (string.IsNullOrWhiteSpace(newBlog.Title))
-            throw new ArgumentException("Blog post title cannot be empty.");
-        if (string.IsNullOrWhiteSpace(newBlog.Content))
-            throw new ArgumentException("Blog post content cannot be empty.");
+        if (newBlog == null) throw new ArgumentNullException(nameof(newBlog));
+        if (string.IsNullOrWhiteSpace(newBlog.Title)) throw new ArgumentException("Title cannot be empty.", nameof(newBlog.Title));
+        if (string.IsNullOrWhiteSpace(newBlog.Content)) throw new ArgumentException("Content cannot be empty.", nameof(newBlog.Content));
 
         var blogPost = new BlogPost
         {
@@ -82,35 +84,30 @@ public class BlogService
     }
 
     /// <summary>
-    /// like a blog post.
+    /// Likes a blog post.
     /// </summary>
+    /// <param name="blogPostId">The ID of the blog post to like.</param>
+    /// <returns>The updated like count.</returns>
     public async Task<int> LikePostAsync(int blogPostId)
     {
-        // TODO: handle Authentication and get the user ID
-
         var blogPost = await _context.BlogPosts.FindAsync(blogPostId);
         if (blogPost == null)
             throw new KeyNotFoundException($"Blog post with ID {blogPostId} not found.");
 
-        string userId = "guest"; // Default value for guest users
+        var authState = await _authStateProvider.GetAuthenticationStateAsync();
+        string userId = authState.User.Identity?.Name ?? "guest";
 
-        var like = new Like
-        {
-            BlogPostId = blogPostId,
-            UserId = userId
-        };
-
-        blogPost.LikeCount++; // Increment like count
+        blogPost.LikeCount++;
         await _context.SaveChangesAsync();
 
         return blogPost.LikeCount;
     }
 
-
-
     /// <summary>
-    ///  Gets all comments for a blog post.
+    /// Retrieves all comments for a given blog post.
     /// </summary>
+    /// <param name="blogPostId">The blog post ID.</param>
+    /// <returns>A list of comments for the specified post.</returns>
     public async Task<List<Comment>> GetCommentsAsync(int blogPostId)
     {
         return await _context.Comments
@@ -120,13 +117,15 @@ public class BlogService
     }
 
     /// <summary>
-    ///  Adds a new comment to a blog post.
+    /// Adds a comment to a blog post.
     /// </summary>
+    /// <param name="blogPostId">The blog post ID.</param>
+    /// <param name="author">The author of the comment.</param>
+    /// <param name="content">The comment content.</param>
+    /// <returns>The newly created comment.</returns>
     public async Task<Comment> AddCommentAsync(int blogPostId, string author, string content)
     {
-        // Validate input
-        if (string.IsNullOrWhiteSpace(content))
-            throw new ArgumentException("Comment content cannot be empty.");
+        if (string.IsNullOrWhiteSpace(content)) throw new ArgumentException("Comment content cannot be empty.", nameof(content));
 
         var comment = new Comment
         {
@@ -139,26 +138,26 @@ public class BlogService
         await _context.SaveChangesAsync();
         return comment;
     }
-
-
-    
-    
 }
 
-// DTO for creating a new blog post
+/// <summary>
+/// DTO for creating a new blog post.
+/// </summary>
 public class BlogPostDto
 {
     public int Id { get; set; }
-    public string Title { get; set; } = "";
-    public string Content { get; set; } = "";
-    public string AuthorId { get; set; } = "";
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+    public string AuthorId { get; set; } = string.Empty;
 }
 
-// DTO for uploading media
+/// <summary>
+/// DTO for media upload results.
+/// </summary>
 public class MediaUploadResult
 {
     public int Id { get; set; }
-    public string Url { get; set; } = "";
+    public string Url { get; set; } = string.Empty;
     public string? ThumbnailUrl { get; set; }
     public MediaType Type { get; set; }
 }

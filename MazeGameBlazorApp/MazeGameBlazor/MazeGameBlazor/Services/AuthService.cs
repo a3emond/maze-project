@@ -1,26 +1,34 @@
-﻿using System.Security.Claims;
-using MazeGameBlazor.Database.Models;
+﻿using MazeGameBlazor.Database.Models;
 using Microsoft.AspNetCore.Identity;
-using static MazeGameBlazor.Components.Pages.Register;
 using static MazeGameBlazor.Components.Pages.Login;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components;
+using static MazeGameBlazor.Components.Pages.Register;
 
 namespace MazeGameBlazor.Services
 {
+    /// <summary>
+    /// Service responsible for handling user authentication, registration, and logout.
+    /// </summary>
     public class AuthService
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
 
-
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthService"/> class.
+        /// </summary>
+        /// <param name="userManager">User manager service for handling user-related operations.</param>
+        /// <param name="signInManager">Sign-in manager service for handling authentication.</param>
         public AuthService(UserManager<User> userManager, SignInManager<User> signInManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
         }
 
+        /// <summary>
+        /// Registers a new user asynchronously.
+        /// </summary>
+        /// <param name="model">User registration details.</param>
+        /// <returns>IdentityResult indicating success or failure.</returns>
         public async Task<IdentityResult> RegisterUserAsync(RegisterModel model)
         {
             var user = new User
@@ -30,35 +38,38 @@ namespace MazeGameBlazor.Services
                 EmailConfirmed = true,
             };
 
-            await _userManager.CreateAsync(user, model.Password);
-            // Add user to default role User
-            await _userManager.AddToRoleAsync(user, "User");
-            return IdentityResult.Success;
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, "User");
+            }
+            return result;
         }
 
+        /// <summary>
+        /// Logs in a user asynchronously.
+        /// </summary>
+        /// <param name="model">User login details.</param>
+        /// <returns>SignInResult indicating success or failure.</returns>
         public async Task<SignInResult> LoginUserAsync(LoginModel model)
         {
-            //display model.Email
-            Console.WriteLine(model.Email);
-            //display model.Password
-            Console.WriteLine(model.Password);
             var user = await _userManager.FindByEmailAsync(model.Email);
-
             if (user == null)
             {
-                Console.WriteLine("\n\n\nuser does not exist\n\n\n");
                 return SignInResult.Failed; // User does not exist
             }
 
             return await _signInManager.PasswordSignInAsync(
-                user.UserName, // Use UserName instead of Email
+                user.UserName,
                 model.Password,
                 isPersistent: false,
                 lockoutOnFailure: false
             );
-
         }
 
+        /// <summary>
+        /// Logs out the current user asynchronously.
+        /// </summary>
         public async Task LogoutAsync()
         {
             await _signInManager.SignOutAsync();
