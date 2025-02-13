@@ -1,4 +1,6 @@
 # 🏆 Blazor 2D Maze Game
+[Visit the official WebSite and get updates on development](https://maze.aedev.pro/)
+
 
 ## 📌 Project Overview
 The **Blazor 2D Maze Game** is an interactive, top-down **maze generation and solving project** designed to demonstrate **data structures and algorithms** in a fun and engaging way. This project is part of a **Data Structures course**, focusing on **graph traversal, pathfinding, and visibility algorithms**.
