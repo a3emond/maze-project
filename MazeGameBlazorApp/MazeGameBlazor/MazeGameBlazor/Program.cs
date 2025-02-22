@@ -14,7 +14,7 @@ namespace MazeGameBlazor
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine(Environment.GetEnvironmentVariable("AdminPassword"));
+            //Console.WriteLine(Environment.GetEnvironmentVariable("AdminPassword"));
 
             var builder = WebApplication.CreateBuilder(args);
 
