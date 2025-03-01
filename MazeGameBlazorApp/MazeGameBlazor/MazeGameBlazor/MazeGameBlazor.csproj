@@ -33,7 +33,6 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\assets\hud\health\" />
-    <Folder Include="wwwroot\assets\hud\inventory\" />
     <Folder Include="wwwroot\assets\minimap\icons\" />
     <Folder Include="wwwroot\assets\sprites\items\" />
     <Folder Include="wwwroot\assets\sprites\player\" />

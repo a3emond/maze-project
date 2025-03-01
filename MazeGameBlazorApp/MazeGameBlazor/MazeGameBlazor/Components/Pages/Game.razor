@@ -13,10 +13,10 @@
     </header>
 
     <!-- Game Screen -->
+    
     <div class="game-screen">
         <canvas id="mazeCanvas"></canvas>
         <canvas id="minimapCanvas"></canvas>
-
         <div class="game-overlay">
             <p id="gameStatus">Ready?</p>
         </div>
@@ -42,7 +42,7 @@
                     <div class="inventory-slot">
                         @if (!string.IsNullOrEmpty(inventorySlots[i]))
                         {
-                            <img src="@inventorySlots[i]" />
+                            <img width="44px" src="@inventorySlots[i]" />
                         }
                     </div>
                 }
@@ -65,7 +65,7 @@
 @code {
     private int maxHearts = 5;
     private int currentHearts = 3;
-    private string[] inventorySlots = new string[6] { "/assets/sprites/item1.png", "/assets/sprites/item2.png", "/assets/sprites/item3.png", null, null, null };
+    private string[] inventorySlots = new string[6] { "/assets/hud/inventory/compass.png", "/assets/hud/inventory/key.png", null, null, null, null };
     private TimeSpan timer = TimeSpan.Zero;
     private string statusEffect = "Normal";
     private MazeGenerator mazeGenerator = new();
@@ -80,14 +80,19 @@
 
     private async void GenerateAndRenderMaze()
     {
+        //mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.RecursiveBacktracking);
+        //mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.DrunkardsWalk);
+        //mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.Prims);
+        //mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.BSPDungeon);
         mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.RecursiveBacktracking);
+
 
         int width = mazeGenerator.mazeGrid.GetLength(0);
         int height = mazeGenerator.mazeGrid.GetLength(1);
 
         string[,] spriteGrid = new string[width, height];
 
-        // ✅ Fixed issue: Ensure correct order when passing to JS
+        // Fixed issue: Ensure correct order when passing to JS
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
@@ -112,5 +117,5 @@
         GenerateAndRenderMaze();
     }
 
-    private string GetHeartImage(int index) => index < currentHearts ? "/assets/sprites/full-heart.png" : "/assets/sprites/empty-heart.png";
+    private string GetHeartImage(int index) => index < currentHearts ? "/assets/hud/health/heart_100.png" : "/assets/hud/health/heart_0.png";
 }
