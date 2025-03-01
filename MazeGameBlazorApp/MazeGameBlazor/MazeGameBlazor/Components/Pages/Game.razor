@@ -1,6 +1,8 @@
 ﻿@page "/play"
 @rendermode InteractiveServer
-@* @using MazeGameBlazor.GameLogic *@
+@inject IJSRuntime JS
+@using MazeGameBlazor.GameEngine
+
 <PageTitle>Play the Maze Game</PageTitle>
 
 <div class="game-container">
@@ -13,30 +15,102 @@
     <!-- Game Screen -->
     <div class="game-screen">
         <canvas id="mazeCanvas"></canvas>
+        <canvas id="minimapCanvas"></canvas>
+
         <div class="game-overlay">
             <p id="gameStatus">Ready?</p>
         </div>
     </div>
 
-    <!-- Controls & Actions -->
-    <div class="game-controls">
-        <button class="control-button" id="startGame"><i class="fas fa-play"></i> Start</button>
-        <button class="control-button" id="restartGame"><i class="fas fa-redo"></i> Restart</button>
+    <!-- Player HUD -->
+    <div class="game-hud">
+        <div class="hud-section">
+            <span>Health:</span>
+            <div class="heart-container">
+                @for (int i = 0; i < maxHearts; i++)
+                {
+                    <img src="@GetHeartImage(i)" class="heart-icon" />
+                }
+            </div>
+        </div>
+
+        <div class="hud-section">
+            <span>Inventory:</span>
+            <div class="inventory">
+                @for (int i = 0; i < inventorySlots.Length; i++)
+                {
+                    <div class="inventory-slot">
+                        @if (!string.IsNullOrEmpty(inventorySlots[i]))
+                        {
+                            <img src="@inventorySlots[i]" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="hud-section">
+            <span>Time: @timer</span>
+            <span>Status: @statusEffect</span>
+        </div>
     </div>
 
-    <!-- Game Info -->
-    <section class="game-info">
-        <h3>Game Instructions</h3>
-        <p>
-            Use the **arrow keys** to navigate through the maze.<br />
-            Avoid obstacles and reach the **exit** as fast as possible! 🏆
-        </p>
-    </section>
+    <!-- Controls -->
+    <div class="game-controls">
+        <button class="control-button" @onclick="StartGame"><i class="fas fa-play"></i> Start</button>
+        <button class="control-button" @onclick="RestartGame"><i class="fas fa-redo"></i> Restart</button>
+    </div>
 </div>
 
 @code {
-    /// <summary>
-    /// Placeholder for game logic integration.
-    /// </summary>
-    // Future integration for game mechanics.
+    private int maxHearts = 5;
+    private int currentHearts = 3;
+    private string[] inventorySlots = new string[6] { "/assets/sprites/item1.png", "/assets/sprites/item2.png", "/assets/sprites/item3.png", null, null, null };
+    private TimeSpan timer = TimeSpan.Zero;
+    private string statusEffect = "Normal";
+    private MazeGenerator mazeGenerator = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            GenerateAndRenderMaze();
+        }
+    }
+
+    private async void GenerateAndRenderMaze()
+    {
+        mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.RecursiveBacktracking);
+
+        int width = mazeGenerator.mazeGrid.GetLength(0);
+        int height = mazeGenerator.mazeGrid.GetLength(1);
+
+        string[,] spriteGrid = new string[width, height];
+
+        // ✅ Fixed issue: Ensure correct order when passing to JS
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                spriteGrid[y, x] = mazeGenerator.GetTileSprite(x, y);
+            }
+        }
+
+        string[] flattenedSprites = spriteGrid.Cast<string>().ToArray();
+
+        await JS.InvokeVoidAsync("initWebGL", flattenedSprites, width, height);
+        await JS.InvokeVoidAsync("initMinimap", flattenedSprites, width, height);
+    }
+
+    private async Task StartGame()
+    {
+        await JS.InvokeVoidAsync("startGame");
+    }
+
+    private async Task RestartGame()
+    {
+        GenerateAndRenderMaze();
+    }
+
+    private string GetHeartImage(int index) => index < currentHearts ? "/assets/sprites/full-heart.png" : "/assets/sprites/empty-heart.png";
 }

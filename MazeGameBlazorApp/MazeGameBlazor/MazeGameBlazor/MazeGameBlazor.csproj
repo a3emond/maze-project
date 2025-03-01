@@ -7,6 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\assets\textures\floors\**" />
+    <Compile Remove="wwwroot\assets\textures\walls\**" />
+    <Content Remove="wwwroot\assets\textures\floors\**" />
+    <Content Remove="wwwroot\assets\textures\walls\**" />
+    <EmbeddedResource Remove="wwwroot\assets\textures\floors\**" />
+    <EmbeddedResource Remove="wwwroot\assets\textures\walls\**" />
+    <None Remove="wwwroot\assets\textures\floors\**" />
+    <None Remove="wwwroot\assets\textures\walls\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MazeGameBlazor.Client\MazeGameBlazor.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.1" />
@@ -21,6 +32,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\assets\hud\health\" />
+    <Folder Include="wwwroot\assets\hud\inventory\" />
+    <Folder Include="wwwroot\assets\minimap\icons\" />
+    <Folder Include="wwwroot\assets\sprites\items\" />
+    <Folder Include="wwwroot\assets\sprites\player\" />
     <Folder Include="wwwroot\uploads\" />
   </ItemGroup>
 

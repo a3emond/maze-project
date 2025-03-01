@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using static MazeGameBlazor.GameEngine.MazeGenerator;
+using MazeGameBlazor.GameEngine;
 
 namespace MazeGameBlazor
 {
@@ -14,6 +16,8 @@ namespace MazeGameBlazor
     {
         public static void Main(string[] args)
         {
+            
+
             //Console.WriteLine(Environment.GetEnvironmentVariable("AdminPassword"));
 
             var builder = WebApplication.CreateBuilder(args);
@@ -81,8 +85,10 @@ namespace MazeGameBlazor
             app.UseStaticFiles();
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(
-                    Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")),
+                FileProvider = new CompositeFileProvider(
+                    new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")), // Default wwwroot
+                    new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads")) // Uploads folder
+                ),
                 RequestPath = "/uploads",
                 ServeUnknownFileTypes = true, // Allow serving video files
                 DefaultContentType = "application/octet-stream", // Handle different formats
