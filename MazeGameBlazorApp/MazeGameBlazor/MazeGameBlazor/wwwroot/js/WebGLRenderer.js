@@ -1,62 +1,52 @@
-﻿// Global WebGL context, shader program, textures, camera, and maze data
+﻿// Global WebGL variables
 window.gl = null;
 window.shaderProgram = null;
 window.tileTextures = {};
-window.cameraX = 0;
-window.cameraY = 0;
-window.zoomLevel = 1;
 window.tileSize = 16;
-window.tileData = [];  // ✅ Fix: Store `tileData` globally
+window.tileData = [];
 window.mazeWidth = 0;
 window.mazeHeight = 0;
 
-// Initialize WebGL
+// Initialize WebGL and Render the Maze
 window.initWebGL = function (tileDataInput, width, height) {
     console.log("Initializing WebGL...");
-    const canvas = document.getElementById("mazeCanvas");
 
+    const canvas = document.getElementById("mazeCanvas");
     if (!canvas) {
-        console.error("❌ Error: Canvas element not found!");
+        console.error("❌ Canvas element not found!");
         return;
     }
 
     window.gl = canvas.getContext("webgl");
     if (!window.gl) {
-        console.error("❌ Error: WebGL is not supported!");
+        console.error("❌ WebGL not supported!");
         return;
     }
 
-    const gl = window.gl;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    console.log("✅ WebGL Initialized Successfully!");
-
-    // ✅ Fix: Store tileData globally for future access
+    // Store maze data
     window.tileData = tileDataInput;
     window.mazeWidth = width;
     window.mazeHeight = height;
 
-    initShaders(gl);
+    // Adjust canvas size to fit the entire maze
+    canvas.width = width * window.tileSize;
+    canvas.height = height * window.tileSize;
+    window.gl.viewport(0, 0, canvas.width, canvas.height);
 
+    console.log(`🖼 Maze Dimensions: ${width} x ${height}, Canvas Size: ${canvas.width} x ${canvas.height}`);
+
+    initShaders();
     loadTextures(tileDataInput).then(textures => {
-        console.log("✅ Textures Loaded:", textures);
         window.tileTextures = textures;
-
-        setupInputListeners();  // Now `tileData` is available globally
-        renderMaze(gl, textures);
-    }).catch(error => {
-        console.error("❌ Error loading textures:", error);
-    });
+        renderMaze(); // Call render function once textures are ready
+    }).catch(error => console.error("❌ Texture loading failed:", error));
 };
 
 // Initialize shaders
-function initShaders(gl) {
+function initShaders() {
     console.log("🔹 Compiling shaders...");
+    const gl = window.gl;
+
     const vertexShaderSource = `
         attribute vec2 aPosition;
         attribute vec2 aTexCoord;
@@ -79,24 +69,13 @@ function initShaders(gl) {
     const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
 
-    if (!vertexShader || !fragmentShader) {
-        console.error("❌ Shader compilation failed!");
-        return;
-    }
-
     const shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, vertexShader);
     gl.attachShader(shaderProgram, fragmentShader);
     gl.linkProgram(shaderProgram);
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        console.error("❌ Shader program failed to link:", gl.getProgramInfoLog(shaderProgram));
-        return;
-    }
-
     gl.useProgram(shaderProgram);
-    window.shaderProgram = shaderProgram;
 
+    window.shaderProgram = shaderProgram;
     console.log("✅ Shaders compiled and linked successfully!");
 }
 
@@ -107,10 +86,9 @@ function compileShader(gl, type, source) {
     gl.compileShader(shader);
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error(`❌ Shader compilation error (${type}):`, gl.getShaderInfoLog(shader));
+        console.error("❌ Shader compilation error:", gl.getShaderInfoLog(shader));
         return null;
     }
-
     return shader;
 }
 
@@ -120,73 +98,72 @@ function loadTextures(tileData) {
         const gl = window.gl;
         const tileTextures = {};
         let loadedCount = 0;
-        const uniqueTextures = [...new Set(tileData)];
 
-        console.log("🔹 Loading textures:", uniqueTextures);
+        const uniqueTextures = [...new Set(tileData.filter(url => url))];
 
-        function onLoad() {
-            loadedCount++;
-            if (loadedCount === uniqueTextures.length) {
-                console.log("✅ All textures loaded successfully!");
-                resolve(tileTextures);
-            }
-        }
+        console.log("🔹 Loading Textures:", uniqueTextures);
 
         uniqueTextures.forEach(url => {
             let texture = gl.createTexture();
             let image = new Image();
-
-            image.onload = function () {
+            image.onload = () => {
                 gl.bindTexture(gl.TEXTURE_2D, texture);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-                gl.generateMipmap(gl.TEXTURE_2D);
                 tileTextures[url] = texture;
-                onLoad();
-            };
+                loadedCount++;
 
-            image.onerror = function () {
-                console.error(`❌ Failed to load texture: ${url}`);
-                onLoad();
+                if (loadedCount === uniqueTextures.length) resolve(tileTextures);
             };
-
+            image.onerror = () => console.error(`❌ Failed to Load Texture: ${url}`);
             image.src = url;
         });
     });
 }
 
-// Render the maze
-function renderMaze(gl, textures) {
+// Render full maze
+function renderMaze() {
+    const gl = window.gl;
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    console.log(`🖼 Rendering Full Maze (${window.mazeWidth} x ${window.mazeHeight})`);
 
     for (let y = 0; y < window.mazeHeight; y++) {
         for (let x = 0; x < window.mazeWidth; x++) {
-            let texture = textures[window.tileData[y * window.mazeWidth + x]];
-            if (!texture) continue;
+            let tileIndex = y * window.mazeWidth + x;
+            let tileTextureKey = window.tileData[tileIndex];
+            let texture = window.tileTextures[tileTextureKey];
 
+            if (!texture) {
+                console.warn(`🚨 Missing Texture for Tile (${x}, ${y}), Key: ${tileTextureKey}`);
+                continue;
+            }
             drawTile(gl, x, y, texture);
         }
     }
 }
 
-// Draw tile considering camera offset and zoom
+// Draw a single tile at (x, y) with the given texture
 function drawTile(gl, x, y, texture) {
-    let tileSize = window.tileSize * window.zoomLevel;
-    let offsetX = (x * tileSize - window.cameraX) / gl.canvas.width * 2 - 1;
-    let offsetY = 1 - (y * tileSize - window.cameraY) / gl.canvas.height * 2;
-
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
+    const tileSize = window.tileSize;
+    const x0 = (x * tileSize) / gl.canvas.width * 2 - 1; // Convert to NDC (-1 to 1)
+    const y0 = 1 - (y * tileSize) / gl.canvas.height * 2; // Convert to NDC (-1 to 1)
+
+    const x1 = x0 + (tileSize / gl.canvas.width) * 2;
+    const y1 = y0 - (tileSize / gl.canvas.height) * 2;
+
     const vertices = new Float32Array([
-        offsetX, offsetY, 0.0, 0.0,
-        offsetX + tileSize / gl.canvas.width * 2, offsetY, 1.0, 0.0,
-        offsetX, offsetY - tileSize / gl.canvas.height * 2, 0.0, 1.0,
-        offsetX + tileSize / gl.canvas.width * 2, offsetY - tileSize / gl.canvas.height * 2, 1.0, 1.0
+        x0, y0, 0.0, 0.0,  // Top-left
+        x1, y0, 1.0, 0.0,  // Top-right
+        x0, y1, 0.0, 1.0,  // Bottom-left
+        x1, y1, 1.0, 1.0   // Bottom-right
     ]);
 
-    const vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
     const positionAttrib = gl.getAttribLocation(window.shaderProgram, "aPosition");
@@ -198,28 +175,11 @@ function drawTile(gl, x, y, texture) {
     gl.enableVertexAttribArray(texCoordAttrib);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
 }
 
-// ✅ Fix: Camera movement and zooming now works without `tileData` issues
-function setupInputListeners() {
-    document.addEventListener("keydown", (event) => {
-        let moveSpeed = 20 / window.zoomLevel;
-        if (event.key === "ArrowUp") window.cameraY -= moveSpeed;
-        if (event.key === "ArrowDown") window.cameraY += moveSpeed;
-        if (event.key === "ArrowLeft") window.cameraX -= moveSpeed;
-        if (event.key === "ArrowRight") window.cameraX += moveSpeed;
 
-        renderMaze(window.gl, window.tileTextures);
-    });
-
-    document.addEventListener("wheel", (event) => {
-        let zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
-        window.zoomLevel = Math.max(0.5, Math.min(2, window.zoomLevel * zoomFactor));
-        renderMaze(window.gl, window.tileTextures);
-    });
-}
-
-console.log("✅ WebGL Script Loaded Successfully!");
+console.log("✅ Simplified WebGL Script Loaded!");
 
 
 window.initMinimap = function (tileData, width, height) {

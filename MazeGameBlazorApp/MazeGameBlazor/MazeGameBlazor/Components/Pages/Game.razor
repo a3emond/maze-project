@@ -1,6 +1,7 @@
 ﻿@page "/play"
 @rendermode InteractiveServer
 @inject IJSRuntime JS
+@implements IAsyncDisposable
 @using MazeGameBlazor.GameEngine
 
 <PageTitle>Play the Maze Game</PageTitle>
@@ -9,15 +10,15 @@
     <!-- Game Header -->
     <header class="game-header">
         <h1>Maze Game</h1>
-        <p>Find the exit and avoid traps! Use the arrow keys to move.</p>
+        <p>Find the exit and avoid traps! Use the WASD keys to move.</p>
+        <p>Press Start Button to spawn your character</p>
     </header>
 
     <!-- Game Screen -->
-    
-    <div class="game-screen">
+    <div class="game-screen" tabindex="0" @onfocus="SetFocus">
         <canvas id="mazeCanvas"></canvas>
         <canvas id="minimapCanvas"></canvas>
-        <div class="game-overlay">
+        <div class="game-overlay" id="gameOverlay">
             <p id="gameStatus">Ready?</p>
         </div>
     </div>
@@ -62,6 +63,7 @@
     </div>
 </div>
 
+
 @code {
     private int maxHearts = 5;
     private int currentHearts = 3;
@@ -69,30 +71,31 @@
     private TimeSpan timer = TimeSpan.Zero;
     private string statusEffect = "Normal";
     private MazeGenerator mazeGenerator = new();
+    private Player player;
+    private bool gameStarted = false;
+    private bool gameRunning = false;
+    private HashSet<string> movementKeys = new();
+    private DotNetObjectReference<Game> dotNetRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             GenerateAndRenderMaze();
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("registerKeyListeners", dotNetRef);
         }
     }
 
     private async void GenerateAndRenderMaze()
     {
-        //mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.RecursiveBacktracking);
-        //mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.DrunkardsWalk);
-        //mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.Prims);
-        //mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.BSPDungeon);
         mazeGenerator.GenerateMaze(MazeGenerator.MazeAlgorithm.RecursiveBacktracking);
-
 
         int width = mazeGenerator.mazeGrid.GetLength(0);
         int height = mazeGenerator.mazeGrid.GetLength(1);
 
         string[,] spriteGrid = new string[width, height];
 
-        // Fixed issue: Ensure correct order when passing to JS
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
@@ -102,20 +105,102 @@
         }
 
         string[] flattenedSprites = spriteGrid.Cast<string>().ToArray();
+        await JS.InvokeVoidAsync("initCanvas2D", flattenedSprites, width, height);
+    }
 
-        await JS.InvokeVoidAsync("initWebGL", flattenedSprites, width, height);
-        await JS.InvokeVoidAsync("initMinimap", flattenedSprites, width, height);
+    [JSInvokable]
+    public async Task HandleKeyPress(string key)
+    {
+        if (!gameStarted || player == null) return;
+
+        string direction = key switch
+        {
+            "w" => "up",
+            "s" => "down",
+            "a" => "left",
+            "d" => "right",
+            _ => null
+        };
+
+        if (direction != null)
+        {
+            movementKeys.Add(direction);
+            await StartGameLoop();
+        }
+    }
+
+    [JSInvokable]
+    public void HandleKeyRelease(string key)
+    {
+        string direction = key switch
+        {
+            "w" => "up",
+            "s" => "down",
+            "a" => "left",
+            "d" => "right",
+            _ => null
+        };
+
+        if (direction != null)
+        {
+            movementKeys.Remove(direction);
+        }
+    }
+
+    private async Task StartGameLoop()
+    {
+        if (gameRunning) return;
+        gameRunning = true;
+
+        while (gameRunning && movementKeys.Count > 0)
+        {
+            string direction = movementKeys.Last();
+            player.Move(direction, mazeGenerator.GetWalkableTiles());
+            await UpdatePlayerPosition();
+
+            await Task.Delay(50); // Adjust for smoother movement
+        }
+
+        gameRunning = false;
+    }
+
+    private async Task UpdatePlayerPosition()
+    {
+        await JS.InvokeVoidAsync("updatePlayerPosition", player.X, player.Y, player.GetCurrentSprite());
+    }
+
+    private async Task SetFocus()
+    {
+        await JS.InvokeVoidAsync("focusGameScreen");
     }
 
     private async Task StartGame()
     {
-        await JS.InvokeVoidAsync("startGame");
+        gameStarted = true;
+        var startPosition = mazeGenerator.GetStartPosition();
+        player = new Player(startPosition.Item1, startPosition.Item2);
+
+        await JS.InvokeVoidAsync("clearOverlay"); // Hide "Ready?" overlay
+        await JS.InvokeVoidAsync("spawnPlayer", player.X, player.Y, player.GetCurrentSprite());
+        await JS.InvokeVoidAsync("updatePlayerOnMinimap", player.X, player.Y); // Update minimap immediately
     }
+
 
     private async Task RestartGame()
     {
         GenerateAndRenderMaze();
+        gameStarted = false;
+        await JS.InvokeVoidAsync("resetGame");
     }
 
     private string GetHeartImage(int index) => index < currentHearts ? "/assets/hud/health/heart_100.png" : "/assets/hud/health/heart_0.png";
+
+    public async ValueTask DisposeAsync()
+    {
+        if (dotNetRef != null)
+        {
+            dotNetRef.Dispose();
+        }
+    }
 }
+

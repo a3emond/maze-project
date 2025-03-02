@@ -15,6 +15,7 @@ namespace MazeGameBlazor.GameEngine
         private const int RoomMinSize = 3;
         private const int MaxRooms = 10;
         private Random rand = new Random();
+        private HashSet<(int x, int y)> walkableTiles = new();
 
         public int[,] mazeGrid = new int[Width * CellSize, Height * CellSize];
         private (int, int) startPosition;
@@ -72,6 +73,47 @@ namespace MazeGameBlazor.GameEngine
             // Step 6: Print the maze to the console
             PrintMaze();
         }
+
+        // GetStartPosition method
+        public (int, int) GetStartPosition()
+        {
+            Console.WriteLine($"start position : ({startPosition.Item1},{startPosition.Item2})");
+            return startPosition;
+        }
+
+        // ------------------------------------------------------------------------------
+        // Collect walkable tiles for item placement and player movements ---------------
+        // ------------------------------------------------------------------------------
+
+        // **Extract Walkable Tiles from Grid**
+        private void IdentifyWalkableTiles()
+        {
+            walkableTiles.Clear();
+
+            for (int y = 0; y < Height * CellSize; y++)
+            {
+                for (int x = 0; x < Width * CellSize; x++)
+                {
+                    if (mazeGrid[x, y] == 0)
+                    {
+                        walkableTiles.Add((x, y));
+                    }
+                }
+            }
+        }
+
+        // **Get Walkable Tiles for External Use**
+        public HashSet<(int x, int y)> GetWalkableTiles()
+        {
+            return walkableTiles;
+        }
+
+        // **Check if a Given Tile is Walkable**
+        public bool IsWalkable(int x, int y)
+        {
+            return walkableTiles.Contains((x, y));
+        }
+    
 
 
 
@@ -157,7 +199,7 @@ namespace MazeGameBlazor.GameEngine
                 mazeGrid[x, y] = (int)TileType.Floor_Center; // Carve out path
             }
 
-            ProcessTileTypes(); // Ensure proper walls and connections
+            
         }
 
 
@@ -562,6 +604,9 @@ namespace MazeGameBlazor.GameEngine
 
         private void ProcessTileTypes()
         {
+            // get walkable tiles before processing (at this point there is only -1 and 0 in the grid)
+            IdentifyWalkableTiles();
+            // Process the tiles
             ProcessWalls();
             ProcessCorners();
             ProcessInnerCorners();
