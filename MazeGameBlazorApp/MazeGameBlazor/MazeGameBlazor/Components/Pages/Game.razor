@@ -182,7 +182,7 @@
     private async Task StartGame()
     {
         _gameStarted = true;
-        var startPosition = MazeUtils.FindStartPosition(_maze);
+        var startPosition = _maze.StartPosition;
         _player = new Player(startPosition.Item1, startPosition.Item2);
 
         await Js.InvokeVoidAsync("clearOverlay"); // Hide "Ready?" overlay
