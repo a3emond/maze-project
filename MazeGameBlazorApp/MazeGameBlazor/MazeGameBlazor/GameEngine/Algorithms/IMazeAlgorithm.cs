@@ -1,7 +1,6 @@
-﻿namespace MazeGameBlazor.GameEngine.Algorithms
+﻿namespace MazeGameBlazor.GameEngine.Algorithms;
+
+public interface IMazeAlgorithm
 {
-    public interface IMazeAlgorithm
-    {
-        void Generate(Maze maze);
-    }
+    void Generate(Maze maze);
 }

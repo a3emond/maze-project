@@ -1,18 +1,18 @@
 ﻿@page "/blog"
-@rendermode InteractiveServer
 @using MazeGameBlazor.Database.Models
+@rendermode InteractiveServer
 @inject BlogService BlogService
 
 <h2>My Blog</h2>
 
-@if (BlogPosts.Count == 0)
+@if (_blogPosts.Count == 0)
 {
     <p>No blog posts available.</p>
 }
 else
 {
     <div class="blog-grid">
-        @foreach (var post in BlogPosts)
+        @foreach (var post in _blogPosts)
         {
             var firstMedia = post.Media;
             var mediaType = firstMedia?.Type ?? MediaType.Image;
@@ -25,63 +25,64 @@ else
                 @if (mediaType == MediaType.Video)
                 {
                     <video controls class="blog-media">
-                        <source src="@($"api/media/stream/{Path.GetFileName(mediaUrl)}")" type="video/mp4" />
+                        <source src="@($"api/media/stream/{Path.GetFileName(mediaUrl)}")" type="video/mp4"/>
                         Your browser does not support the video tag.
                     </video>
                 }
                 else
                 {
-                    <img src="@mediaUrl" alt="@post.Title" class="blog-preview-image" />
+                    <img src="@mediaUrl" alt="@post.Title" class="blog-preview-image"/>
                 }
             </div>
         }
     </div>
 }
 
-@if (selectedPost != null)
+@if (_selectedPost != null)
 {
     <div class="blog-modal">
         <div class="blog-modal-content">
             <button class="close-button" @onclick="CloseBlogPost">×</button>
 
-            <BlogCard Id="@selectedPost.Id"
-                      Title="@selectedPost.Title"
-                      Content="@selectedPost.Content"
-                      Author="@selectedPost.Author?.UserName"
-                      CreatedAt="@selectedPost.CreatedAt"
-                      LikeCount="@selectedPost.LikeCount"
-                      MediaType="@(selectedPost.Media?.Type ?? MediaType.Image)"
-                      MediaUrl="@(selectedPost.Media?.Url ?? "/images/default.jpg")" />
+            <BlogCard Id="@_selectedPost.Id"
+                      Title="@_selectedPost.Title"
+                      Content="@_selectedPost.Content"
+                      Author="@_selectedPost.Author?.UserName"
+                      CreatedAt="@_selectedPost.CreatedAt"
+                      LikeCount="@_selectedPost.LikeCount"
+                      MediaType="@(_selectedPost.Media?.Type ?? MediaType.Image)"
+                      MediaUrl="@(_selectedPost.Media?.Url ?? "/images/default.jpg")"/>
         </div>
     </div>
 }
 
 @code {
-    private List<BlogPost> BlogPosts = new();
-    private BlogPost? selectedPost = null;
+    private List<BlogPost> _blogPosts = new();
+    private BlogPost? _selectedPost;
 
     /// <summary>
-    /// Lifecycle method: Runs when the component initializes.
-    /// Fetches all blog posts from the database.
+    ///     Lifecycle method: Runs when the component initializes.
+    ///     Fetches all blog posts from the database.
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        BlogPosts = await BlogService.GetAllBlogsAsync();
+        _blogPosts = await BlogService.GetAllBlogsAsync();
     }
 
     /// <summary>
-    /// Opens the selected blog post in a modal.
+    ///     Opens the selected blog post in a modal.
     /// </summary>
     private void OpenBlogPost(BlogPost post)
     {
-        selectedPost = post;
+        _selectedPost = post;
     }
 
     /// <summary>
-    /// Closes the currently opened blog post modal.
+    ///     Closes the currently opened blog post modal.
     /// </summary>
     private void CloseBlogPost()
     {
-        selectedPost = null;
+        _selectedPost = null;
     }
+
 }

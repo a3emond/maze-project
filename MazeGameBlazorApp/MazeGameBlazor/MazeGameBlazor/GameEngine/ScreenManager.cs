@@ -1,6 +1,5 @@
-﻿namespace MazeGameBlazor.GameEngine
+﻿namespace MazeGameBlazor.GameEngine;
+
+public class ScreenManager
 {
-    public class ScreenManager
-    {
-    }
 }

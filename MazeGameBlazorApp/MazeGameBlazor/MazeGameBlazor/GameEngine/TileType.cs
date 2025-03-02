@@ -1,39 +1,34 @@
-﻿using MazeGameBlazor.GameEngine;
+﻿namespace MazeGameBlazor.GameEngine;
 
-namespace MazeGameBlazor.GameEngine
+public enum TileType
 {
-    public enum TileType
-    {
-        
-        Empty_Black = -1,
-        Start = -2,
-        Goal = -3,
+    EmptyBlack = -1,
+    Start = -2,
+    Goal = -3,
 
-        Floor_Center = 0,
-        Floor_Top = 1,
-        Floor_Bottom = 2,
-        Floor_Left = 3,
-        Floor_Right = 4,
-        Floor_Corner_TopLeft = 5,
-        Floor_Corner_TopRight = 6,
-        Floor_Corner_BottomLeft = 7,
-        Floor_Corner_BottomRight = 8,
+    FloorCenter = 0,
+    FloorTop = 1,
+    FloorBottom = 2,
+    FloorLeft = 3,
+    FloorRight = 4,
+    FloorCornerTopLeft = 5,
+    FloorCornerTopRight = 6,
+    FloorCornerBottomLeft = 7,
+    FloorCornerBottomRight = 8,
 
-        Wall_Top = 9,
-        Wall_Bottom = 10,
-        Wall_Left = 11,
-        Wall_Right = 12,
-        Wall_Corner_TopLeft = 13,
-        Wall_Corner_TopRight = 14,
-        Wall_Corner_BottomLeft = 15,
-        Wall_Corner_BottomRight = 16,
-        Wall_InnerCorner_TopLeft = 17,
-        Wall_InnerCorner_TopRight = 18,
-        Wall_InnerCorner_BottomLeft = 19,
-        Wall_InnerCorner_BottomRight = 20,
+    WallTop = 9,
+    WallBottom = 10,
+    WallLeft = 11,
+    WallRight = 12,
+    WallCornerTopLeft = 13,
+    WallCornerTopRight = 14,
+    WallCornerBottomLeft = 15,
+    WallCornerBottomRight = 16,
+    WallInnerCornerTopLeft = 17,
+    WallInnerCornerTopRight = 18,
+    WallInnerCornerBottomLeft = 19,
+    WallInnerCornerBottomRight = 20,
 
-        Plain_Wall = 21,  // Generic wall tile
-        Plain_Floor = 22  // Generic floor tile
-    }
-
+    PlainWall = 21, // Generic wall tile
+    PlainFloor = 22 // Generic floor tile
 }

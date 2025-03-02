@@ -8,18 +8,23 @@
         <h3>Login</h3>
 
         <!-- Login Form -->
-        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm" id="loginForm">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+        <EditForm Model="@Model" OnValidSubmit="HandleLogin" FormName="loginForm" id="loginForm">
+            <DataAnnotationsValidator/>
+            <ValidationSummary/>
 
             <div class="input-group">
                 <label>Email:</label>
-                <InputText @bind-Value="loginModel.Email" class="input-field" />
-            </div>
+                @if (Model != null)
+                {
+                    <InputText @bind-Value="Model.Email" class="input-field"/>
+                    @:</div>
 
-            <div class="input-group">
-                <label>Password:</label>
-                <InputText @bind-Value="loginModel.Password" InputType="password" class="input-field" />
+                    @:<div class="input-group">
+                    <label>Password:</label>
+                    <InputText @bind-Value="Model.Password" InputType="password" class="input-field"/>
+                }
+
+
             </div>
 
             <button type="submit" class="login-button">
@@ -36,11 +41,11 @@
         </div>
 
         <!-- Login Message -->
-        @if (!string.IsNullOrEmpty(message))
+        @if (!string.IsNullOrEmpty(_message))
         {
-            <p class="login-message">@message</p>
+            <p class="login-message">@_message</p>
 
-            @if (loginSuccessful)
+            @if (_loginSuccessful)
             {
                 <p>
                     <a href="/">Click here to go to the home page</a>
@@ -55,53 +60,61 @@
 </div>
 
 @code {
+
     /// <summary>
-    /// Model for login credentials.
+    ///     Model for login credentials.
     /// </summary>
     [SupplyParameterFromForm]
-    private LoginModel? loginModel { get; set; }
+    private LoginModel? Model { get; set; }
 
     /// <summary>
-    /// Lifecycle method: Ensures the login model is initialized.
+    ///     Lifecycle method: Ensures the login model is initialized.
     /// </summary>
-    protected override void OnInitialized() => loginModel ??= new();
+    protected override void OnInitialized()
+    {
+        this.Model ??= new LoginModel();
+    }
 
-    private string? message;
-    private bool loginSuccessful = false;
+    private string? _message;
+    private bool _loginSuccessful;
 
     /// <summary>
-    /// Handles user login authentication.
+    ///     Handles user login authentication.
     /// </summary>
     private async Task HandleLogin()
     {
         try
         {
-            var result = await AuthService.LoginUserAsync(loginModel);
-            if (result.Succeeded)
+            if (Model != null)
             {
-                loginSuccessful = true;
-                message = "Login successful! Use the link below to go to the home page.";
-            }
-            else
-            {
-                loginSuccessful = false;
-                message = "Invalid Email or Password.";
+                var result = await AuthService.LoginUserAsync(Model);
+                if (result.Succeeded)
+                {
+                    _loginSuccessful = true;
+                    _message = "Login successful! Use the link below to go to the home page.";
+                }
+                else
+                {
+                    _loginSuccessful = false;
+                    _message = "Invalid Email or Password.";
+                }
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Login error: {ex.Message}");
-            loginSuccessful = false;
-            message = $"Error: {ex.Message}";
+            _loginSuccessful = false;
+            _message = $"Error: {ex.Message}";
         }
     }
 
     /// <summary>
-    /// Represents a user's login credentials.
+    ///     Represents a user's login credentials.
     /// </summary>
     public class LoginModel
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
+
 }

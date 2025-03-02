@@ -1,6 +1,6 @@
 ﻿@page "/"
-@rendermode InteractiveServer
 @using MazeGameBlazor.Database.Models
+@rendermode InteractiveServer
 @inject BlogService BlogService
 
 <PageTitle>Home</PageTitle>
@@ -19,17 +19,17 @@
     <section class="news-section">
         <h2>Latest News</h2>
 
-        @if (post != null)
+        @if (_post != null)
         {
             <div class="news-card">
-                <BlogCard Id="@post.Id"
-                          Title="@post.Title"
-                          Content="@post.Content"
-                          Author="@post.Author?.UserName"
-                          CreatedAt="@post.CreatedAt"
-                          LikeCount="@post.LikeCount"
-                          MediaType="@mediaType"
-                          MediaUrl="@mediaUrl" />
+                <BlogCard Id="@_post.Id"
+                          Title="@_post.Title"
+                          Content="@_post.Content"
+                          Author="@_post.Author?.UserName"
+                          CreatedAt="@_post.CreatedAt"
+                          LikeCount="@_post.LikeCount"
+                          MediaType="@_mediaType"
+                          MediaUrl="@_mediaUrl"/>
             </div>
         }
         else
@@ -50,33 +50,33 @@
 </div>
 
 @code {
-    private BlogPost? post;
-    private MediaType mediaType = MediaType.Image;
-    private string mediaUrl = string.Empty;
+    private BlogPost? _post;
+    private MediaType _mediaType = MediaType.Image;
+    private string _mediaUrl = string.Empty;
 
     /// <summary>
-    /// Lifecycle method: Runs when the component initializes.
-    /// Fetches the latest blog post and its associated media.
+    ///     Lifecycle method: Runs when the component initializes.
+    ///     Fetches the latest blog post and its associated media.
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            post = await BlogService.GetLatestBlogPostAsync();
+            _post = await BlogService.GetLatestBlogPostAsync();
 
-            if (post == null)
+            if (_post == null)
             {
                 Console.WriteLine("No blog post found.");
                 return;
             }
 
-            Console.WriteLine($"Post Title: {post.Title}, Media: {post.Media}");
+            Console.WriteLine($"Post Title: {_post.Title}, Media: {_post.Media}");
 
-            if (post.Media != null)
+            if (_post.Media != null)
             {
-                mediaType = post.Media.Type;
-                mediaUrl = post.Media.Url;
-                Console.WriteLine($"Media Type: {mediaType}, Media URL: {mediaUrl}");
+                _mediaType = _post.Media.Type;
+                _mediaUrl = _post.Media.Url;
+                Console.WriteLine($"Media Type: {_mediaType}, Media URL: {_mediaUrl}");
             }
             else
             {
@@ -88,4 +88,5 @@
             Console.WriteLine($"Error fetching blog post: {ex.Message}");
         }
     }
+
 }

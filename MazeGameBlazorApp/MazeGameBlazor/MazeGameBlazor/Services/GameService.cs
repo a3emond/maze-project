@@ -1,6 +1,5 @@
-﻿namespace MazeGameBlazor.Services
+﻿namespace MazeGameBlazor.Services;
+
+public class GameService
 {
-    public class GameService
-    {
-    }
 }

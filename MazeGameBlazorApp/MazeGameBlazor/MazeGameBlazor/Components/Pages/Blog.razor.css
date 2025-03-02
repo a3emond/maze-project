@@ -1,115 +1,113 @@
 ﻿/* Blog Grid */
 .blog-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Wider cards */
     gap: 15px; /* Slightly smaller gap */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Wider cards */
     margin: 10px auto; /* Reduce margins */
-    padding: 10px; /* Ensures content isn't too narrow */
     max-width: 1200px; /* Prevents excessive stretching on large screens */
+    padding: 10px; /* Ensures content isn't too narrow */
 }
 
 /* Blog Card Preview */
+
 .blog-card-preview {
-    cursor: pointer;
-    padding: 15px;
-    border-radius: 10px;
-    transition: transform 0.2s ease-in-out;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    align-items: center; /* Center content */
     background: #1e1e1e;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     color: white;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center content */
+    padding: 15px;
+    transition: transform 0.2s ease-in-out;
     width: 100%; /* Ensures full width usage */
 }
 
 /* Media Elements */
+
 .blog-media, .blog-preview-image, .blog-preview-video {
-    width: 100%; /* Make it responsive */
-    max-width: 100%; /* Prevents overflow */
-    height: 180px; /* Slightly larger for better visibility */
-    object-fit: cover;
     border-radius: 8px;
+    height: 180px; /* Slightly larger for better visibility */
+    max-width: 100%; /* Prevents overflow */
+    object-fit: cover;
+    width: 100%; /* Make it responsive */
 }
 
 /* Hover Effect */
-.blog-card-preview:hover {
-    transform: scale(1.03);
-}
+
+.blog-card-preview:hover { transform: scale(1.03); }
 
 /* Adjust Modal for Smaller Screens */
+
 .blog-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    align-items: center;
     background: rgba(0, 0, 0, 0.8);
     display: flex;
+    height: 100%;
     justify-content: center;
-    align-items: center;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100%;
     z-index: 1000;
 }
 
 /* Blog Modal Content */
+
 .blog-modal-content {
     background: #333;
-    padding: 20px;
     border-radius: 10px;
-    width: 85%;
-    max-width: 600px;
-    position: relative;
     max-height: 90vh; /* Prevents the modal from overflowing */
+    max-width: 600px;
     overflow-y: auto; /* Adds scrolling if content is too long */
+    padding: 20px;
+    position: relative;
+    width: 85%;
 }
 
-    /* Custom Scrollbars for Modal */
-    .blog-modal-content::-webkit-scrollbar {
-        width: 8px;
-    }
+/* Custom Scrollbars for Modal */
 
-    .blog-modal-content::-webkit-scrollbar-track {
-        background: #252526;
-    }
+.blog-modal-content::-webkit-scrollbar { width: 8px; }
 
-    .blog-modal-content::-webkit-scrollbar-thumb {
-        background: #555;
-        border-radius: 4px;
-    }
+.blog-modal-content::-webkit-scrollbar-track { background: #252526; }
 
-        .blog-modal-content::-webkit-scrollbar-thumb:hover {
-            background: #777;
-        }
+.blog-modal-content::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.blog-modal-content::-webkit-scrollbar-thumb:hover { background: #777; }
 
 /* Close Button Adjustments */
+
 .close-button {
-    position: absolute;
-    top: 8px;
-    right: 8px;
     background: red;
-    color: white;
     border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
     font-size: 18px;
     padding: 6px;
-    cursor: pointer;
-    border-radius: 50%;
+    position: absolute;
+    right: 8px;
+    top: 8px;
 }
 
-    .close-button:hover {
-        background: darkred;
-    }
+.close-button:hover { background: darkred; }
 
 /*  Mobile Optimizations */
+
 @media screen and (max-width: 600px) {
     .blog-grid {
-        grid-template-columns: 1fr; /* Full width on small screens */
         gap: 10px; /* Reduce space between cards */
+        grid-template-columns: 1fr; /* Full width on small screens */
     }
 
     .blog-card-preview {
-        width: 95%; /* Use almost full screen width */
         margin: 0 auto; /* Center it */
         padding: 12px; /* Adjust padding */
+        width: 95%; /* Use almost full screen width */
     }
 
     .blog-media, .blog-preview-image, .blog-preview-video {
@@ -117,7 +115,7 @@
     }
 
     .blog-modal-content {
-        width: 95%; /* Ensure modal fits nicely */
         max-height: 85vh; /* Ensures proper scaling */
+        width: 95%; /* Ensure modal fits nicely */
     }
 }

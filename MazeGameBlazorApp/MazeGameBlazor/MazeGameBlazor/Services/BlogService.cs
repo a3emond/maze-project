@@ -1,15 +1,15 @@
 ﻿using MazeGameBlazor.Database;
 using MazeGameBlazor.Database.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 public class BlogService
 {
-    private readonly AppDbContext _context;
     private readonly AuthenticationStateProvider _authStateProvider;
+    private readonly AppDbContext _context;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BlogService"/> class.
+    ///     Initializes a new instance of the <see cref="BlogService" /> class.
     /// </summary>
     /// <param name="context">The database context.</param>
     /// <param name="authStateProvider">The authentication state provider.</param>
@@ -20,7 +20,7 @@ public class BlogService
     }
 
     /// <summary>
-    /// Retrieves all blog posts with their associated media and author.
+    ///     Retrieves all blog posts with their associated media and author.
     /// </summary>
     /// <returns>A list of all blog posts.</returns>
     public async Task<List<BlogPost>> GetAllBlogsAsync()
@@ -33,10 +33,10 @@ public class BlogService
     }
 
     /// <summary>
-    /// Retrieves a single blog post by ID with associated media and author.
+    ///     Retrieves a single blog post by ID with associated media and author.
     /// </summary>
     /// <param name="id">The ID of the blog post.</param>
-    /// <returns>The corresponding <see cref="BlogPost"/> or null if not found.</returns>
+    /// <returns>The corresponding <see cref="BlogPost" /> or null if not found.</returns>
     public async Task<BlogPost?> GetBlogByIdAsync(int id)
     {
         return await _context.BlogPosts
@@ -46,9 +46,9 @@ public class BlogService
     }
 
     /// <summary>
-    /// Gets the latest blog post.
+    ///     Gets the latest blog post.
     /// </summary>
-    /// <returns>The most recent <see cref="BlogPost"/>, or null if no posts exist.</returns>
+    /// <returns>The most recent <see cref="BlogPost" />, or null if no posts exist.</returns>
     public async Task<BlogPost?> GetLatestBlogPostAsync()
     {
         return await _context.BlogPosts
@@ -59,15 +59,17 @@ public class BlogService
     }
 
     /// <summary>
-    /// Creates a new blog post.
+    ///     Creates a new blog post.
     /// </summary>
     /// <param name="newBlog">The blog post details.</param>
-    /// <returns>The created <see cref="BlogPost"/>.</returns>
+    /// <returns>The created <see cref="BlogPost" />.</returns>
     public async Task<BlogPost> CreateBlogAsync(BlogPostDto newBlog)
     {
         if (newBlog == null) throw new ArgumentNullException(nameof(newBlog));
-        if (string.IsNullOrWhiteSpace(newBlog.Title)) throw new ArgumentException("Title cannot be empty.", nameof(newBlog.Title));
-        if (string.IsNullOrWhiteSpace(newBlog.Content)) throw new ArgumentException("Content cannot be empty.", nameof(newBlog.Content));
+        if (string.IsNullOrWhiteSpace(newBlog.Title))
+            throw new ArgumentException("Title cannot be empty.", nameof(newBlog.Title));
+        if (string.IsNullOrWhiteSpace(newBlog.Content))
+            throw new ArgumentException("Content cannot be empty.", nameof(newBlog.Content));
 
         var blogPost = new BlogPost
         {
@@ -84,7 +86,7 @@ public class BlogService
     }
 
     /// <summary>
-    /// Likes a blog post.
+    ///     Likes a blog post.
     /// </summary>
     /// <param name="blogPostId">The ID of the blog post to like.</param>
     /// <returns>The updated like count.</returns>
@@ -95,7 +97,7 @@ public class BlogService
             throw new KeyNotFoundException($"Blog post with ID {blogPostId} not found.");
 
         var authState = await _authStateProvider.GetAuthenticationStateAsync();
-        string userId = authState.User.Identity?.Name ?? "guest";
+        var userId = authState.User.Identity?.Name ?? "guest";
 
         blogPost.LikeCount++;
         await _context.SaveChangesAsync();
@@ -104,7 +106,7 @@ public class BlogService
     }
 
     /// <summary>
-    /// Retrieves all comments for a given blog post.
+    ///     Retrieves all comments for a given blog post.
     /// </summary>
     /// <param name="blogPostId">The blog post ID.</param>
     /// <returns>A list of comments for the specified post.</returns>
@@ -117,7 +119,7 @@ public class BlogService
     }
 
     /// <summary>
-    /// Adds a comment to a blog post.
+    ///     Adds a comment to a blog post.
     /// </summary>
     /// <param name="blogPostId">The blog post ID.</param>
     /// <param name="author">The author of the comment.</param>
@@ -125,7 +127,8 @@ public class BlogService
     /// <returns>The newly created comment.</returns>
     public async Task<Comment> AddCommentAsync(int blogPostId, string author, string content)
     {
-        if (string.IsNullOrWhiteSpace(content)) throw new ArgumentException("Comment content cannot be empty.", nameof(content));
+        if (string.IsNullOrWhiteSpace(content))
+            throw new ArgumentException("Comment content cannot be empty.", nameof(content));
 
         var comment = new Comment
         {
@@ -141,7 +144,7 @@ public class BlogService
 }
 
 /// <summary>
-/// DTO for creating a new blog post.
+///     DTO for creating a new blog post.
 /// </summary>
 public class BlogPostDto
 {
@@ -152,7 +155,7 @@ public class BlogPostDto
 }
 
 /// <summary>
-/// DTO for media upload results.
+///     DTO for media upload results.
 /// </summary>
 public class MediaUploadResult
 {

@@ -1,4 +1,6 @@
 ﻿@page "/create-blog"
+@using System.Net.Http.Headers
+@using System.Security.Claims
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 @inject BlogService BlogService
@@ -12,7 +14,7 @@
     <h3>Step 1: Upload or Select Media</h3>
 
     <!-- File Upload Section -->
-    <InputFile OnChange="HandleFileSelection" MaxAllowedSize="104857600" /> <!-- 100 MB -->
+    <InputFile OnChange="HandleFileSelection" MaxAllowedSize="104857600"/> <!-- 100 MB -->
     @if (!string.IsNullOrEmpty(SelectedFileName))
     {
         <p>Selected File: @SelectedFileName</p>
@@ -29,7 +31,7 @@
         @foreach (var media in AvailableMedia)
         {
             <div class="media-item">
-                <img src="@media.ThumbnailUrl" alt="Media" class="media-thumbnail" />
+                <img src="@media.ThumbnailUrl" alt="Media" class="media-thumbnail"/>
                 <button @onclick="() => AddMediaToPost(media)" class="btn btn-success">Add to Post</button>
             </div>
         }
@@ -42,17 +44,17 @@
     <div>
         <h3>Step 2: Create Blog Post</h3>
         <EditForm Model="NewBlogPost" OnValidSubmit="HandleValidSubmit">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+            <DataAnnotationsValidator/>
+            <ValidationSummary/>
 
             <div>
                 <label for="title">Title</label>
-                <InputText id="title" @bind-Value="NewBlogPost.Title" class="form-control" />
+                <InputText id="title" @bind-Value="NewBlogPost.Title" class="form-control"/>
             </div>
 
             <div>
                 <label for="content">Content</label>
-                <InputTextArea id="content" @bind-Value="NewBlogPost.Content" class="form-control" />
+                <InputTextArea id="content" @bind-Value="NewBlogPost.Content" class="form-control"/>
             </div>
 
             <!-- Selected Media Preview -->
@@ -61,7 +63,7 @@
                 @foreach (var media in SelectedMedia)
                 {
                     <div class="selected-media-item">
-                        <img src="@media.ThumbnailUrl" alt="Selected Media" class="selected-media-thumbnail" />
+                        <img src="@media.ThumbnailUrl" alt="Selected Media" class="selected-media-thumbnail"/>
                         <button @onclick="() => RemoveMediaFromPost(media)" class="btn btn-danger">Remove</button>
                     </div>
                 }
@@ -73,19 +75,19 @@
 }
 
 @code {
-    private BlogPostDto NewBlogPost { get; set; } = new();
+    private BlogPostDto NewBlogPost { get; } = new();
     private string SelectedFileName { get; set; } = string.Empty;
     private string UploadStatus { get; set; } = string.Empty;
     private List<MediaUploadResult> AvailableMedia { get; set; } = new();
-    private List<int> SelectedMediaIds { get; set; } = new();
-    private List<MediaUploadResult> SelectedMedia { get; set; } = new();
-    private bool IsBlogPostCreated { get; set; } = false;
+    private List<int> SelectedMediaIds { get; } = new();
+    private List<MediaUploadResult> SelectedMedia { get; } = new();
+    private bool IsBlogPostCreated { get; set; }
     private Stream? SelectedFileStream { get; set; }
     private string SelectedFileContentType { get; set; } = string.Empty;
 
     /// <summary>
-    /// Lifecycle method: Runs when the component initializes.
-    /// Fetches available media from the server.
+    ///     Lifecycle method: Runs when the component initializes.
+    ///     Fetches available media from the server.
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
@@ -93,7 +95,7 @@
     }
 
     /// <summary>
-    /// Handles form submission and creates a new blog post.
+    ///     Handles form submission and creates a new blog post.
     /// </summary>
     private async Task HandleValidSubmit()
     {
@@ -101,7 +103,7 @@
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
-            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userId))
             {
@@ -133,7 +135,7 @@
     }
 
     /// <summary>
-    /// Fetches available media files for selection.
+    ///     Fetches available media files for selection.
     /// </summary>
     private async Task LoadAvailableMedia()
     {
@@ -142,7 +144,7 @@
     }
 
     /// <summary>
-    /// Adds media to the selected blog post.
+    ///     Adds media to the selected blog post.
     /// </summary>
     private void AddMediaToPost(MediaUploadResult media)
     {
@@ -154,7 +156,7 @@
     }
 
     /// <summary>
-    /// Removes media from the selected blog post.
+    ///     Removes media from the selected blog post.
     /// </summary>
     private void RemoveMediaFromPost(MediaUploadResult media)
     {
@@ -166,7 +168,7 @@
     }
 
     /// <summary>
-    /// Attaches media to a created blog post.
+    ///     Attaches media to a created blog post.
     /// </summary>
     private async Task AttachMediaToBlogPost(int blogPostId, List<int> mediaIds)
     {
@@ -176,7 +178,7 @@
     }
 
     /// <summary>
-    /// Handles file selection for uploading media.
+    ///     Handles file selection for uploading media.
     /// </summary>
     private async Task HandleFileSelection(InputFileChangeEventArgs e)
     {
@@ -193,7 +195,7 @@
     }
 
     /// <summary>
-    /// Uploads the selected file to the server.
+    ///     Uploads the selected file to the server.
     /// </summary>
     private async Task UploadFile()
     {
@@ -208,7 +210,7 @@
             var httpClient = HttpClientFactory.CreateClient();
             using var content = new MultipartFormDataContent();
             var fileContent = new StreamContent(SelectedFileStream);
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedFileContentType);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(SelectedFileContentType);
             content.Add(fileContent, "file", SelectedFileName);
 
             var response = await httpClient.PostAsync("https://localhost:7208/api/media/upload", content);
@@ -229,4 +231,5 @@
             UploadStatus = $"Error: {ex.Message}";
         }
     }
+
 }

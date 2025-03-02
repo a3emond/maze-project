@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 [Route("api/media")]
 public class MediaController : ControllerBase
 {
-    private readonly IWebHostEnvironment _environment;
     private readonly AppDbContext _dbContext;
+    private readonly IWebHostEnvironment _environment;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MediaController"/> class.
+    ///     Initializes a new instance of the <see cref="MediaController" /> class.
     /// </summary>
     /// <param name="environment">Web hosting environment.</param>
     /// <param name="dbContext">Database context.</param>
@@ -22,7 +22,7 @@ public class MediaController : ControllerBase
     }
 
     /// <summary>
-    /// Streams a media file for playback.
+    ///     Streams a media file for playback.
     /// </summary>
     /// <param name="filename">The name of the media file.</param>
     /// <returns>The media file stream or a not found result.</returns>
@@ -34,11 +34,11 @@ public class MediaController : ControllerBase
             return NotFound("Media file not found.");
 
         var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-        return File(stream, "video/mp4", enableRangeProcessing: true); // Enables seeking
+        return File(stream, "video/mp4", true); // Enables seeking
     }
 
     /// <summary>
-    /// Uploads a media file to the server and stores metadata in the database.
+    ///     Uploads a media file to the server and stores metadata in the database.
     /// </summary>
     /// <param name="file">The uploaded file.</param>
     /// <returns>Details of the uploaded media.</returns>
@@ -80,7 +80,7 @@ public class MediaController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves all media files available in the database.
+    ///     Retrieves all media files available in the database.
     /// </summary>
     /// <returns>A list of media objects.</returns>
     [HttpGet]
@@ -91,7 +91,7 @@ public class MediaController : ControllerBase
     }
 
     /// <summary>
-    /// Attaches media files to a blog post.
+    ///     Attaches media files to a blog post.
     /// </summary>
     /// <param name="request">The request containing the blog post ID and media IDs.</param>
     /// <returns>A success message if media is attached.</returns>
@@ -114,7 +114,7 @@ public class MediaController : ControllerBase
     }
 
     /// <summary>
-    /// Determines the type of media based on the content type.
+    ///     Determines the type of media based on the content type.
     /// </summary>
     /// <param name="contentType">The MIME type of the file.</param>
     /// <returns>The corresponding media type.</returns>
@@ -131,7 +131,7 @@ public class MediaController : ControllerBase
 }
 
 /// <summary>
-/// Model representing a request to attach media to a blog post.
+///     Model representing a request to attach media to a blog post.
 /// </summary>
 public class AttachMediaRequest
 {

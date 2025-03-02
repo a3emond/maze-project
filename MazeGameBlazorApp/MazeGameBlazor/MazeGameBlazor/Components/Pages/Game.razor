@@ -1,10 +1,10 @@
 ﻿@page "/play"
 @rendermode InteractiveServer
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 @inject NavigationManager NavigationManager
-@implements IAsyncDisposable
 @using MazeGameBlazor.GameEngine
 @using MazeGameBlazor.GameEngine.Algorithms
+@implements IAsyncDisposable
 
 <PageTitle>Play the Maze Game</PageTitle>
 
@@ -30,9 +30,9 @@
         <div class="hud-section">
             <span>Health:</span>
             <div class="heart-container">
-                @for (int i = 0; i < maxHearts; i++)
+                @for (var i = 0; i < _maxHearts; i++)
                 {
-                    <img src="@GetHeartImage(i)" class="heart-icon" />
+                    <img src="@GetHeartImage(i)" class="heart-icon"/>
                 }
             </div>
         </div>
@@ -40,12 +40,12 @@
         <div class="hud-section">
             <span>Inventory:</span>
             <div class="inventory">
-                @for (int i = 0; i < inventorySlots.Length; i++)
+                @for (var i = 0; i < _inventorySlots.Length; i++)
                 {
                     <div class="inventory-slot">
-                        @if (!string.IsNullOrEmpty(inventorySlots[i]))
+                        @if (!string.IsNullOrEmpty(_inventorySlots[i]))
                         {
-                            <img width="44px" src="@inventorySlots[i]" />
+                            <img width="44px" src="@_inventorySlots[i]"/>
                         }
                     </div>
                 }
@@ -53,8 +53,8 @@
         </div>
 
         <div class="hud-section">
-            <span>Time: @timer</span>
-            <span>Status: @statusEffect</span>
+            <span>Time: @_timer</span>
+            <span>Status: @_statusEffect</span>
         </div>
     </div>
 
@@ -67,58 +67,58 @@
 
 
 @code {
-    private int maxHearts = 5;
-    private int currentHearts = 3;
-    private string[] inventorySlots = new string[6] { "/assets/hud/inventory/compass.png", "/assets/hud/inventory/key.png", null, null, null, null };
-    private TimeSpan timer = TimeSpan.Zero;
-    private string statusEffect = "Normal";
-    private MazeGenerator mazeGenerator = new();
-    private Maze maze;
-    private Player player;
-    private bool gameStarted = false;
-    private bool gameRunning = false;
-    private HashSet<string> movementKeys = new();
-    private DotNetObjectReference<Game> dotNetRef;
-    private MazeAlgorithmEnum selectedAlgorithm = MazeAlgorithmEnum.RecursiveBacktracking; // Default Algorithm
+    private readonly int _maxHearts = 5;
+    private readonly int _currentHearts = 3;
+    private readonly string[] _inventorySlots = new string[6] { "/assets/hud/inventory/compass.png", "/assets/hud/inventory/key.png", null, null, null, null };
+    private readonly TimeSpan _timer = TimeSpan.Zero;
+    private readonly string _statusEffect = "Normal";
+    private readonly MazeGenerator _mazeGenerator = new();
+    private Maze _maze;
+    private Player _player;
+    private bool _gameStarted;
+    private bool _gameRunning;
+    private readonly HashSet<string?> _movementKeys = new();
+    private DotNetObjectReference<Game> _dotNetRef;
+    private readonly MazeAlgorithmType _selectedAlgorithm = MazeAlgorithmType.RecursiveBacktracking; // Default Algorithm
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             GenerateAndRenderMaze();
-            dotNetRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("registerKeyListeners", dotNetRef);
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await Js.InvokeVoidAsync("registerKeyListeners", _dotNetRef);
         }
     }
 
     private async void GenerateAndRenderMaze()
     {
         // Generate maze using MazeGenerator
-        maze = mazeGenerator.GenerateMaze(selectedAlgorithm);
+        _maze = _mazeGenerator.GenerateMaze(_selectedAlgorithm);
 
-        int widthPixels = maze.Width;
-        int heightPixels = maze.Height;
+        var widthPixels = _maze.Width;
+        var heightPixels = _maze.Height;
 
         string[,] spriteGrid = new string[widthPixels, heightPixels];
 
-        for (int y = 0; y < heightPixels; y++)
+        for (var y = 0; y < heightPixels; y++)
         {
-            for (int x = 0; x < widthPixels; x++)
+            for (var x = 0; x < widthPixels; x++)
             {
-                spriteGrid[y, x] = TileProcessor.GetTileSprite(maze, x, y);
+                spriteGrid[y, x] = TileProcessor.GetTileSprite(_maze, x, y);
             }
         }
 
         string[] flattenedSprites = spriteGrid.Cast<string>().ToArray();
-        await JS.InvokeVoidAsync("initCanvas2D", flattenedSprites, widthPixels, heightPixels);
+        await Js.InvokeVoidAsync("initCanvas2D", flattenedSprites, widthPixels, heightPixels);
     }
 
     [JSInvokable]
     public async Task HandleKeyPress(string key)
     {
-        if (!gameStarted || player == null) return;
+        if (!_gameStarted || _player == null) return;
 
-        string direction = key switch
+        var direction = key switch
         {
             "w" => "up",
             "s" => "down",
@@ -129,7 +129,7 @@
 
         if (direction != null)
         {
-            movementKeys.Add(direction);
+            _movementKeys.Add(direction);
             await StartGameLoop();
         }
     }
@@ -137,7 +137,7 @@
     [JSInvokable]
     public void HandleKeyRelease(string key)
     {
-        string direction = key switch
+        var direction = key switch
         {
             "w" => "up",
             "s" => "down",
@@ -148,64 +148,68 @@
 
         if (direction != null)
         {
-            movementKeys.Remove(direction);
+            _movementKeys.Remove(direction);
         }
     }
 
     private async Task StartGameLoop()
     {
-        if (gameRunning) return;
-        gameRunning = true;
+        if (_gameRunning) return;
+        _gameRunning = true;
 
-        while (gameRunning && movementKeys.Count > 0)
+        while (_gameRunning && _movementKeys.Count > 0)
         {
-            string direction = movementKeys.Last();
-            player.Move(direction, maze.WalkableTiles);
+            var direction = _movementKeys.Last();
+            _player.Move(direction, _maze.WalkableTiles);
             await UpdatePlayerPosition();
 
             await Task.Delay(30); // Adjust for smoother movement
         }
 
-        gameRunning = false;
+        _gameRunning = false;
     }
 
     private async Task UpdatePlayerPosition()
     {
-        await JS.InvokeVoidAsync("updatePlayerPosition", player.X, player.Y, player.GetCurrentSprite());
+        await Js.InvokeVoidAsync("updatePlayerPosition", _player.X, _player.Y, _player.GetCurrentSprite());
     }
 
     private async Task SetFocus()
     {
-        await JS.InvokeVoidAsync("focusGameScreen");
+        await Js.InvokeVoidAsync("focusGameScreen");
     }
 
     private async Task StartGame()
     {
-        gameStarted = true;
-        var startPosition = MazeUtils.FindStartPosition(maze);
-        player = new Player(startPosition.Item1, startPosition.Item2);
+        _gameStarted = true;
+        var startPosition = MazeUtils.FindStartPosition(_maze);
+        _player = new Player(startPosition.Item1, startPosition.Item2);
 
-        await JS.InvokeVoidAsync("clearOverlay"); // Hide "Ready?" overlay
-        await JS.InvokeVoidAsync("spawnPlayer", player.X, player.Y, player.GetCurrentSprite());
-        await JS.InvokeVoidAsync("updatePlayerOnMinimap", player.X, player.Y); // Update minimap immediately
+        await Js.InvokeVoidAsync("clearOverlay"); // Hide "Ready?" overlay
+        await Js.InvokeVoidAsync("spawnPlayer", _player.X, _player.Y, _player.GetCurrentSprite());
+        await Js.InvokeVoidAsync("updatePlayerOnMinimap", _player.X, _player.Y); // Update minimap immediately
     }
 
     private async Task RestartGame()
     {
         GenerateAndRenderMaze();
-        gameStarted = false;
+        _gameStarted = false;
         // reload the page to reset the game
         NavigationManager.NavigateTo("/play", true);
         //await JS.InvokeVoidAsync("resetGame");
     }
 
-    private string GetHeartImage(int index) => index < currentHearts ? "/assets/hud/health/heart_100.png" : "/assets/hud/health/heart_0.png";
+    private string GetHeartImage(int index)
+    {
+        return index < _currentHearts ? "/assets/hud/health/heart_100.png" : "/assets/hud/health/heart_0.png";
+    }
 
     public async ValueTask DisposeAsync()
     {
-        if (dotNetRef != null)
+        if (_dotNetRef != null)
         {
-            dotNetRef.Dispose();
+            _dotNetRef.Dispose();
         }
     }
+
 }

@@ -3,76 +3,69 @@ using Microsoft.AspNetCore.Identity;
 using static MazeGameBlazor.Components.Pages.Login;
 using static MazeGameBlazor.Components.Pages.Register;
 
-namespace MazeGameBlazor.Services
+namespace MazeGameBlazor.Services;
+
+/// <summary>
+///     Service responsible for handling user authentication, registration, and logout.
+/// </summary>
+public class AuthService
 {
+    private readonly SignInManager<User> _signInManager;
+    private readonly UserManager<User> _userManager;
+
     /// <summary>
-    /// Service responsible for handling user authentication, registration, and logout.
+    ///     Initializes a new instance of the <see cref="AuthService" /> class.
     /// </summary>
-    public class AuthService
+    /// <param name="userManager">User manager service for handling user-related operations.</param>
+    /// <param name="signInManager">Sign-in manager service for handling authentication.</param>
+    public AuthService(UserManager<User> userManager, SignInManager<User> signInManager)
     {
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
+        _userManager = userManager;
+        _signInManager = signInManager;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AuthService"/> class.
-        /// </summary>
-        /// <param name="userManager">User manager service for handling user-related operations.</param>
-        /// <param name="signInManager">Sign-in manager service for handling authentication.</param>
-        public AuthService(UserManager<User> userManager, SignInManager<User> signInManager)
+    /// <summary>
+    ///     Registers a new user asynchronously.
+    /// </summary>
+    /// <param name="model">User registration details.</param>
+    /// <returns>IdentityResult indicating success or failure.</returns>
+    public async Task<IdentityResult> RegisterUserAsync(RegisterModel model)
+    {
+        var user = new User
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
+            UserName = model.UserName,
+            Email = model.Email,
+            EmailConfirmed = true
+        };
 
-        /// <summary>
-        /// Registers a new user asynchronously.
-        /// </summary>
-        /// <param name="model">User registration details.</param>
-        /// <returns>IdentityResult indicating success or failure.</returns>
-        public async Task<IdentityResult> RegisterUserAsync(RegisterModel model)
-        {
-            var user = new User
-            {
-                UserName = model.UserName,
-                Email = model.Email,
-                EmailConfirmed = true,
-            };
+        var result = await _userManager.CreateAsync(user, model.Password);
+        if (result.Succeeded) await _userManager.AddToRoleAsync(user, "User");
+        return result;
+    }
 
-            var result = await _userManager.CreateAsync(user, model.Password);
-            if (result.Succeeded)
-            {
-                await _userManager.AddToRoleAsync(user, "User");
-            }
-            return result;
-        }
+    /// <summary>
+    ///     Logs in a user asynchronously.
+    /// </summary>
+    /// <param name="model">User login details.</param>
+    /// <returns>SignInResult indicating success or failure.</returns>
+    public async Task<SignInResult> LoginUserAsync(LoginModel model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null) return SignInResult.Failed; // User does not exist
 
-        /// <summary>
-        /// Logs in a user asynchronously.
-        /// </summary>
-        /// <param name="model">User login details.</param>
-        /// <returns>SignInResult indicating success or failure.</returns>
-        public async Task<SignInResult> LoginUserAsync(LoginModel model)
-        {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                return SignInResult.Failed; // User does not exist
-            }
+        return await _signInManager.PasswordSignInAsync(
+            user.UserName,
+            model.Password,
+            false,
+            false
+        );
+    }
 
-            return await _signInManager.PasswordSignInAsync(
-                user.UserName,
-                model.Password,
-                isPersistent: false,
-                lockoutOnFailure: false
-            );
-        }
-
-        /// <summary>
-        /// Logs out the current user asynchronously.
-        /// </summary>
-        public async Task LogoutAsync()
-        {
-            await _signInManager.SignOutAsync();
-        }
+    /// <summary>
+    ///     Logs out the current user asynchronously.
+    /// </summary>
+    public async Task LogoutAsync()
+    {
+        await _signInManager.SignOutAsync();
     }
 }

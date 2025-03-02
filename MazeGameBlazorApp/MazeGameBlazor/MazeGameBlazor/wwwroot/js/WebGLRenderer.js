@@ -8,7 +8,7 @@ window.mazeWidth = 0;
 window.mazeHeight = 0;
 
 // Initialize WebGL and Render the Maze
-window.initWebGL = function (tileDataInput, width, height) {
+window.initWebGL = function(tileDataInput, width, height) {
     console.log("Initializing WebGL...");
 
     const canvas = document.getElementById("mazeCanvas");
@@ -104,8 +104,8 @@ function loadTextures(tileData) {
         console.log("🔹 Loading Textures:", uniqueTextures);
 
         uniqueTextures.forEach(url => {
-            let texture = gl.createTexture();
-            let image = new Image();
+            const texture = gl.createTexture();
+            const image = new Image();
             image.onload = () => {
                 gl.bindTexture(gl.TEXTURE_2D, texture);
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -131,9 +131,9 @@ function renderMaze() {
 
     for (let y = 0; y < window.mazeHeight; y++) {
         for (let x = 0; x < window.mazeWidth; x++) {
-            let tileIndex = y * window.mazeWidth + x;
-            let tileTextureKey = window.tileData[tileIndex];
-            let texture = window.tileTextures[tileTextureKey];
+            const tileIndex = y * window.mazeWidth + x;
+            const tileTextureKey = window.tileData[tileIndex];
+            const texture = window.tileTextures[tileTextureKey];
 
             if (!texture) {
                 console.warn(`🚨 Missing Texture for Tile (${x}, ${y}), Key: ${tileTextureKey}`);
@@ -156,10 +156,10 @@ function drawTile(gl, x, y, texture) {
     const y1 = y0 - (tileSize / gl.canvas.height) * 2;
 
     const vertices = new Float32Array([
-        x0, y0, 0.0, 0.0,  // Top-left
-        x1, y0, 1.0, 0.0,  // Top-right
-        x0, y1, 0.0, 1.0,  // Bottom-left
-        x1, y1, 1.0, 1.0   // Bottom-right
+        x0, y0, 0.0, 0.0, // Top-left
+        x1, y0, 1.0, 0.0, // Top-right
+        x0, y1, 0.0, 1.0, // Bottom-left
+        x1, y1, 1.0, 1.0 // Bottom-right
     ]);
 
     const buffer = gl.createBuffer();
@@ -182,7 +182,7 @@ function drawTile(gl, x, y, texture) {
 console.log("✅ Simplified WebGL Script Loaded!");
 
 
-window.initMinimap = function (tileData, width, height) {
+window.initMinimap = function(tileData, width, height) {
     const canvas = document.getElementById("minimapCanvas");
     if (!canvas) {
         console.error("Minimap canvas not found!");
@@ -195,7 +195,7 @@ window.initMinimap = function (tileData, width, height) {
         return;
     }
 
-    canvas.width = width * 4;  // Minimap scale factor
+    canvas.width = width * 4; // Minimap scale factor
     canvas.height = height * 4;
 
     ctx.fillStyle = "black";
@@ -203,7 +203,7 @@ window.initMinimap = function (tileData, width, height) {
 
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            let tile = tileData[y * width + x];
+            const tile = tileData[y * width + x];
             ctx.fillStyle = tile.includes("wall") ? "gray" : "white";
             ctx.fillRect(x * 4, y * 4, 4, 4);
         }

@@ -7,39 +7,39 @@
     <h3 class="form-title">Create an Account</h3>
 
     <!-- Registration Form -->
-    <EditForm Model="@registerModel" OnValidSubmit="HandleRegistration" FormName="registerForm" id="registerForm">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="validation-summary" />
+    <EditForm Model="@Model" OnValidSubmit="HandleRegistration" FormName="registerForm" id="registerForm">
+        <DataAnnotationsValidator/>
+        <ValidationSummary class="validation-summary"/>
 
         <div class="input-group">
             <label>Username:</label>
-            <InputText @bind-Value="registerModel.UserName" class="input-field" />
+            <InputText @bind-Value="Model.UserName" class="input-field"/>
         </div>
 
         <div class="input-group">
             <label>Email:</label>
-            <InputText @bind-Value="registerModel.Email" class="input-field" />
+            <InputText @bind-Value="Model.Email" class="input-field"/>
         </div>
 
         <div class="input-group">
             <label>Password:</label>
-            <InputText @bind-Value="registerModel.Password" InputType="password" class="input-field" />
+            <InputText @bind-Value="Model.Password" InputType="password" class="input-field"/>
         </div>
 
         <div class="input-group">
             <label>Confirm Password:</label>
-            <InputText @bind-Value="registerModel.ConfirmPassword" InputType="password" class="input-field" />
+            <InputText @bind-Value="Model.ConfirmPassword" InputType="password" class="input-field"/>
         </div>
 
         <button type="submit" class="register-button"><i class="fas fa-user-plus"></i> Register</button>
     </EditForm>
 
     <!-- Registration Message -->
-    @if (!string.IsNullOrEmpty(message))
+    @if (!string.IsNullOrEmpty(_message))
     {
-        <p class="status-message">@message</p>
+        <p class="status-message">@_message</p>
 
-        @if (registrationSuccessful)
+        @if (_registrationSuccessful)
         {
             <p>
                 <a href="/login" class="login-link"><i class="fas fa-sign-in-alt"></i> Click here to login</a>
@@ -57,50 +57,51 @@
 </div>
 
 @code {
+
     /// <summary>
-    /// Model for user registration.
+    ///     Model for user registration.
     /// </summary>
     [SupplyParameterFromForm]
-    private RegisterModel registerModel { get; set; } = new();
+    private RegisterModel Model { get; } = new();
 
-    private string? message;
-    private bool registrationSuccessful = false;
+    private string? _message;
+    private bool _registrationSuccessful;
 
     /// <summary>
-    /// Handles user registration.
+    ///     Handles user registration.
     /// </summary>
     private async Task HandleRegistration()
     {
-        if (registerModel.Password != registerModel.ConfirmPassword)
+        if (Model.Password != Model.ConfirmPassword)
         {
-            registrationSuccessful = false;
-            message = "Passwords do not match.";
+            _registrationSuccessful = false;
+            _message = "Passwords do not match.";
             return;
         }
 
         try
         {
-            var result = await AuthService.RegisterUserAsync(registerModel);
+            var result = await AuthService.RegisterUserAsync(Model);
             if (result.Succeeded)
             {
-                registrationSuccessful = true;
-                message = "Registration successful! Use the link below to log in.";
+                _registrationSuccessful = true;
+                _message = "Registration successful! Use the link below to log in.";
             }
             else
             {
-                registrationSuccessful = false;
-                message = string.Join(", ", result.Errors.Select(e => e.Description));
+                _registrationSuccessful = false;
+                _message = string.Join(", ", result.Errors.Select(e => e.Description));
             }
         }
         catch (Exception ex)
         {
-            registrationSuccessful = false;
-            message = $"Error: {ex.Message}";
+            _registrationSuccessful = false;
+            _message = $"Error: {ex.Message}";
         }
     }
 
     /// <summary>
-    /// Represents a new user's registration details.
+    ///     Represents a new user's registration details.
     /// </summary>
     public class RegisterModel
     {
@@ -109,4 +110,5 @@
         public string Password { get; set; } = string.Empty;
         public string ConfirmPassword { get; set; } = string.Empty;
     }
+
 }

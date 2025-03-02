@@ -2,173 +2,164 @@
 .blog-card {
     border: 1px solid #ddd;
     border-radius: 8px;
-    overflow: hidden;
-    margin: 10px auto; /* Centered for small screens */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease-in-out;
+    margin: 10px auto; /* Centered for small screens */
     max-width: 600px; /* Prevents excessive stretching on large screens */
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out;
     width: 95%; /* Uses most of the screen on mobile */
 }
 
-    .blog-card:hover {
-        transform: scale(1.02);
-    }
+.blog-card:hover { transform: scale(1.02); }
 
 /* Blog Media */
+
 .blog-media {
-    width: 100%;
     height: auto;
     max-height: 250px; /* Ensures images/videos don't take too much space */
     object-fit: cover; /* Keeps media properly sized */
+    width: 100%;
 }
 
 /* Blog Content */
-.blog-content {
-    padding: 15px;
-}
+
+.blog-content { padding: 15px; }
 
 .blog-meta {
-    font-size: 0.8em;
     color: gray;
+    font-size: 0.8em;
 }
 
 /* Like Button */
+
 .like-button {
     background-color: #ff4d4d;
-    color: white;
     border: none;
-    padding: 10px 14px; /* Larger tap area */
-    font-size: 1em;
-    cursor: pointer;
     border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    font-size: 1em;
     margin-top: 10px;
-    width: 100%; /* Full width on small screens */
     max-width: 200px;
+    padding: 10px 14px; /* Larger tap area */
     text-align: center;
     transition: background 0.2s ease-in-out;
+    width: 100%; /* Full width on small screens */
 }
 
-    .like-button:hover {
-        background-color: #e63e3e;
-    }
+.like-button:hover { background-color: #e63e3e; }
 
 /* Comment Section */
+
 .comment-section {
-    padding: 15px;
-    margin-top: 15px;
     background-color: #1e1e1e; /* Dark background */
     border-radius: 5px;
     color: white;
-    max-width: 600px;
-    width: 95%;
     margin: 0 auto; /* Centers it */
+    margin-top: 15px;
+    max-width: 600px;
+    padding: 15px;
+    width: 95%;
 }
 
 /* Comment List */
+
 .comments {
+    background-color: #252526;
+    border: 1px solid #444;
+    border-radius: 5px;
     max-height: 250px; /* Keeps the comment section from growing too big */
     overflow-y: auto;
     padding: 10px;
-    background-color: #252526;
-    border-radius: 5px;
-    border: 1px solid #444;
-    scrollbar-width: thin;
     scrollbar-color: #555 #252526;
+    scrollbar-width: thin;
 }
 
-    /* Custom Scrollbars */
-    .comments::-webkit-scrollbar {
-        width: 8px;
-    }
+/* Custom Scrollbars */
 
-    .comments::-webkit-scrollbar-track {
-        background: #252526;
-    }
+.comments::-webkit-scrollbar { width: 8px; }
 
-    .comments::-webkit-scrollbar-thumb {
-        background: #555;
-        border-radius: 4px;
-    }
+.comments::-webkit-scrollbar-track { background: #252526; }
 
-        .comments::-webkit-scrollbar-thumb:hover {
-            background: #777;
-        }
+.comments::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.comments::-webkit-scrollbar-thumb:hover { background: #777; }
 
 /* Individual Comment */
+
 .comment {
-    padding: 10px;
-    margin-bottom: 5px;
-    border-bottom: 1px solid #444;
     background-color: #2a2a2a;
+    border-bottom: 1px solid #444;
     border-radius: 4px;
+    margin-bottom: 5px;
+    padding: 10px;
     word-wrap: break-word; /* Ensures long text wraps instead of overflowing */
 }
 
-    /* Highlight Admin/GUEST Comments */
-    .comment strong {
-        color: #f5c518;
-    }
+/* Highlight Admin/GUEST Comments */
+
+.comment strong { color: #f5c518; }
 
 /* Comment Input Area */
+
 .add-comment {
-    display: flex;
-    gap: 10px;
     align-items: center;
-    margin-top: 10px;
+    display: flex;
     flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
 }
 
-    .add-comment input {
-        flex-grow: 1;
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #555;
-        background-color: #333;
-        color: white;
-        width: 100%;
-        max-width: 400px;
-    }
+.add-comment input {
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: white;
+    flex-grow: 1;
+    max-width: 400px;
+    padding: 10px;
+    width: 100%;
+}
 
 /* Comment Button */
+
 .comment-button {
     background-color: #007bff;
-    color: white;
     border: none;
-    padding: 10px 14px;
-    cursor: pointer;
     border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    max-width: 150px;
+    padding: 10px 14px;
     transition: background 0.2s ease-in-out;
     width: 100%;
-    max-width: 150px;
 }
 
-    .comment-button:hover {
-        background-color: #0056b3;
-    }
+.comment-button:hover { background-color: #0056b3; }
 
 /* ✅ Responsive Fixes for Narrow Screens */
+
 @media screen and (max-width: 600px) {
     .blog-card, .comment-section {
         width: 98%; /* Uses most of the screen width */
     }
 
-    .blog-content {
-        padding: 12px;
-    }
+    .blog-content { padding: 12px; }
 
-    .comments {
-        max-height: 200px;
-    }
+    .comments { max-height: 200px; }
 
     .add-comment {
         flex-direction: column; /* Stacks input and button */
         gap: 8px;
     }
 
-        .add-comment input {
-            width: 100%; /* Full width input field */
-            max-width: none;
-        }
+    .add-comment input {
+        max-width: none;
+        width: 100%; /* Full width input field */
+    }
 
     .like-button, .comment-button {
         width: 100%; /* Full width for better touch accessibility */

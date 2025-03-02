@@ -1,15 +1,15 @@
-﻿@rendermode InteractiveServer
-@using System.Security.Claims
+﻿@using System.Security.Claims
 @using MazeGameBlazor.Services
+@rendermode InteractiveServer
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavManager
 @inject AuthService AuthService
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 
 <header class="navbar">
     <!-- Logo -->
     <a href="/" class="navbar-logo">
-        <img src="logo.webp" alt="Maze Game Logo" class="logo-img" />
+        <img src="logo.webp" alt="Maze Game Logo" class="logo-img"/>
     </a>
 
     <!-- Hamburger Menu Button (Visible on Mobile) -->
@@ -33,7 +33,7 @@
             </NavLink>
         </li>
 
-        @if (isAdmin)
+        @if (_isAdmin)
         {
             <li>
                 <NavLink href="/create-blog" class="nav-button">
@@ -42,11 +42,11 @@
             </li>
         }
 
-        @if (isLoggedIn)
+        @if (_isLoggedIn)
         {
             <li>
                 <NavLink href="/my-account" class="nav-button">
-                    <i class="fas fa-user"></i> My Profile: @userName
+                    <i class="fas fa-user"></i> My Profile: @_userName
                 </NavLink>
             </li>
             <li>
@@ -73,13 +73,13 @@
 </header>
 
 @code {
-    private bool isLoggedIn;
-    private bool isAdmin;
-    private string userName = string.Empty;
+    private bool _isLoggedIn;
+    private bool _isAdmin;
+    private string _userName = string.Empty;
 
     /// <summary>
-    /// Lifecycle method: Runs when the component initializes.
-    /// Subscribes to authentication state changes and updates the UI.
+    ///     Lifecycle method: Runs when the component initializes.
+    ///     Subscribes to authentication state changes and updates the UI.
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
@@ -88,23 +88,23 @@
     }
 
     /// <summary>
-    /// Updates the authentication state, checking if the user is logged in and if they are an admin.
+    ///     Updates the authentication state, checking if the user is logged in and if they are an admin.
     /// </summary>
     private async Task UpdateAuthStateAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        isLoggedIn = user.Identity?.IsAuthenticated ?? false;
-        userName = isLoggedIn ? user.Identity?.Name ?? "User" : string.Empty;
+        _isLoggedIn = user.Identity?.IsAuthenticated ?? false;
+        _userName = _isLoggedIn ? user.Identity?.Name ?? "User" : string.Empty;
 
-        isAdmin = isLoggedIn && user.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+        _isAdmin = _isLoggedIn && user.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
 
         StateHasChanged();
     }
 
     /// <summary>
-    /// Handles authentication state changes and updates the UI accordingly.
+    ///     Handles authentication state changes and updates the UI accordingly.
     /// </summary>
     private async void HandleAuthStateChanged(Task<AuthenticationState> authStateTask)
     {
@@ -112,7 +112,7 @@
     }
 
     /// <summary>
-    /// Logs out the user by navigating to the logout page.
+    ///     Logs out the user by navigating to the logout page.
     /// </summary>
     private void HandleLogout()
     {
@@ -120,10 +120,11 @@
     }
 
     /// <summary>
-    /// Toggles the mobile navigation menu by invoking a JavaScript function.
+    ///     Toggles the mobile navigation menu by invoking a JavaScript function.
     /// </summary>
     private async Task ToggleMenu()
     {
-        await JS.InvokeVoidAsync("toggleNavbar");
+        await Js.InvokeVoidAsync("toggleNavbar");
     }
+
 }
