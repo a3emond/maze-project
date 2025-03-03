@@ -1,5 +1,7 @@
-﻿
+﻿// -------------------------------------------------------------------------------
 // Global variables
+// -------------------------------------------------------------------------------
+
 window.canvas = null;
 window.ctx = null;
 window.tileSize = 16; // Base tile size
@@ -13,7 +15,10 @@ window.tileTextures = {};
 window.mazeWidth = 0;
 window.mazeHeight = 0;
 
-// 🎯 Initialize Canvas2D Renderer
+// -------------------------------------------------------------------------------
+// Canvas2D initialization
+// -------------------------------------------------------------------------------
+
 window.initCanvas2D = function(tileDataInput, width, height) {
     console.log("🖌 Initializing Canvas2D...");
 
@@ -66,36 +71,7 @@ function loadTextures(tileData) {
     });
 }
 
-//// 🎮 Handle Camera Movement (WASD)
-//function setupInputListeners() {
-//    document.addEventListener("keydown", (event) => {
-//        let moved = false;
 
-//        if (event.key === "w" || event.key === "W") {
-//            window.cameraY -= window.moveSpeed;
-//            moved = true;
-//        }
-//        if (event.key === "s" || event.key === "S") {
-//            window.cameraY += window.moveSpeed;
-//            moved = true;
-//        }
-//        if (event.key === "a" || event.key === "A") {
-//            window.cameraX -= window.moveSpeed;
-//            moved = true;
-//        }
-//        if (event.key === "d" || event.key === "D") {
-//            window.cameraX += window.moveSpeed;
-//            moved = true;
-//        }
-
-//        if (moved) {
-//            enforceCameraBounds(); // ✅ Ensure camera stays within maze limits
-//            renderMaze(); // ✅ Render updated view
-//        }
-//    });
-//}
-
-// 🛠 Fix Camera Boundaries
 function enforceCameraBounds() {
     const mazePixelWidth = window.mazeWidth * window.tileSize * window.zoomLevel;
     const mazePixelHeight = window.mazeHeight * window.tileSize * window.zoomLevel;
@@ -193,7 +169,7 @@ window.renderPlayer = function() {
     };
 };
 
-window.updatePlayerPosition = function(gridX, gridY, sprite) {
+window.updatePlayerPosition = function (gridX, gridY, sprite) {
     window.player.x = gridX;
     window.player.y = gridY;
     window.player.sprite = sprite;
@@ -205,9 +181,12 @@ window.updatePlayerPosition = function(gridX, gridY, sprite) {
     enforceCameraBounds(); // Keep camera inside maze
     renderMaze();
     renderPlayer();
+
+    // Update minimap with player's new position
+    updatePlayerOnMinimap(gridX, gridY);
 };
 
-window.focusGameScreen = function() {
+window.focusGameScreen = function () { // Method called from C# to focus the game screen
     const gameScreen = document.querySelector(".game-screen");
     if (gameScreen) {
         gameScreen.focus();
@@ -215,7 +194,7 @@ window.focusGameScreen = function() {
 };
 
 
-window.registerKeyListeners = (dotNetInstance) => {
+window.registerKeyListeners = (dotNetInstance) => { // Method called from C# to register key listeners
     const activeKeys = new Set();
 
     document.addEventListener("keydown",
@@ -265,39 +244,23 @@ function initMinimap(tileData, width, height) {
     // Disable smoothing for sharp pixel-based rendering
     ctx.imageSmoothingEnabled = false;
 
-    console.log(`🗺 Rendering Minimap (${width} x ${height})`);
+    console.log(`🗺 Initializing Minimap (${width} x ${height})`);
 
     // Predefine colors for walls, floors, and unexplored areas
     const wallColor = "#222"; // Dark gray for walls
     const floorColor = "#DDD"; // Light gray for walkable paths
-    const fogColor = "#111"; // Blackish-gray for unexplored areas
+    const fogColor = "#000"; // Completely black for unexplored areas
 
-    // Initialize fog of war (all tiles are "unexplored" at the beginning)
-    if (!window.fogOfWar) {
-        window.fogOfWar = Array.from({ length: height }, () => Array(width).fill(true));
-    }
+    // Initialize fog of war to fully hidden
+    window.fogOfWar = Array.from({ length: height }, () => Array(width).fill(false));
 
-    // Draw minimap tiles
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const tileIndex = y * width + x;
-            const tileType = tileData[tileIndex];
+    // Draw fully hidden minimap initially
+    ctx.fillStyle = fogColor;
+    ctx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
 
-            if (!tileType) continue;
-
-            // Decide tile color based on type and fog visibility
-            if (!window.fogOfWar[y][x]) {
-                ctx.fillStyle = fogColor; // Hide unexplored areas
-            } else {
-                ctx.fillStyle = tileType.includes("wall") ? wallColor : floorColor;
-            }
-
-            ctx.fillRect(x * scale, y * scale, scale, scale);
-        }
-    }
-
-    console.log("✅ Minimap Rendered with High Clarity & Fog of War");
+    console.log("✅ Minimap Initialized with Full Fog of War");
 };
+
 
 
 function revealMinimapArea(playerX, playerY, radius = 2) {
@@ -310,15 +273,17 @@ function revealMinimapArea(playerX, playerY, radius = 2) {
             const ny = playerY + dy;
 
             if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
-                window.fogOfWar[ny][nx] = true;
+                window.fogOfWar[ny][nx] = true; // Mark as revealed (fix!)
             }
         }
     }
 
-    renderMinimap(); // Update minimap with revealed areas
+    renderMinimap(); // Update minimap immediately
 }
 
-window.renderMinimap = function() {
+
+
+window.renderMinimap = function () {
     const minimapCanvas = document.getElementById("minimapCanvas");
     if (!minimapCanvas) {
         console.error("❌ Minimap canvas not found!");
@@ -331,9 +296,9 @@ window.renderMinimap = function() {
     ctx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height); // Clear previous minimap
 
     // Predefine colors for walls, floors, and unexplored areas
-    const wallColor = "#222"; // Dark gray for walls
-    const floorColor = "#DDD"; // Light gray for walkable paths
-    const fogColor = "#111"; // Blackish-gray for unexplored areas
+    const wallColor = "#222";  // Dark gray for walls
+    const floorColor = "#FFF"; // White for revealed areas (fix!)
+    const fogColor = "#000";   // Black for unexplored areas
 
     for (let y = 0; y < window.mazeHeight; y++) {
         for (let x = 0; x < window.mazeWidth; x++) {
@@ -342,10 +307,11 @@ window.renderMinimap = function() {
 
             if (!tileType) continue;
 
-            // Decide tile color based on type and fog visibility
+            // If the tile is NOT revealed, keep it black (fog)
             if (!window.fogOfWar[y][x]) {
-                ctx.fillStyle = fogColor; // Hide unexplored areas
+                ctx.fillStyle = fogColor;
             } else {
+                // Reveal walls and floors properly
                 ctx.fillStyle = tileType.includes("wall") ? wallColor : floorColor;
             }
 
@@ -353,14 +319,33 @@ window.renderMinimap = function() {
         }
     }
 
-    console.log("✅ Minimap Redrawn");
+    console.log("✅ Minimap Redrawn with Proper Revealed Areas");
 };
 
 
-let playerBlinkState = 1.0; // Start fully visible
-let blinkDirection = -0.05; // Fade in & out smoothly
 
-window.updatePlayerOnMinimap = function(playerX, playerY) {
+
+
+
+
+let playerBlinkState = 1.0; // Opacity (1.0 = fully visible)
+let blinkDirection = -0.05; // Controls blinking speed
+
+function animatePlayerMarker(ctx, x, y, scale) {
+    playerBlinkState += blinkDirection;
+    if (playerBlinkState <= 0.3 || playerBlinkState >= 1.0) {
+        blinkDirection *= -1; // Reverse direction for smooth blinking
+    }
+
+    ctx.globalAlpha = playerBlinkState; // Apply opacity
+    ctx.fillStyle = "red";
+    ctx.fillRect(x * scale, y * scale, scale, scale);
+    ctx.globalAlpha = 1.0; // Reset opacity for other elements
+
+    requestAnimationFrame(() => animatePlayerMarker(ctx, x, y, scale)); // Keep animating
+}
+
+window.updatePlayerOnMinimap = function (playerX, playerY) {
     const minimapCanvas = document.getElementById("minimapCanvas");
     if (!minimapCanvas) {
         console.error("❌ Minimap canvas not found!");
@@ -373,23 +358,24 @@ window.updatePlayerOnMinimap = function(playerX, playerY) {
         return;
     }
 
-    const scale = 4; // Minimap scale factor (4px per tile)
+    const scale = 4; // Minimap scale factor (make sure it's correct)
 
-    console.log(`📍 Drawing player at minimap position: (${playerX}, ${playerY})`);
+    if (playerX < 0 || playerX >= window.mazeWidth || playerY < 0 || playerY >= window.mazeHeight) {
+        console.warn(`⚠️ Player position (${playerX}, ${playerY}) is out of minimap bounds.`);
+        return;
+    }
 
-    // Render the minimap **before** adding the player dot
-    renderMinimap();
+    console.log(`📍 Updating player position on minimap: (${playerX}, ${playerY})`);
 
-    setTimeout(() => {
-            if (playerX < 0 || playerX >= window.mazeWidth || playerY < 0 || playerY >= window.mazeHeight) {
-                console.warn(`⚠️ Player position (${playerX}, ${playerY}) is out of minimap bounds.`);
-                return;
-            }
+    // Update fog of war and render minimap first
+    revealMinimapArea(playerX, playerY);
+    renderMinimap(); // Ensure previous markers are cleared
 
-            // Draw red dot for player
-            ctx.fillStyle = "red";
-            ctx.fillRect(playerX * scale, playerY * scale, scale, scale);
-            console.log(`✅ Player dot drawn at (${playerX * scale}, ${playerY * scale}) on minimap.`);
-        },
-        50); // Short delay to prevent overwriting
+    // Draw the player marker ON TOP without leaving a trail
+    ctx.fillStyle = "red";
+    const dotSize = scale * 8; // Increase the size of the red dot
+    ctx.fillRect((playerX * scale) - (dotSize / 4), (playerY * scale) - (dotSize / 4), dotSize, dotSize);
+
+    console.log(`✅ Player dot drawn at (${playerX * scale}, ${playerY * scale}) on minimap.`);
 };
+
