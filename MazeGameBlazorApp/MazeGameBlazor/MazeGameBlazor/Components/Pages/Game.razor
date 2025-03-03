@@ -3,7 +3,7 @@
 @inject IJSRuntime Js
 @inject NavigationManager NavigationManager
 @using MazeGameBlazor.GameEngine
-@using MazeGameBlazor.GameEngine.Algorithms
+@using MazeGameBlazor.GameEngine.GeneratingAlgorithms
 @implements IAsyncDisposable
 
 <PageTitle>Play the Maze Game</PageTitle>
@@ -160,7 +160,7 @@
         while (_gameRunning && _movementKeys.Count > 0)
         {
             var direction = _movementKeys.Last();
-            _player.Move(direction, _maze.WalkableTiles);
+            _player.Move(direction, _maze);
             await UpdatePlayerPosition();
 
             await Task.Delay(30); // Adjust for smoother movement

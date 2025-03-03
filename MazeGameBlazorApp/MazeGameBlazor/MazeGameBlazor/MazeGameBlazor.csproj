@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="GameEngine\SolvingAlgorithms\" />
     <Folder Include="wwwroot\assets\hud\health\" />
     <Folder Include="wwwroot\assets\minimap\icons\" />
     <Folder Include="wwwroot\assets\sprites\items\" />

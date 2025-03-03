@@ -1,4 +1,4 @@
-﻿using MazeGameBlazor.GameEngine.Algorithms;
+﻿using MazeGameBlazor.GameEngine.GeneratingAlgorithms;
 
 namespace MazeGameBlazor.GameEngine;
 

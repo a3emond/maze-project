@@ -1,4 +1,6 @@
-﻿namespace MazeGameBlazor.GameEngine;
+﻿using System;
+
+namespace MazeGameBlazor.GameEngine;
 
 public static class MazeUtils
 {
@@ -139,5 +141,15 @@ public static class MazeUtils
                 if (maze.Grid[nx, ny] == (int)TileType.FloorCenter && !regions.ContainsKey((nx, ny)))
                     queue.Enqueue((nx, ny));
         }
+    }
+
+    // Items layer utils
+    public static (int x, int y)? GetRandomWalkableTile(Maze maze)
+    {
+        var validTiles = maze.WalkableTiles
+            .Where(t => !maze.HasItemAt(t.x, t.y) && t != maze.StartPosition && t != maze.GoalPosition)
+        .ToList();
+
+        return validTiles.Count > 0 ? validTiles[Rand.Next(validTiles.Count)] : null;
     }
 }

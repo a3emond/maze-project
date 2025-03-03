@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace MazeGameBlazor.GameEngine.Algorithms;
+namespace MazeGameBlazor.GameEngine.GeneratingAlgorithms;
 
 public class MazeAlgorithmBsp : IMazeAlgorithm
 {

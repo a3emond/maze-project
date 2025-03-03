@@ -1,4 +1,4 @@
-﻿namespace MazeGameBlazor.GameEngine.Algorithms;
+﻿namespace MazeGameBlazor.GameEngine.GeneratingAlgorithms;
 
 public interface IMazeAlgorithm
 {
