@@ -16,6 +16,18 @@
         <p>Press Start Button to spawn your character</p>
     </header>
 
+    <!-- Maze Algorithm Selection -->
+    <div class="algorithm-selection">
+        <label for="algorithmSelect">Select Maze Algorithm:</label>
+        <select id="algorithmSelect" @bind="selectedAlgorithm" @bind:after="OnAlgorithmChange">
+
+            @foreach (var algorithm in Enum.GetValues(typeof(MazeAlgorithmType)))
+            {
+                <option value="@algorithm">@algorithm</option>
+            }
+        </select>
+    </div>
+
     <!-- Game Screen -->
     <div class="game-screen" tabindex="0" @onfocus="SetFocus">
         <canvas id="mazeCanvas"></canvas>
@@ -32,7 +44,7 @@
             <div class="heart-container">
                 @for (var i = 0; i < _maxHearts; i++)
                 {
-                    <img src="@GetHeartImage(i)" class="heart-icon"/>
+                    <img src="@GetHeartImage(i)" class="heart-icon" />
                 }
             </div>
         </div>
@@ -45,7 +57,7 @@
                     <div class="inventory-slot">
                         @if (!string.IsNullOrEmpty(_inventorySlots[i]))
                         {
-                            <img width="44px" src="@_inventorySlots[i]"/>
+                            <img width="44" src="@_inventorySlots[i]" />
                         }
                     </div>
                 }
@@ -65,21 +77,20 @@
     </div>
 </div>
 
-
 @code {
     private readonly int _maxHearts = 5;
     private readonly int _currentHearts = 3;
-    private readonly string[] _inventorySlots = new string[6] { "/assets/hud/inventory/compass.png", "/assets/hud/inventory/key.png", null, null, null, null };
+    private readonly string[] _inventorySlots = new string[6] { "/assets/hud/inventory/compass.png", "/assets/hud/inventory/key.png", string.Empty, string.Empty, string.Empty, string.Empty };
     private readonly TimeSpan _timer = TimeSpan.Zero;
     private readonly string _statusEffect = "Normal";
     private readonly MazeGenerator _mazeGenerator = new();
-    private Maze _maze;
-    private Player _player;
+    private Maze? _maze;
+    private Player? _player;
     private bool _gameStarted;
     private bool _gameRunning;
     private readonly HashSet<string?> _movementKeys = new();
-    private DotNetObjectReference<Game> _dotNetRef;
-    private readonly MazeAlgorithmType _selectedAlgorithm = MazeAlgorithmType.RecursiveBacktracking; // Default Algorithm
+    private DotNetObjectReference<Game>? _dotNetRef;
+    private MazeAlgorithmType selectedAlgorithm = MazeAlgorithmType.RecursiveBacktracking; // Default Algorithm
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -94,7 +105,7 @@
     private async void GenerateAndRenderMaze()
     {
         // Generate maze using MazeGenerator
-        _maze = _mazeGenerator.GenerateMaze(_selectedAlgorithm);
+        _maze = _mazeGenerator.GenerateMaze(selectedAlgorithm);
 
         var widthPixels = _maze.Width;
         var heightPixels = _maze.Height;
@@ -112,6 +123,12 @@
         string[] flattenedSprites = spriteGrid.Cast<string>().ToArray();
         await Js.InvokeVoidAsync("initCanvas2D", flattenedSprites, widthPixels, heightPixels);
     }
+
+    private void OnAlgorithmChange()
+    {
+        GenerateAndRenderMaze();
+    }
+
 
     [JSInvokable]
     public async Task HandleKeyPress(string key)
@@ -160,7 +177,7 @@
         while (_gameRunning && _movementKeys.Count > 0)
         {
             var direction = _movementKeys.Last();
-            _player.Move(direction, _maze);
+            _player?.Move(direction, _maze);
             await UpdatePlayerPosition();
 
             await Task.Delay(30); // Adjust for smoother movement
@@ -171,7 +188,10 @@
 
     private async Task UpdatePlayerPosition()
     {
-        await Js.InvokeVoidAsync("updatePlayerPosition", _player.X, _player.Y, _player.GetCurrentSprite());
+        if (_player != null)
+        {
+            await Js.InvokeVoidAsync("updatePlayerPosition", _player.X, _player.Y, _player.GetCurrentSprite());
+        }
     }
 
     private async Task SetFocus()
@@ -182,7 +202,7 @@
     private async Task StartGame()
     {
         _gameStarted = true;
-        var startPosition = _maze.StartPosition;
+        var startPosition = _maze?.StartPosition ?? (0, 0);
         _player = new Player(startPosition.Item1, startPosition.Item2);
 
         await Js.InvokeVoidAsync("clearOverlay"); // Hide "Ready?" overlay
@@ -190,13 +210,12 @@
         await Js.InvokeVoidAsync("updatePlayerOnMinimap", _player.X, _player.Y); // Update minimap immediately
     }
 
-    private async Task RestartGame()
+    private void RestartGame()
     {
         GenerateAndRenderMaze();
         _gameStarted = false;
         // reload the page to reset the game
         NavigationManager.NavigateTo("/play", true);
-        //await JS.InvokeVoidAsync("resetGame");
     }
 
     private string GetHeartImage(int index)
@@ -204,12 +223,9 @@
         return index < _currentHearts ? "/assets/hud/health/heart_100.png" : "/assets/hud/health/heart_0.png";
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (_dotNetRef != null)
-        {
-            _dotNetRef.Dispose();
-        }
+        _dotNetRef?.Dispose();
+        return ValueTask.CompletedTask;
     }
-
 }

@@ -2,43 +2,68 @@
 
 public class MazeAlgorithmDrunkardsWalk : IMazeAlgorithm
 {
+    /// <summary>
+    /// Generates a maze using the Drunkard's Walk algorithm.
+    /// </summary>
+    /// <param name="maze">The maze to generate.</param>
     public void Generate(Maze maze)
     {
         var rand = new Random();
-        var startX = maze.Width / 2;
-        var startY = maze.Height / 2;
-        var steps = maze.Width * maze.Height * 3;
+        var startX = maze.Width / 2; // center of the maze
+        var startY = maze.Height / 2; // center of the maze
+        var steps = maze.Width * maze.Height * 10; // number of steps to take (3x the area of the maze)
 
         var x = startX;
         var y = startY;
         maze.Grid[x, y] = (int)TileType.FloorCenter;
 
+        // Track visited cells
+        var visited = new bool[maze.Width, maze.Height];
+        visited[x, y] = true;
+
+        // Perform random walk to carve out the maze
         for (var i = 0; i < steps; i++)
         {
             var dir = rand.Next(4);
+            var newX = x;
+            var newY = y;
+
             switch (dir)
             {
                 case 0:
-                    if (y > 1) y--;
+                    if (y > 1) newY--;
                     break; // Up
                 case 1:
-                    if (y < maze.Height - 2) y++;
+                    if (y < maze.Height - 2) newY++;
                     break; // Down
                 case 2:
-                    if (x > 1) x--;
+                    if (x > 1) newX--;
                     break; // Left
                 case 3:
-                    if (x < maze.Width - 2) x++;
+                    if (x < maze.Width - 2) newX++;
                     break; // Right
             }
 
-            maze.Grid[x, y] = (int)TileType.FloorCenter;
+            // Only move to the new position if it has not been visited
+            if (!visited[newX, newY])
+            {
+                // Carve a path between the current position and the new position
+                MazeUtils.CarvePath(maze, x, y, newX, newY);
+
+                x = newX;
+                y = newY;
+                visited[x, y] = true;
+            }
         }
 
         // Ensure all regions are connected
         ConnectDisconnectedCaves(maze);
     }
 
+    /// <summary>
+    /// Connects disconnected regions of the maze to ensure all areas are reachable.
+    /// </summary>
+    /// <param name="maze">The maze to connect.</param>
     private void ConnectDisconnectedCaves(Maze maze)
     {
         Dictionary<(int, int), int> regions = new();
@@ -46,12 +71,12 @@ public class MazeAlgorithmDrunkardsWalk : IMazeAlgorithm
 
         // Step 1: Identify all separate regions using flood fill
         for (var y = 1; y < maze.Height - 1; y++)
-        for (var x = 1; x < maze.Width - 1; x++)
-            if (maze.Grid[x, y] == (int)TileType.FloorCenter && !regions.ContainsKey((x, y)))
-            {
-                MazeUtils.FloodFill(maze, x, y, regionId, regions);
-                regionId++;
-            }
+            for (var x = 1; x < maze.Width - 1; x++)
+                if (maze.Grid[x, y] == (int)TileType.FloorCenter && !regions.ContainsKey((x, y)))
+                {
+                    MazeUtils.FloodFill(maze, x, y, regionId, regions);
+                    regionId++;
+                }
 
         if (regionId <= 1) return; // Already fully connected
 
