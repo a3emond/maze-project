@@ -5,6 +5,7 @@ public class Player
     private const int AnimationSpeed = 10; // Adjust for animation timing
     private int _animationFrame;
     private int _frameCounter;
+    private Maze _maze;
 
     public Dictionary<string, string[]> Animations = new()
     {
@@ -33,10 +34,11 @@ public class Player
         }
     };
 
-    public Player(int startX, int startY)
+    public Player(int startX, int startY, Maze maze)
     {
         X = startX;
         Y = startY;
+        _maze = maze;
         Direction = "down";
     }
 
@@ -141,6 +143,14 @@ public class Player
     {
         // Teleport logic
         Console.WriteLine("teleport");
+
+        // update player position with a random walkable tile
+        var randomTile = MazeUtils.GetRandomWalkableTile(_maze);
+        if (randomTile.HasValue)
+        {
+            X = randomTile.Value.x;
+            Y = randomTile.Value.y;
+        }
     }
 
     private void IncreaseVisionRadius()

@@ -218,7 +218,7 @@
     {
         _gameStarted = true;
         var startPosition = _maze?.StartPosition ?? (0, 0);
-        _player = new Player(startPosition.Item1, startPosition.Item2); // Initialize the player at the start position
+        _player = new Player(startPosition.Item1, startPosition.Item2, _maze); // Initialize the player at the start position
 
         await Js.InvokeVoidAsync("clearOverlay"); // Hide the "Ready?" overlay
         await Js.InvokeVoidAsync("spawnPlayer", _player.X, _player.Y, _player.GetCurrentSprite()); // Spawn the player on the canvas
