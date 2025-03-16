@@ -71,22 +71,36 @@
 
 
         // Spawn multiple items from a predefined list
+        /*
+         * I improved it by shuffling the walkable tiles and then
+         * iterating over the items list until all required items are placed.
+         * Saved many iterations and made the code more efficient.
+         */
         public void SpawnItemsFromList(Maze maze, List<(ItemName name, bool walkable, bool interactable, bool collectible, ItemEffect effect, int count)> itemList)
         {
+            var shuffledWalkableTiles = MazeUtils.ShuffleWalkableTiles(maze);
+            int tileIndex = 0;
+
             foreach (var item in itemList)
             {
                 for (int i = 0; i < item.count; i++)
                 {
-                    var position = MazeUtils.GetRandomWalkableTile(maze);
-                    if (position.HasValue)
+                    if (tileIndex >= shuffledWalkableTiles.Count)
                     {
-                        var sprite = Item.GetSprite(item.name);
-                        AddItem(item.name, position.Value.x, position.Value.y, sprite,
-                                item.walkable, item.interactable, item.collectible, item.effect);
+                        // No more walkable tiles available
+                        return;
                     }
+
+                    var position = shuffledWalkableTiles[tileIndex];
+                    tileIndex++;
+
+                    var sprite = Item.GetSprite(item.name);
+                    AddItem(item.name, position.x, position.y, sprite,
+                        item.walkable, item.interactable, item.collectible, item.effect);
                 }
             }
         }
+
 
         public Item? PickupItem(int x, int y)
         {

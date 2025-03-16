@@ -152,4 +152,11 @@ public static class MazeUtils
 
         return validTiles.Count > 0 ? validTiles[Rand.Next(validTiles.Count)] : null;
     }
+
+    private static readonly Random Random = new();
+
+    public static List<(int x, int y)> ShuffleWalkableTiles(Maze maze)
+    {
+        return maze.WalkableTiles.OrderBy(_ => Random.Next()).ToList();
+    }
 }
