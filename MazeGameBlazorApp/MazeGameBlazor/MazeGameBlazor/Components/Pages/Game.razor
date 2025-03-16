@@ -203,6 +203,8 @@
         {
             // Update the player's position on the canvas
             await Js.InvokeVoidAsync("updatePlayerPosition", _player.X, _player.Y, _player.GetCurrentSprite());
+            // try picking up an item
+            _player.TryPickupItem(_maze);
         }
     }
 

@@ -58,11 +58,11 @@
             var itemsToGenerate = new List<(ItemName name, bool walkable, bool interactable, bool collectible, ItemEffect effect, int count)>
             {
                 (ItemName.Key, false, false, true, ItemEffect.Unlock, 1),
-                (ItemName.Potion, false, true, false, ItemEffect.Heal, 10),
+                (ItemName.Potion, false, true, true, ItemEffect.Heal, 10),
                 (ItemName.Lantern, false, false, true, ItemEffect.LightRadiusIncrease, 3),
                 (ItemName.Compass, false, false, true, ItemEffect.ShowDirection, 1),
                 (ItemName.TeleportCircle, true, false, false, ItemEffect.Teleport, 4),
-                (ItemName.Trap, true, false, false, ItemEffect.Damage, 25)
+                (ItemName.Trap, true, false, false, ItemEffect.Damage, 200)
             };
 
             // Call SpawnItemsFromList to add items to the grid

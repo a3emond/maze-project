@@ -88,7 +88,7 @@ public class Player
         }
     }
 
-    private void TryPickupItem(Maze maze)  // TODO: integrate and check for item removal
+    public void TryPickupItem(Maze maze)  // TODO: integrate and check for item removal
     {
         var item = maze.ItemGrid.PickupItem(X, Y);
 
@@ -98,7 +98,7 @@ public class Player
         }
     }
 
-    public void ApplyItemEffect(Item item)
+    private void ApplyItemEffect(Item item)
     {
         switch (item.Effect)
         {
