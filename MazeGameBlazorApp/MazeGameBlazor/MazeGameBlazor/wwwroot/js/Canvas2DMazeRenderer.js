@@ -3,6 +3,8 @@
 // -------------------------------------------------------------------------------
 window.canvas = null;
 window.ctx = null;
+window.bufferCanvas = null;
+window.bufferCtx = null;
 window.tileSize = 16; // Base tile size
 window.zoomLevel = 3; // Zoom factor (adjust for desired view)
 window.cameraX = 0; // Camera position (top-left)
@@ -27,6 +29,12 @@ window.initCanvas2D = function (tileDataInput, width, height) {
     }
     window.ctx = window.canvas.getContext("2d");
 
+    // Create an off-screen canvas for double buffering
+    window.bufferCanvas = document.createElement("canvas");
+    window.bufferCanvas.width = width * window.tileSize * window.zoomLevel;
+    window.bufferCanvas.height = height * window.tileSize * window.zoomLevel;
+    window.bufferCtx = window.bufferCanvas.getContext("2d");
+
     // Store maze data
     window.tileData = tileDataInput;
     window.mazeWidth = width;
@@ -41,7 +49,8 @@ window.initCanvas2D = function (tileDataInput, width, height) {
     // Load textures and render the maze
     loadTextures(tileDataInput).then(textures => {
         window.tileTextures = textures;
-        renderMaze();
+        renderFullMaze();
+        renderViewport();
     }).catch(error => console.error("Texture loading failed:", error));
 
     // Initialize the minimap
@@ -51,35 +60,44 @@ window.initCanvas2D = function (tileDataInput, width, height) {
 // -------------------------------------------------------------------------------
 // Maze Rendering
 // -------------------------------------------------------------------------------
-function renderMaze() {
-    const ctx = window.ctx;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function renderFullMaze() {
+    const ctx = window.bufferCtx; // Use buffer context for drawing
+    ctx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
 
     const tileSize = window.tileSize * window.zoomLevel;
 
-    const startX = Math.floor(window.cameraX / tileSize);
-    const startY = Math.floor(window.cameraY / tileSize);
-    const endX = Math.min(window.mazeWidth, Math.ceil((window.cameraX + window.canvas.width) / tileSize));
-    const endY = Math.min(window.mazeHeight, Math.ceil((window.cameraY + window.canvas.height) / tileSize));
-
-    //console.log(`Rendering Viewport: X(${startX} - ${endX}), Y(${startY} - ${endY})`);
-
-    for (let y = startY; y < endY; y++) {
-        for (let x = startX; x < endX; x++) {
+    for (let y = 0; y < window.mazeHeight; y++) {
+        for (let x = 0; x < window.mazeWidth; x++) {
             const tileIndex = y * window.mazeWidth + x;
             const tileTextureKey = window.tileData[tileIndex];
             const texture = window.tileTextures[tileTextureKey];
 
             if (!texture) continue;
 
-            // Calculate on-screen position
-            const drawX = (x * tileSize) - window.cameraX;
-            const drawY = (y * tileSize) - window.cameraY;
+            // Calculate position on the buffer canvas
+            const drawX = x * tileSize;
+            const drawY = y * tileSize;
 
             ctx.drawImage(texture, drawX, drawY, tileSize, tileSize);
         }
     }
-    renderItems(ctx, tileSize); // Render items on top of the maze)
+    renderItems(ctx, tileSize); // Render items on top of the maze
+}
+
+function renderViewport() {
+    const ctx = window.ctx; // Use visible canvas context for drawing
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const tileSize = window.tileSize * window.zoomLevel;
+
+    // Calculate the portion of the buffer canvas to draw
+    const sourceX = window.cameraX;
+    const sourceY = window.cameraY;
+    const sourceWidth = window.canvas.width;
+    const sourceHeight = window.canvas.height;
+
+    // Draw the portion of the buffer canvas to the visible canvas
+    ctx.drawImage(window.bufferCanvas, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
 }
 
 // Load textures for the maze tiles
@@ -111,7 +129,8 @@ function loadTextures(tileData) {
 // Receive item data from C# and store it globally
 window.updateItemData = function (items) {
     window.itemData = items; // Store item data globally
-    renderMaze(); // Re-render maze with updated items
+    renderFullMaze(); // Re-render full maze with updated items
+    renderViewport(); // Re-render viewport with updated items
 };
 
 // Render items on the maze
@@ -123,8 +142,8 @@ function renderItems(ctx, tileSize) {
         img.src = item.sprite;
 
         img.onload = () => {
-            const drawX = (item.x * tileSize) - window.cameraX;
-            const drawY = (item.y * tileSize) - window.cameraY;
+            const drawX = item.x * tileSize;
+            const drawY = item.y * tileSize;
 
             ctx.drawImage(img, drawX, drawY, tileSize, tileSize);
         };
@@ -150,14 +169,13 @@ window.spawnPlayer = function (gridX, gridY, sprite) {
     enforceCameraBounds();
 
     // Render everything
-    renderMaze();
+    renderViewport();
     renderPlayer();
 };
 
 // Render the player on the maze
 window.renderPlayer = function () {
-    const canvas = document.getElementById("mazeCanvas");
-    const ctx = canvas.getContext("2d");
+    const ctx = window.ctx;
     const img = new Image();
     img.src = window.player.sprite;
 
@@ -167,15 +185,11 @@ window.renderPlayer = function () {
         const playerSize = tileSize; // Player size should be the same as tiles (adjust if needed)
 
         // Correct viewport positioning
-        const viewportX = (window.canvas.width / 2) - (playerSize / 2); // Center player in the viewport
-        const viewportY = (window.canvas.height / 2) - (playerSize / 2);
-
-        // Adjust position to keep the player centered while moving
-        const drawX = (window.player.x * tileSize) - window.cameraX + (tileSize / 2) - (playerSize / 2);
-        const drawY = (window.player.y * tileSize) - window.cameraY + (tileSize / 2) - (playerSize / 2);
+        const drawX = (window.player.x * tileSize) - window.cameraX;
+        const drawY = (window.player.y * tileSize) - window.cameraY;
 
         // Ensure the maze is rendered before drawing the player
-        renderMaze();
+        renderViewport();
         ctx.drawImage(img, drawX, drawY, playerSize, playerSize);
     };
 };
@@ -191,7 +205,7 @@ window.updatePlayerPosition = function (gridX, gridY, sprite) {
     window.cameraY = (gridY * window.tileSize * window.zoomLevel) - (window.canvas.height / 2);
 
     enforceCameraBounds(); // Keep camera inside maze
-    renderMaze();
+    renderViewport();
     renderPlayer();
 
     // Update minimap with player's new position
