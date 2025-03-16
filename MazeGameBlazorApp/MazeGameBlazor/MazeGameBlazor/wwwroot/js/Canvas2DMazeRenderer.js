@@ -13,6 +13,7 @@ window.moveSpeed = 16; // How fast the camera moves
 
 window.tileData = [];
 window.tileTextures = {};
+window.itemImageCache = {}; // Cache item images for performance
 window.mazeWidth = 0;
 window.mazeHeight = 0;
 
@@ -138,17 +139,27 @@ function renderItems(ctx, tileSize) {
     if (!window.itemData) return;
 
     window.itemData.forEach(item => {
-        const img = new Image();
-        img.src = item.sprite;
+        if (!window.itemImageCache[item.sprite]) {
+            const img = new Image();
+            img.src = item.sprite;
 
-        img.onload = () => {
-            const drawX = item.x * tileSize;
-            const drawY = item.y * tileSize;
-
-            ctx.drawImage(img, drawX, drawY, tileSize, tileSize);
-        };
+            img.onload = () => {
+                window.itemImageCache[item.sprite] = img;
+                drawItem(ctx, img, item, tileSize);
+            };
+        } else {
+            const img = window.itemImageCache[item.sprite];
+            drawItem(ctx, img, item, tileSize);
+        }
     });
 }
+
+function drawItem(ctx, img, item, tileSize) {
+    const drawX = item.x * tileSize;
+    const drawY = item.y * tileSize;
+    ctx.drawImage(img, drawX, drawY, tileSize, tileSize);
+}
+
 
 // -------------------------------------------------------------------------------
 // Player Rendering
