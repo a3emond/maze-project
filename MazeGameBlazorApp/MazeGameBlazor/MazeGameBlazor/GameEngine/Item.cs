@@ -6,10 +6,10 @@
             {
                 { ItemName.Key, "assets/sprites/items/keys/keys_1_1.png" },
                 { ItemName.Potion, "assets/sprites/items/potions/potion_large_red.png" },
-                { ItemName.Lantern, "assets/sprites/items/powerup/light_radius_coin.png" },
-                { ItemName.Compass, "assets/sprites/items/powerup/light_radius_coin.png" },
+                { ItemName.Lantern, "assets/sprites/items/torch.png" },
+                { ItemName.Compass, "assets/sprites/items/compas.png" },
                 { ItemName.Door, "assets/sprites/items/door/door_1.png" },
-                { ItemName.TeleportCircle, "assets/sprites/items/powerup/light_radius_coin.png" },
+                { ItemName.TeleportCircle, "assets/sprites/items/portal.png" },
                 { ItemName.Trap, "assets/sprites/items/peaks/peaks_1.png" }
             };
 

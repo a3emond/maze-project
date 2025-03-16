@@ -61,7 +61,7 @@
                 (ItemName.Potion, false, true, true, ItemEffect.Heal, 10),
                 (ItemName.Lantern, false, false, true, ItemEffect.LightRadiusIncrease, 3),
                 (ItemName.Compass, false, false, true, ItemEffect.ShowDirection, 1),
-                (ItemName.TeleportCircle, true, false, false, ItemEffect.Teleport, 4),
+                (ItemName.TeleportCircle, true, false, false, ItemEffect.Teleport, 20),
                 (ItemName.Trap, true, false, false, ItemEffect.Damage, 200)
             };
 
