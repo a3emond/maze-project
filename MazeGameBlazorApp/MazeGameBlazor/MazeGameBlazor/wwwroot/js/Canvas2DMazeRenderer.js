@@ -1,7 +1,6 @@
 ﻿// -------------------------------------------------------------------------------
 // Global variables
 // -------------------------------------------------------------------------------
-
 window.canvas = null;
 window.ctx = null;
 window.tileSize = 16; // Base tile size
@@ -18,8 +17,7 @@ window.mazeHeight = 0;
 // -------------------------------------------------------------------------------
 // Canvas2D initialization
 // -------------------------------------------------------------------------------
-
-window.initCanvas2D = function(tileDataInput, width, height) {
+window.initCanvas2D = function (tileDataInput, width, height) {
     console.log("Initializing Canvas2D...");
 
     window.canvas = document.getElementById("mazeCanvas");
@@ -40,18 +38,18 @@ window.initCanvas2D = function(tileDataInput, width, height) {
 
     console.log(`Maze Size: ${width} x ${height}, Canvas: ${canvas.width} x ${canvas.height}`);
 
+    // Load textures and render the maze
     loadTextures(tileDataInput).then(textures => {
         window.tileTextures = textures;
         renderMaze();
     }).catch(error => console.error("Texture loading failed:", error));
 
+    // Initialize the minimap
     initMinimap(tileDataInput, width, height);
 };
 
-
-
 // -------------------------------------------------------------------------------
-// ------------------------------Maze Rendering-----------------------------------
+// Maze Rendering
 // -------------------------------------------------------------------------------
 function renderMaze() {
     const ctx = window.ctx;
@@ -64,7 +62,7 @@ function renderMaze() {
     const endX = Math.min(window.mazeWidth, Math.ceil((window.cameraX + window.canvas.width) / tileSize));
     const endY = Math.min(window.mazeHeight, Math.ceil((window.cameraY + window.canvas.height) / tileSize));
 
-    console.log(`Rendering Viewport: X(${startX} - ${endX}), Y(${startY} - ${endY})`);
+    //console.log(`Rendering Viewport: X(${startX} - ${endX}), Y(${startY} - ${endY})`);
 
     for (let y = startY; y < endY; y++) {
         for (let x = startX; x < endX; x++) {
@@ -81,15 +79,17 @@ function renderMaze() {
             ctx.drawImage(texture, drawX, drawY, tileSize, tileSize);
         }
     }
+    renderItems(ctx, tileSize); // Render items on top of the maze)
 }
 
+// Load textures for the maze tiles
 function loadTextures(tileData) {
     return new Promise(resolve => {
         const tileTextures = {};
         let loadedCount = 0;
 
         const uniqueTextures = [...new Set(tileData.filter(url => url))];
-        console.log("Loading Textures:", uniqueTextures);
+        //console.log("Loading Textures:", uniqueTextures);
 
         uniqueTextures.forEach(url => {
             const image = new Image();
@@ -105,18 +105,17 @@ function loadTextures(tileData) {
     });
 }
 
-// ------------------------------------------------------------------------------
-// ------------------------------Item Rendering----------------------------------
-// ------------------------------------------------------------------------------
-
+// -------------------------------------------------------------------------------
+// Item Rendering
+// -------------------------------------------------------------------------------
 // Receive item data from C# and store it globally
 window.updateItemData = function (items) {
     window.itemData = items; // Store item data globally
     renderMaze(); // Re-render maze with updated items
 };
 
-
-function renderItems(ctx, tileSize) { // TODO: Implement item rendering and call it after maze rendering
+// Render items on the maze
+function renderItems(ctx, tileSize) {
     if (!window.itemData) return;
 
     window.itemData.forEach(item => {
@@ -132,12 +131,11 @@ function renderItems(ctx, tileSize) { // TODO: Implement item rendering and call
     });
 }
 
-
 // -------------------------------------------------------------------------------
-// ------------------------------Player Rendering----------------------------------
+// Player Rendering
 // -------------------------------------------------------------------------------
-
-window.spawnPlayer = function(gridX, gridY, sprite) {
+// Spawn the player at the specified grid position
+window.spawnPlayer = function (gridX, gridY, sprite) {
     window.player = {
         x: gridX, // Logical grid position
         y: gridY,
@@ -156,7 +154,8 @@ window.spawnPlayer = function(gridX, gridY, sprite) {
     renderPlayer();
 };
 
-window.renderPlayer = function() {
+// Render the player on the maze
+window.renderPlayer = function () {
     const canvas = document.getElementById("mazeCanvas");
     const ctx = canvas.getContext("2d");
     const img = new Image();
@@ -181,6 +180,7 @@ window.renderPlayer = function() {
     };
 };
 
+// Update the player's position on the maze
 window.updatePlayerPosition = function (gridX, gridY, sprite) {
     window.player.x = gridX;
     window.player.y = gridY;
@@ -197,26 +197,42 @@ window.updatePlayerPosition = function (gridX, gridY, sprite) {
     // Update minimap with player's new position
     updatePlayerOnMinimap(gridX, gridY);
 };
-// -------------------------------------------------------------------------------
-// ------------------------------Camera Movement-----------------------------------
-// -------------------------------------------------------------------------------
 
-window.focusGameScreen = function () { // Method called from C# to focus the game screen
+// -------------------------------------------------------------------------------
+// Camera Movement
+// -------------------------------------------------------------------------------
+// Focus the game screen (called from C#)
+window.focusGameScreen = function () {
     const gameScreen = document.querySelector(".game-screen");
     if (gameScreen) {
         gameScreen.focus();
     }
 };
 
+// Clear the overlay (called from C#)
 window.clearOverlay = function () {
     document.getElementById("gameOverlay").style.display = "none";
 };
 
-// -------------------------------------------------------------------------------
-// ------------------------------Keyboard Input-----------------------------------
-// -------------------------------------------------------------------------------
+// Enforce camera bounds to keep it within the maze
+function enforceCameraBounds() {
+    const mazePixelWidth = window.mazeWidth * window.tileSize * window.zoomLevel;
+    const mazePixelHeight = window.mazeHeight * window.tileSize * window.zoomLevel;
 
-window.registerKeyListeners = (dotNetInstance) => { // Method called from C# to register key listeners
+    const maxCameraX = Math.max(0, mazePixelWidth - window.canvas.width);
+    const maxCameraY = Math.max(0, mazePixelHeight - window.canvas.height);
+
+    window.cameraX = Math.max(0, Math.min(window.cameraX, maxCameraX));
+    window.cameraY = Math.max(0, Math.min(window.cameraY, maxCameraY));
+
+    //console.log(`Camera Bounds Enforced: X(${window.cameraX}/${maxCameraX}), Y(${window.cameraY}/${maxCameraY})`);
+}
+
+// -------------------------------------------------------------------------------
+// Keyboard Input
+// -------------------------------------------------------------------------------
+// Register key listeners for player movement (called from C#)
+window.registerKeyListeners = (dotNetInstance) => {
     const activeKeys = new Set();
 
     document.addEventListener("keydown",
@@ -237,27 +253,9 @@ window.registerKeyListeners = (dotNetInstance) => { // Method called from C# to 
 };
 
 // -------------------------------------------------------------------------------
-// ------------------------------Camera Movement-----------------------------------
+// Minimap Rendering
 // -------------------------------------------------------------------------------
-
-function enforceCameraBounds() {
-    const mazePixelWidth = window.mazeWidth * window.tileSize * window.zoomLevel;
-    const mazePixelHeight = window.mazeHeight * window.tileSize * window.zoomLevel;
-
-    const maxCameraX = Math.max(0, mazePixelWidth - window.canvas.width);
-    const maxCameraY = Math.max(0, mazePixelHeight - window.canvas.height);
-
-    window.cameraX = Math.max(0, Math.min(window.cameraX, maxCameraX));
-    window.cameraY = Math.max(0, Math.min(window.cameraY, maxCameraY));
-
-    console.log(`Camera Bounds Enforced: X(${window.cameraX}/${maxCameraX}), Y(${window.cameraY}/${maxCameraY})`);
-}
-
-
-// -------------------------------------------------------------------------------
-// ------------------------------Minimap Rendering--------------------------------
-// -------------------------------------------------------------------------------
-
+// Initialize the minimap
 function initMinimap(tileData, width, height) {
     const minimapCanvas = document.getElementById("minimapCanvas");
     if (!minimapCanvas) {
@@ -292,12 +290,10 @@ function initMinimap(tileData, width, height) {
     ctx.fillStyle = fogColor;
     ctx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
 
-    console.log("Minimap Initialized with Full Fog of War");
-};
+    //console.log("Minimap Initialized with Full Fog of War");
+}
 
-
-
-
+// Render the minimap
 window.renderMinimap = function () {
     const minimapCanvas = document.getElementById("minimapCanvas");
     if (!minimapCanvas) {
@@ -311,7 +307,7 @@ window.renderMinimap = function () {
     ctx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height); // Clear previous minimap
 
     // Predefine colors for walls, floors, and unexplored areas
-    const wallColor = "#222";  // Dark gray for walls
+    const wallColor = "#AAA";  // Dark gray for walls
     const floorColor = "#FFF"; // White for revealed areas (fix!)
     const fogColor = "#000";   // Black for unexplored areas
 
@@ -334,12 +330,10 @@ window.renderMinimap = function () {
         }
     }
 
-    console.log("Minimap Redrawn with Proper Revealed Areas");
-};
+}
 
-
-
-function revealMinimapArea(playerX, playerY, radius = 2) {
+// Reveal an area around the player on the minimap
+function revealMinimapArea(playerX, playerY, radius = 3) {
     const width = window.mazeWidth;
     const height = window.mazeHeight;
 
@@ -357,14 +351,7 @@ function revealMinimapArea(playerX, playerY, radius = 2) {
     renderMinimap(); // Update minimap immediately
 }
 
-
-
-
-
-
-let playerBlinkState = 1.0; // Opacity (1.0 = fully visible)
-let blinkDirection = -0.05; // Controls blinking speed
-
+// Animate the player marker on the minimap
 function animatePlayerMarker(ctx, x, y, scale) {
     playerBlinkState += blinkDirection;
     if (playerBlinkState <= 0.3 || playerBlinkState >= 1.0) {
@@ -379,6 +366,7 @@ function animatePlayerMarker(ctx, x, y, scale) {
     requestAnimationFrame(() => animatePlayerMarker(ctx, x, y, scale)); // Keep animating
 }
 
+// Update the player's position on the minimap
 window.updatePlayerOnMinimap = function (playerX, playerY) {
     const minimapCanvas = document.getElementById("minimapCanvas");
     if (!minimapCanvas) {
@@ -399,7 +387,7 @@ window.updatePlayerOnMinimap = function (playerX, playerY) {
         return;
     }
 
-    console.log(`📍 Updating player position on minimap: (${playerX}, ${playerY})`);
+    //console.log(`📍 Updating player position on minimap: (${playerX}, ${playerY})`);
 
     // Update fog of war and render minimap first
     revealMinimapArea(playerX, playerY);
@@ -410,6 +398,5 @@ window.updatePlayerOnMinimap = function (playerX, playerY) {
     const dotSize = scale * 8; // Increase the size of the red dot
     ctx.fillRect((playerX * scale) - (dotSize / 4), (playerY * scale) - (dotSize / 4), dotSize, dotSize);
 
-    console.log(`Player dot drawn at (${playerX * scale}, ${playerY * scale}) on minimap.`);
-};
-
+    //console.log(`Player dot drawn at (${playerX * scale}, ${playerY * scale}) on minimap.`);
+}

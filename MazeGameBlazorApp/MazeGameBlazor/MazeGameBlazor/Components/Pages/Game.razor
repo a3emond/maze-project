@@ -20,7 +20,6 @@
     <div class="algorithm-selection">
         <label for="algorithmSelect">Select Maze Algorithm:</label>
         <select id="algorithmSelect" @bind="selectedAlgorithm" @bind:after="OnAlgorithmChange">
-
             @foreach (var algorithm in Enum.GetValues(typeof(MazeAlgorithmType)))
             {
                 <option value="@algorithm">@algorithm</option>
@@ -78,40 +77,44 @@
 </div>
 
 @code {
-    private readonly int _maxHearts = 5;
-    private readonly int _currentHearts = 3;
-    private readonly string[] _inventorySlots = new string[6] { "/assets/hud/inventory/compass.png", "/assets/hud/inventory/key.png", string.Empty, string.Empty, string.Empty, string.Empty };
-    private readonly TimeSpan _timer = TimeSpan.Zero;
-    private readonly string _statusEffect = "Normal";
-    private readonly MazeGenerator _mazeGenerator = new();
-    private Maze? _maze;
-    private Player? _player;
-    private bool _gameStarted;
-    private bool _gameRunning;
-    private readonly HashSet<string?> _movementKeys = new();
-    private DotNetObjectReference<Game>? _dotNetRef;
-    private MazeAlgorithmType selectedAlgorithm = MazeAlgorithmType.RecursiveBacktracking; // Default Algorithm
+    private readonly int _maxHearts = 5; // Maximum number of hearts for the player
+    private readonly int _currentHearts = 3; // Current number of hearts for the player
+    private readonly string[] _inventorySlots = new string[6] { "/assets/hud/inventory/compass.png", "/assets/hud/inventory/key.png", string.Empty, string.Empty, string.Empty, string.Empty }; // Inventory slots
+    private readonly TimeSpan _timer = TimeSpan.Zero; // Game timer
+    private readonly string _statusEffect = "Normal"; // Player status effect
+    private readonly MazeGenerator _mazeGenerator = new(); // Maze generator instance
+    private Maze? _maze; // Current maze
+    private Player? _player; // Current player
+    private bool _gameStarted; // Flag to check if the game has started
+    private bool _gameRunning; // Flag to check if the game is running
+    private readonly HashSet<string?> _movementKeys = new(); // Set of movement keys pressed
+    private DotNetObjectReference<Game>? _dotNetRef; // Reference to the current instance for JS interop
+    private MazeAlgorithmType selectedAlgorithm = MazeAlgorithmType.RecursiveBacktracking; // Default maze algorithm
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            GenerateAndRenderMaze();
-            _dotNetRef = DotNetObjectReference.Create(this);
-            await Js.InvokeVoidAsync("registerKeyListeners", _dotNetRef);
+            GenerateAndRenderMaze(); // Generate and render the maze on first render
+            _dotNetRef = DotNetObjectReference.Create(this); // Create a reference to the current instance for JS interop
+            await Js.InvokeVoidAsync("registerKeyListeners", _dotNetRef); // Register key listeners for player movement
         }
     }
 
     private async void GenerateAndRenderMaze()
     {
-        // Generate maze using MazeGenerator
+        // Generate maze using the selected algorithm
         _maze = _mazeGenerator.GenerateMaze(selectedAlgorithm);
+
+        // Generate items in the maze
+        _maze.ItemGrid.GenerateItems(_maze);
 
         var widthPixels = _maze.Width;
         var heightPixels = _maze.Height;
 
         string[,] spriteGrid = new string[widthPixels, heightPixels];
 
+        // Generate the sprite grid for the maze
         for (var y = 0; y < heightPixels; y++)
         {
             for (var x = 0; x < widthPixels; x++)
@@ -120,21 +123,27 @@
             }
         }
 
+        // Flatten the sprite grid and initialize the canvas
         string[] flattenedSprites = spriteGrid.Cast<string>().ToArray();
         await Js.InvokeVoidAsync("initCanvas2D", flattenedSprites, widthPixels, heightPixels);
+
+        // Pass item data to JavaScript for rendering
+        var items = _maze.ItemGrid.GetAllItems().Select(item => new { item.X, item.Y, item.Sprite }).ToList();
+        await Js.InvokeVoidAsync("updateItemData", items);
     }
 
     private void OnAlgorithmChange()
     {
+        // Generate and render the maze when the algorithm is changed
         GenerateAndRenderMaze();
     }
-
 
     [JSInvokable]
     public async Task HandleKeyPress(string key)
     {
         if (!_gameStarted || _player == null) return;
 
+        // Determine the direction based on the key pressed
         var direction = key switch
         {
             "w" => "up",
@@ -147,13 +156,14 @@
         if (direction != null)
         {
             _movementKeys.Add(direction);
-            await StartGameLoop();
+            await StartGameLoop(); // Start the game loop if a movement key is pressed
         }
     }
 
     [JSInvokable]
     public void HandleKeyRelease(string key)
     {
+        // Determine the direction based on the key released
         var direction = key switch
         {
             "w" => "up",
@@ -165,7 +175,7 @@
 
         if (direction != null)
         {
-            _movementKeys.Remove(direction);
+            _movementKeys.Remove(direction); // Remove the direction from the set of movement keys
         }
     }
 
@@ -174,11 +184,12 @@
         if (_gameRunning) return;
         _gameRunning = true;
 
+        // Continue the game loop while there are movement keys pressed
         while (_gameRunning && _movementKeys.Count > 0)
         {
             var direction = _movementKeys.Last();
-            _player?.Move(direction, _maze);
-            await UpdatePlayerPosition();
+            _player?.Move(direction, _maze); // Move the player in the specified direction
+            await UpdatePlayerPosition(); // Update the player's position on the canvas
 
             await Task.Delay(30); // Adjust for smoother movement
         }
@@ -190,12 +201,14 @@
     {
         if (_player != null)
         {
+            // Update the player's position on the canvas
             await Js.InvokeVoidAsync("updatePlayerPosition", _player.X, _player.Y, _player.GetCurrentSprite());
         }
     }
 
     private async Task SetFocus()
     {
+        // Set focus to the game screen
         await Js.InvokeVoidAsync("focusGameScreen");
     }
 
@@ -203,29 +216,28 @@
     {
         _gameStarted = true;
         var startPosition = _maze?.StartPosition ?? (0, 0);
-        _player = new Player(startPosition.Item1, startPosition.Item2);
+        _player = new Player(startPosition.Item1, startPosition.Item2); // Initialize the player at the start position
 
-        await Js.InvokeVoidAsync("clearOverlay"); // Hide "Ready?" overlay
-        await Js.InvokeVoidAsync("spawnPlayer", _player.X, _player.Y, _player.GetCurrentSprite());
-        await Js.InvokeVoidAsync("updatePlayerOnMinimap", _player.X, _player.Y); // Update minimap immediately
+        await Js.InvokeVoidAsync("clearOverlay"); // Hide the "Ready?" overlay
+        await Js.InvokeVoidAsync("spawnPlayer", _player.X, _player.Y, _player.GetCurrentSprite()); // Spawn the player on the canvas
+        await Js.InvokeVoidAsync("updatePlayerOnMinimap", _player.X, _player.Y); // Update the player's position on the minimap
     }
 
     private void RestartGame()
     {
-        GenerateAndRenderMaze();
+        GenerateAndRenderMaze(); // Generate and render a new maze
         _gameStarted = false;
-        // reload the page to reset the game
-        NavigationManager.NavigateTo("/play", true);
     }
 
     private string GetHeartImage(int index)
     {
+        // Get the appropriate heart image based on the player's current health
         return index < _currentHearts ? "/assets/hud/health/heart_100.png" : "/assets/hud/health/heart_0.png";
     }
 
     public ValueTask DisposeAsync()
     {
-        _dotNetRef?.Dispose();
+        _dotNetRef?.Dispose(); // Dispose of the DotNetObjectReference
         return ValueTask.CompletedTask;
     }
 }

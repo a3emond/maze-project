@@ -1,7 +1,18 @@
 ﻿namespace MazeGameBlazor.GameEngine
 {
-    public class Item 
+    public class Item
     {
+        private static readonly Dictionary<ItemName, string> SpritePaths = new()
+            {
+                { ItemName.Key, "assets/sprites/items/keys/keys_1_1.png" },
+                { ItemName.Potion, "assets/sprites/items/potions/potion_large_red.png" },
+                { ItemName.Lantern, "assets/sprites/items/powerup/light_radius_coin.png" },
+                { ItemName.Compass, "assets/sprites/items/powerup/light_radius_coin.png" },
+                { ItemName.Door, "assets/sprites/items/door/door_1.png" },
+                { ItemName.TeleportCircle, "assets/sprites/items/powerup/light_radius_coin.png" },
+                { ItemName.Trap, "assets/sprites/items/peaks/peaks_1.png" }
+            };
+
         public ItemName Name { get; set; } // Item name (e.g., "Key", "Potion")
         public int X { get; set; } // Grid X position
         public int Y { get; set; } // Grid Y position
@@ -25,8 +36,13 @@
             Effect = effect;
         }
 
-
+        public static string GetSprite(ItemName name) // Get sprite path based on item name
+        {
+            return SpritePaths.GetValueOrDefault(name, "assets/sprites/items/unknown.png"); 
+        }
     }
+
+
 
     public enum ItemEffect
     {
@@ -37,7 +53,6 @@
         Unlock,      // Unlock a door or mechanism
         ShowDirection,// Compass effect to show direction
         Teleport    // Teleport to another location
-
     }
 
     public enum ItemName
@@ -50,5 +65,7 @@
         TeleportCircle, // walkable
         Trap, // walkable
     }
+
+
 
 }

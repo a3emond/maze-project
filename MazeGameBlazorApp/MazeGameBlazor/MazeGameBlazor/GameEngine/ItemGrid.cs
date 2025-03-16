@@ -13,7 +13,7 @@
             Items = new List<Item>();
         }
 
-        // Add an item (now requires all properties)
+        // Add an item 
         public void AddItem(ItemName name, int x, int y, string sprite,
                             bool walkable, bool interactable, bool collectible,
                             ItemEffect effect)
@@ -55,22 +55,23 @@
         public void GenerateItems(Maze maze)
         {
             // Define all items with their properties
-            var itemsToGenerate = new List<(ItemName name, string sprite, bool walkable, bool interactable, bool collectible, ItemEffect effect, int count)>
+            var itemsToGenerate = new List<(ItemName name, bool walkable, bool interactable, bool collectible, ItemEffect effect, int count)>
             {
-                (ItemName.Key, "key.png", false, false, true, ItemEffect.Unlock, 1),
-                (ItemName.Potion, "potion.png", false, true, false, ItemEffect.Heal, 10),
-                (ItemName.Lantern, "lantern.png", false, false, true, ItemEffect.LightRadiusIncrease, 3),
-                (ItemName.Compass, "compass.png", false, false, true, ItemEffect.ShowDirection, 1),
-                (ItemName.TeleportCircle, "teleport.png", true, false, false, ItemEffect.Teleport, 4),
-                (ItemName.Trap, "trap.png", true, false, false, ItemEffect.Damage, 25)
+                (ItemName.Key, false, false, true, ItemEffect.Unlock, 1),
+                (ItemName.Potion, false, true, false, ItemEffect.Heal, 10),
+                (ItemName.Lantern, false, false, true, ItemEffect.LightRadiusIncrease, 3),
+                (ItemName.Compass, false, false, true, ItemEffect.ShowDirection, 1),
+                (ItemName.TeleportCircle, true, false, false, ItemEffect.Teleport, 4),
+                (ItemName.Trap, true, false, false, ItemEffect.Damage, 25)
             };
 
             // Call SpawnItemsFromList to add items to the grid
             SpawnItemsFromList(maze, itemsToGenerate);
         }
 
+
         // Spawn multiple items from a predefined list
-        public void SpawnItemsFromList(Maze maze, List<(ItemName name, string sprite, bool walkable, bool interactable, bool collectible, ItemEffect effect, int count)> itemList)
+        public void SpawnItemsFromList(Maze maze, List<(ItemName name, bool walkable, bool interactable, bool collectible, ItemEffect effect, int count)> itemList)
         {
             foreach (var item in itemList)
             {
@@ -79,7 +80,8 @@
                     var position = MazeUtils.GetRandomWalkableTile(maze);
                     if (position.HasValue)
                     {
-                        AddItem(item.name, position.Value.x, position.Value.y, item.sprite,
+                        var sprite = Item.GetSprite(item.name);
+                        AddItem(item.name, position.Value.x, position.Value.y, sprite,
                                 item.walkable, item.interactable, item.collectible, item.effect);
                     }
                 }
@@ -102,6 +104,7 @@
 
             return item; // Non-collectible items remain in the grid
         }
+
 
     }
 }
