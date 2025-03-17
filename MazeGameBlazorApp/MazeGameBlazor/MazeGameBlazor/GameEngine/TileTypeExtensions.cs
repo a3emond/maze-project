@@ -9,8 +9,8 @@ public static class TileTypeExtensions
         return tileType switch
         {
             TileType.EmptyBlack => "/assets/textures/plain_empty_black.png",
-            TileType.Start => "/assets/textures/start.png",
-            TileType.Goal => "/assets/textures/goal.png",
+            TileType.Start => $"/assets/textures/floor_center_{Rand.Next(1, 15)}.png",
+            TileType.Goal => $"/assets/textures/floor_center_{Rand.Next(1, 15)}.png",
 
             // Floor Center - 14 Variants
             TileType.FloorCenter => $"/assets/textures/floor_center_{Rand.Next(1, 15)}.png",

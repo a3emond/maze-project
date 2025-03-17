@@ -78,6 +78,7 @@
          */
         public void SpawnItemsFromList(Maze maze, List<(ItemName name, bool walkable, bool interactable, bool collectible, ItemEffect effect, int count)> itemList)
         {
+            PlaceStartAndGoal(maze);
             var shuffledWalkableTiles = MazeUtils.ShuffleWalkableTiles(maze);
             int tileIndex = 0;
 
@@ -99,6 +100,17 @@
                         item.walkable, item.interactable, item.collectible, item.effect);
                 }
             }
+        }
+
+        // place start and goal items
+        public void PlaceStartAndGoal(Maze maze)
+        {
+            var start = MazeUtils.FindStartPosition(maze);
+            var goal = MazeUtils.FindGoalPosition(maze, start);
+            var startSprite = Item.GetSprite(ItemName.Start);
+            var goalSprite = Item.GetSprite(ItemName.Goal);
+            AddItem(ItemName.Start, start.Item1, start.Item2, startSprite, false, false, false, ItemEffect.None);
+            AddItem(ItemName.Goal, goal.Item1, goal.Item2, goalSprite, false, false, false, ItemEffect.None);
         }
 
 

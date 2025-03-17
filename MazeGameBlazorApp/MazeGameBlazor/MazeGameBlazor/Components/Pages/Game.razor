@@ -12,7 +12,7 @@
     <!-- Game Header -->
     <header class="game-header">
         <h1>Maze Game</h1>
-        <p>Find the exit and avoid traps! Use the WASD keys to move.</p>
+        <p>Find the exit<img width="50" src="assets/sprites/items/goal.png" /> and avoid traps! Use the WASD keys to move.</p>
         <p>Press Start Button to spawn your character</p>
     </header>
 
@@ -79,7 +79,7 @@
 @code {
     private readonly int _maxHearts = 5; // Maximum number of hearts for the player
     private readonly int _currentHearts = 3; // Current number of hearts for the player
-    private readonly string[] _inventorySlots = new string[6] { "/assets/hud/inventory/compass.png", "/assets/hud/inventory/key.png", string.Empty, string.Empty, string.Empty, string.Empty }; // Inventory slots
+    private readonly string[] _inventorySlots = new string[6] { "assets/sprites/items/compass.png", "/assets/hud/inventory/key.png", string.Empty, string.Empty, string.Empty, string.Empty }; // Inventory slots
     private readonly TimeSpan _timer = TimeSpan.Zero; // Game timer
     private readonly string _statusEffect = "Normal"; // Player status effect
     private readonly MazeGenerator _mazeGenerator = new(); // Maze generator instance
