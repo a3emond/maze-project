@@ -309,7 +309,7 @@ function initMinimap(tileData, width, height) {
     const fogColor = "#000"; // Completely black for unexplored areas
 
     // Initialize fog of war to fully hidden
-    window.fogOfWar = Array.from({ length: height }, () => Array(width).fill(false));
+    window.fogOfWar = Array.from({ length: height }, () => Array(width).fill(true));
 
     // Draw fully hidden minimap initially
     ctx.fillStyle = fogColor;

@@ -54,17 +54,34 @@ public class Program
             options.MultipartBodyLengthLimit = int.MaxValue;
             options.MultipartHeadersLengthLimit = int.MaxValue;
         });
+        
+        // Add SignalR
+        builder.Services.AddSignalR();
+
 
         // CORS policy
+
         builder.Services.AddCors(options =>
         {
-            options.AddDefaultPolicy(builder =>
-            {
-                builder.AllowAnyOrigin()
-                    .AllowAnyMethod()
-                    .AllowAnyHeader();
-            });
+            options.AddPolicy("AllowSpecificOrigins",
+                policy =>
+                {
+                    policy.WithOrigins("https://maze.aedev.pro")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
         });
+
+        //builder.Services.AddCors(options =>
+        //{
+        //    options.AddDefaultPolicy(builder =>
+        //    {
+        //        builder.AllowAnyOrigin()
+        //            .AllowAnyMethod()
+        //            .AllowAnyHeader();
+        //    });
+        //});
 
         // Custom services
         builder.Services.AddScoped<AuthService>();
@@ -73,7 +90,7 @@ public class Program
 
         var app = builder.Build();
 
-
+        app.UseWebSockets();
         app.UseCors();
         app.UseRouting();
         app.MapControllers();
