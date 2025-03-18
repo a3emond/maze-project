@@ -185,25 +185,37 @@ window.spawnPlayer = function (gridX, gridY, sprite) {
 };
 
 // Render the player on the maze
+// Global Player Image Cache
+window.playerSpriteCache = {};
+
 window.renderPlayer = function () {
     const ctx = window.ctx;
-    const img = new Image();
-    img.src = window.player.sprite;
 
-    img.onload = () => {
-        // Convert grid position to screen position relative to camera
-        const tileSize = window.tileSize * window.zoomLevel; // Match zoom scaling
-        const playerSize = tileSize; // Player size should be the same as tiles (adjust if needed)
+    // Use Cached Image if Available
+    if (!window.playerSpriteCache[window.player.sprite]) {
+        const img = new Image();
+        img.src = window.player.sprite;
 
-        // Correct viewport positioning
-        const drawX = (window.player.x * tileSize) - window.cameraX;
-        const drawY = (window.player.y * tileSize) - window.cameraY;
-
-        // Ensure the maze is rendered before drawing the player
-        renderViewport();
-        ctx.drawImage(img, drawX, drawY, playerSize, playerSize);
-    };
+        img.onload = () => {
+            window.playerSpriteCache[window.player.sprite] = img; // Store in Cache
+            drawPlayer(img);
+        };
+    } else {
+        drawPlayer(window.playerSpriteCache[window.player.sprite]); // Use Cached Version
+    }
 };
+
+// Extracted Draw Function
+function drawPlayer(img) {
+    const ctx = window.ctx;
+    const tileSize = window.tileSize * window.zoomLevel;
+    const drawX = (window.player.x * tileSize) - window.cameraX;
+    const drawY = (window.player.y * tileSize) - window.cameraY;
+
+    renderViewport();
+    ctx.drawImage(img, drawX, drawY, tileSize, tileSize);
+}
+
 
 // Update the player's position on the maze
 window.updatePlayerPosition = function (gridX, gridY, sprite) {
