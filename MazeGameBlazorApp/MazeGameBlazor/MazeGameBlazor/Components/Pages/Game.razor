@@ -125,13 +125,11 @@
 
         // Flatten the sprite grid and initialize the canvas
         string[] flattenedSprites = spriteGrid.Cast<string>().ToArray();
-        await Js.InvokeVoidAsync("MazeRenderer.init", flattenedSprites, widthPixels, heightPixels);
-
+        await Js.InvokeVoidAsync("initCanvas2D", flattenedSprites, widthPixels, heightPixels);
 
         // Pass item data to JavaScript for rendering
         var items = _maze.ItemGrid.GetAllItems().Select(item => new { item.X, item.Y, item.Sprite }).ToList();
-        await Js.InvokeVoidAsync("MazeRenderer.updateItems", items);
-
+        await Js.InvokeVoidAsync("updateItemData", items);
     }
 
     private void OnAlgorithmChange()
@@ -204,7 +202,7 @@
         if (_player != null)
         {
             // Update the player's position on the canvas
-            await Js.InvokeVoidAsync("MazeRenderer.updatePlayer", _player.X, _player.Y, _player.GetCurrentSprite());
+            await Js.InvokeVoidAsync("updatePlayerPosition", _player.X, _player.Y, _player.GetCurrentSprite());
             // try picking up an item
             _player.TryPickupItem(_maze);
         }
@@ -223,7 +221,7 @@
         _player = new Player(startPosition.Item1, startPosition.Item2, _maze); // Initialize the player at the start position
 
         await Js.InvokeVoidAsync("clearOverlay"); // Hide the "Ready?" overlay
-        await Js.InvokeVoidAsync("MazeRenderer.spawnPlayer", _player.X, _player.Y, _player.GetCurrentSprite());
+        await Js.InvokeVoidAsync("spawnPlayer", _player.X, _player.Y, _player.GetCurrentSprite()); // Spawn the player on the canvas
         await Js.InvokeVoidAsync("updatePlayerOnMinimap", _player.X, _player.Y); // Update the player's position on the minimap
     }
 
@@ -244,14 +242,4 @@
         _dotNetRef?.Dispose(); // Dispose of the DotNetObjectReference
         return ValueTask.CompletedTask;
     }
-
-    /*
-     * will be needed for future implementation (ex: fog-of-war and trap effects)
-     */
-    private async Task ForceRedraw()
-    {
-        await Js.InvokeVoidAsync("MazeRenderer.render");
-    }
-
-
 }

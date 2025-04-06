@@ -1,16 +1,38 @@
-﻿window.MazeRenderer = {
-    rendererType: "canvas2d", // Default fallback (can be overridden at init)
+﻿// log to console
+console.log("MazeRenderer.js loaded.");
+function supportsWebGL() {
+    try {
+        const canvas = document.createElement("canvas");
+        const supported = !!(window.WebGLRenderingContext &&
+            (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")));
+        console.log("supportsWebGL:", supported);
+        return supported;
+    } catch (e) {
+        console.log("supportsWebGL threw an error:", e);
+        return false;
+    }
+}
+
+window.MazeRenderer = {
+    rendererType: "canvas2d", // Default (will be overridden)
 
     init: function (tileData, width, height) {
+        console.log("MazeRenderer.init called.");
+
         if (supportsWebGL()) {
+            console.log("WebGL is supported. Initializing WebGL renderer...");
             this.rendererType = "webgl";
+            window.MazeRendererType = "webgl";
             window.initWebGL(tileData, width, height);
         } else {
+            console.log("WebGL not supported. Falling back to Canvas2D.");
             this.rendererType = "canvas2d";
+            window.MazeRendererType = "canvas2d";
             window.initCanvas2D(tileData, width, height);
         }
-        console.log("MazeRenderer using:", window.MazeRenderer.rendererType);
 
+        console.log("MazeRenderer using:", this.rendererType);
+        window.MazeRendererReady = true;
     },
 
     render: function () {
@@ -45,3 +67,7 @@
         }
     }
 };
+
+// Ensure global flags are defined before any C# interop
+window.MazeRendererReady = false;
+window.MazeRendererType = "canvas2d"; // Will be overwritten by init()

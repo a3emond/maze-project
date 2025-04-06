@@ -11,7 +11,8 @@
 
 window.itemData = [];
 window.itemTextureCache = {};
-
+//log to console
+console.log("WebGLRenderer.js loaded.");
 
 window.initWebGL = function (tileDataInput, width, height) {
     console.log("Initializing WebGL...");

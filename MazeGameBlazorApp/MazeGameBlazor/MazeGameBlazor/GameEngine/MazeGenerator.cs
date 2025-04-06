@@ -29,18 +29,6 @@ public class MazeGenerator
         {
             case MazeAlgorithmType.RecursiveBacktracking:
                 new RecursiveBacktrackingMaze().Generate(_maze);
-                //print mazegrid
-                for (var y = 0; y < _maze.Height; y++)
-                {
-                    for (var x = 0; x < _maze.Width; x++)
-                    {
-                        int value = _maze.Grid[x, y];
-                        Console.Write(value == -1 ? 1 : value);
-                    }
-                    Console.WriteLine(); // new line after each row
-                }
-
-
                 break;
             case MazeAlgorithmType.Prims:
                 new MazeAlgorithmPrims().Generate(_maze);
