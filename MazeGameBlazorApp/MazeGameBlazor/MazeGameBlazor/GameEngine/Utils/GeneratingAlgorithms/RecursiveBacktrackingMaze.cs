@@ -1,4 +1,7 @@
-﻿namespace MazeGameBlazor.GameEngine.GeneratingAlgorithms;
+﻿using MazeGameBlazor.GameEngine.Models;
+using MazeGameBlazor.GameEngine.Utils;
+
+namespace MazeGameBlazor.GameEngine.GeneratingAlgorithms;
 
 public class RecursiveBacktrackingMaze : IMazeAlgorithm
 {

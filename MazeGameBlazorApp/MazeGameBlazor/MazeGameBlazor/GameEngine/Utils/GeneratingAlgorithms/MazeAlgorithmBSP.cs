@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using MazeGameBlazor.GameEngine.Models;
+using System.Drawing;
 
 namespace MazeGameBlazor.GameEngine.GeneratingAlgorithms;
 

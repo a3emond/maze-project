@@ -1,7 +1,8 @@
 ﻿using MazeGameBlazor.GameEngine.GeneratingAlgorithms;
+using MazeGameBlazor.GameEngine.Models;
 using System.Text;
 
-namespace MazeGameBlazor.GameEngine;
+namespace MazeGameBlazor.GameEngine.Services;
 
 public class MazeGenerator
 {

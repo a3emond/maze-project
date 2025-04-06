@@ -1,4 +1,4 @@
-﻿namespace MazeGameBlazor.GameEngine;
+﻿namespace MazeGameBlazor.GameEngine.Models;
 
 public static class TileTypeExtensions
 {

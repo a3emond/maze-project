@@ -3,6 +3,8 @@ using MazeGameBlazor.Database.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 
+namespace MazeGameBlazor.Services;
+
 public class BlogService
 {
     private readonly AuthenticationStateProvider _authStateProvider;

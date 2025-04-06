@@ -1,4 +1,6 @@
-﻿namespace MazeGameBlazor.GameEngine;
+﻿using MazeGameBlazor.GameEngine.Models;
+
+namespace MazeGameBlazor.GameEngine.Services;
 
 public static class TileProcessor
 {
@@ -22,10 +24,10 @@ public static class TileProcessor
             if (maze.Grid[x, y] == -1) // Check only empty spaces (-1)
             {
                 var hasAdjacentFloor =
-                    (y > 0 && maze.Grid[x, y - 1] == 0) || // Top
-                    (y < maze.Height - 1 && maze.Grid[x, y + 1] == 0) || // Bottom
-                    (x > 0 && maze.Grid[x - 1, y] == 0) || // Left
-                    (x < maze.Width - 1 && maze.Grid[x + 1, y] == 0); // Right
+                    y > 0 && maze.Grid[x, y - 1] == 0 || // Top
+                    y < maze.Height - 1 && maze.Grid[x, y + 1] == 0 || // Bottom
+                    x > 0 && maze.Grid[x - 1, y] == 0 || // Left
+                    x < maze.Width - 1 && maze.Grid[x + 1, y] == 0; // Right
 
                 if (hasAdjacentFloor) maze.Grid[x, y] = 1; // Mark it as a wall
             }

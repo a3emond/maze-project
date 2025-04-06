@@ -1,4 +1,6 @@
-﻿namespace MazeGameBlazor.GameEngine
+﻿using MazeGameBlazor.GameEngine.Utils;
+
+namespace MazeGameBlazor.GameEngine.Models
 {
     public class ItemGrid
     {

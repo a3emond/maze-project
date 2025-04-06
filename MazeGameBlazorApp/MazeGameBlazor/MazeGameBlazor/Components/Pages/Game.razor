@@ -1,25 +1,26 @@
 ﻿@page "/play"
+@using MazeGameBlazor.GameEngine.Models
+@using MazeGameBlazor.GameEngine.Services
 @rendermode InteractiveServer
 @inject IJSRuntime Js
 @inject NavigationManager NavigationManager
-@using MazeGameBlazor.GameEngine
-@using MazeGameBlazor.GameEngine.GeneratingAlgorithms
+@inject MazeGameManager GameManager
+@inject GameState GameState
+
 @implements IAsyncDisposable
 
 <PageTitle>Play the Maze Game</PageTitle>
 
 <div class="game-container">
-    <!-- Game Header -->
     <header class="game-header">
         <h1>Maze Game</h1>
         <p>Find the exit<img width="50" src="assets/sprites/items/goal.png" /> and avoid traps! Use the WASD keys to move.</p>
         <p>Press Start Button to spawn your character</p>
     </header>
 
-    <!-- Maze Algorithm Selection -->
     <div class="algorithm-selection">
         <label for="algorithmSelect">Select Maze Algorithm:</label>
-        <select id="algorithmSelect" @bind="selectedAlgorithm" @bind:after="OnAlgorithmChange">
+        <select id="algorithmSelect" @bind="GameState.SelectedAlgorithm" @bind:after="OnAlgorithmChange">
             @foreach (var algorithm in Enum.GetValues(typeof(MazeAlgorithmType)))
             {
                 <option value="@algorithm">@algorithm</option>
@@ -27,7 +28,6 @@
         </select>
     </div>
 
-    <!-- Game Screen -->
     <div class="game-screen" tabindex="0" @onfocus="SetFocus">
         <canvas id="mazeCanvas"></canvas>
         <canvas id="minimapCanvas"></canvas>
@@ -36,40 +36,12 @@
         </div>
     </div>
 
-    <!-- Player HUD -->
-    <div class="game-hud">
-        <div class="hud-section">
-            <span>Health:</span>
-            <div class="heart-container">
-                @for (var i = 0; i < _maxHearts; i++)
-                {
-                    <img src="@GetHeartImage(i)" class="heart-icon" />
-                }
-            </div>
-        </div>
+    <MazeHud MaxHearts="@GameState.MaxHearts"
+             CurrentHearts="@GameState.CurrentHearts"
+             InventorySlots="@GameState.InventorySlots"
+             Timer="@GameState.Timer"
+             StatusEffect="@GameState.StatusEffect" />
 
-        <div class="hud-section">
-            <span>Inventory:</span>
-            <div class="inventory">
-                @for (var i = 0; i < _inventorySlots.Length; i++)
-                {
-                    <div class="inventory-slot">
-                        @if (!string.IsNullOrEmpty(_inventorySlots[i]))
-                        {
-                            <img width="44" src="@_inventorySlots[i]" />
-                        }
-                    </div>
-                }
-            </div>
-        </div>
-
-        <div class="hud-section">
-            <span>Time: @_timer</span>
-            <span>Status: @_statusEffect</span>
-        </div>
-    </div>
-
-    <!-- Controls -->
     <div class="game-controls">
         <button class="control-button" @onclick="StartGame"><i class="fas fa-play"></i> Start</button>
         <button class="control-button" @onclick="RestartGame"><i class="fas fa-redo"></i> Restart</button>
@@ -77,169 +49,37 @@
 </div>
 
 @code {
-    private readonly int _maxHearts = 5; // Maximum number of hearts for the player
-    private readonly int _currentHearts = 3; // Current number of hearts for the player
-    private readonly string[] _inventorySlots = new string[6] { "assets/sprites/items/compass.png", "/assets/hud/inventory/key.png", string.Empty, string.Empty, string.Empty, string.Empty }; // Inventory slots
-    private readonly TimeSpan _timer = TimeSpan.Zero; // Game timer
-    private readonly string _statusEffect = "Normal"; // Player status effect
-    private readonly MazeGenerator _mazeGenerator = new(); // Maze generator instance
-    private Maze? _maze; // Current maze
-    private Player? _player; // Current player
-    private bool _gameStarted; // Flag to check if the game has started
-    private bool _gameRunning; // Flag to check if the game is running
-    private readonly HashSet<string?> _movementKeys = new(); // Set of movement keys pressed
-    private DotNetObjectReference<Game>? _dotNetRef; // Reference to the current instance for JS interop
-    private MazeAlgorithmType selectedAlgorithm = MazeAlgorithmType.RecursiveBacktracking; // Default maze algorithm
+    private DotNetObjectReference<Game>? _dotNetRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            GenerateAndRenderMaze(); // Generate and render the maze on first render
-            _dotNetRef = DotNetObjectReference.Create(this); // Create a reference to the current instance for JS interop
-            await Js.InvokeVoidAsync("registerKeyListeners", _dotNetRef); // Register key listeners for player movement
-        }
+        if (!firstRender) return;
+        await GameManager.InitializeAsync();
+        _dotNetRef = DotNetObjectReference.Create(this);
+        await Js.InvokeVoidAsync("registerKeyListeners", _dotNetRef);
     }
 
-    private async void GenerateAndRenderMaze()
-    {
-        // Generate maze using the selected algorithm
-        _maze = _mazeGenerator.GenerateMaze(selectedAlgorithm);
+    private async Task SetFocus() => await Js.InvokeVoidAsync("focusGameScreen");
 
-        // Generate items in the maze
-        _maze.ItemGrid.GenerateItems(_maze);
-
-        var widthPixels = _maze.Width;
-        var heightPixels = _maze.Height;
-
-        string[,] spriteGrid = new string[widthPixels, heightPixels];
-
-        // Generate the sprite grid for the maze
-        for (var y = 0; y < heightPixels; y++)
-        {
-            for (var x = 0; x < widthPixels; x++)
-            {
-                spriteGrid[y, x] = TileProcessor.GetTileSprite(_maze, x, y);
-            }
-        }
-
-        // Flatten the sprite grid and initialize the canvas
-        string[] flattenedSprites = spriteGrid.Cast<string>().ToArray();
-        await Js.InvokeVoidAsync("initCanvas2D", flattenedSprites, widthPixels, heightPixels);
-
-        // Pass item data to JavaScript for rendering
-        var items = _maze.ItemGrid.GetAllItems().Select(item => new { item.X, item.Y, item.Sprite }).ToList();
-        await Js.InvokeVoidAsync("updateItemData", items);
-    }
-
-    private void OnAlgorithmChange()
-    {
-        // Generate and render the maze when the algorithm is changed
-        GenerateAndRenderMaze();
-    }
-
-    [JSInvokable]
-    public async Task HandleKeyPress(string key)
-    {
-        if (!_gameStarted || _player == null) return;
-
-        // Determine the direction based on the key pressed
-        var direction = key switch
-        {
-            "w" => "up",
-            "s" => "down",
-            "a" => "left",
-            "d" => "right",
-            _ => null
-        };
-
-        if (direction != null)
-        {
-            _movementKeys.Add(direction);
-            await StartGameLoop(); // Start the game loop if a movement key is pressed
-        }
-    }
-
-    [JSInvokable]
-    public void HandleKeyRelease(string key)
-    {
-        // Determine the direction based on the key released
-        var direction = key switch
-        {
-            "w" => "up",
-            "s" => "down",
-            "a" => "left",
-            "d" => "right",
-            _ => null
-        };
-
-        if (direction != null)
-        {
-            _movementKeys.Remove(direction); // Remove the direction from the set of movement keys
-        }
-    }
-
-    private async Task StartGameLoop()
-    {
-        if (_gameRunning) return;
-        _gameRunning = true;
-
-        // Continue the game loop while there are movement keys pressed
-        while (_gameRunning && _movementKeys.Count > 0)
-        {
-            var direction = _movementKeys.Last();
-            _player?.Move(direction, _maze); // Move the player in the specified direction
-            await UpdatePlayerPosition(); // Update the player's position on the canvas
-
-            await Task.Delay(30); // Adjust for smoother movement
-        }
-
-        _gameRunning = false;
-    }
-
-    private async Task UpdatePlayerPosition()
-    {
-        if (_player != null)
-        {
-            // Update the player's position on the canvas
-            await Js.InvokeVoidAsync("updatePlayerPosition", _player.X, _player.Y, _player.GetCurrentSprite());
-            // try picking up an item
-            _player.TryPickupItem(_maze);
-        }
-    }
-
-    private async Task SetFocus()
-    {
-        // Set focus to the game screen
-        await Js.InvokeVoidAsync("focusGameScreen");
-    }
-
-    private async Task StartGame()
-    {
-        _gameStarted = true;
-        var startPosition = _maze?.StartPosition ?? (0, 0);
-        _player = new Player(startPosition.Item1, startPosition.Item2, _maze); // Initialize the player at the start position
-
-        await Js.InvokeVoidAsync("clearOverlay"); // Hide the "Ready?" overlay
-        await Js.InvokeVoidAsync("spawnPlayer", _player.X, _player.Y, _player.GetCurrentSprite()); // Spawn the player on the canvas
-        await Js.InvokeVoidAsync("updatePlayerOnMinimap", _player.X, _player.Y); // Update the player's position on the minimap
-    }
+    private async Task StartGame() => await GameManager.StartGameAsync();
 
     private void RestartGame()
     {
-        GenerateAndRenderMaze(); // Generate and render a new maze
-        _gameStarted = false;
+        GameManager.RestartGame();
+        _ = GameManager.InitializeAsync();
     }
 
-    private string GetHeartImage(int index)
-    {
-        // Get the appropriate heart image based on the player's current health
-        return index < _currentHearts ? "/assets/hud/health/heart_100.png" : "/assets/hud/health/heart_0.png";
-    }
+    private void OnAlgorithmChange() => _ = GameManager.InitializeAsync();
+
+    [JSInvokable]
+    public async Task HandleKeyPress(string key) => await GameManager.HandleKeyPressAsync(key);
+
+    [JSInvokable]
+    public void HandleKeyRelease(string key) => GameManager.HandleKeyRelease(key);
 
     public ValueTask DisposeAsync()
     {
-        _dotNetRef?.Dispose(); // Dispose of the DotNetObjectReference
+        _dotNetRef?.Dispose();
         return ValueTask.CompletedTask;
     }
 }

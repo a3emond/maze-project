@@ -1,6 +1,8 @@
 using MazeGameBlazor.Components;
 using MazeGameBlazor.Database;
 using MazeGameBlazor.Database.Models;
+using MazeGameBlazor.GameEngine.Models;
+using MazeGameBlazor.GameEngine.Services;
 using MazeGameBlazor.Services;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
@@ -19,10 +21,11 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.WebHost.ConfigureKestrel(serverOptions =>
-        {
-            serverOptions.ListenAnyIP(5000); // Allow external access on port 5000
-        });
+        //TODO: make this switching dynamically based on environment (this part is needed for the production environment)
+        //builder.WebHost.ConfigureKestrel(serverOptions =>
+        //{
+        //    serverOptions.ListenAnyIP(5000); // Allow external access on port 5000
+        //});
 
         // Register API controllers
         builder.Services.AddControllers();
@@ -91,6 +94,13 @@ public class Program
         // Custom services
         builder.Services.AddScoped<AuthService>();
         builder.Services.AddScoped<BlogService>();
+
+        // Maze Game services
+        builder.Services.AddScoped<GameState>();
+        builder.Services.AddScoped<MazeInputManager>();
+        builder.Services.AddScoped<MazeGameService>();
+        builder.Services.AddScoped<MazeGameManager>();
+
 
 
         var app = builder.Build();

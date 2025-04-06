@@ -2,7 +2,7 @@
 
 // THIS IS NOT USED... need to migrate game.razor to web assembly before
 
-namespace MazeGameBlazor.GameEngine
+namespace MazeGameBlazor.GameEngine.Services
 {
     public enum MazeRendererType
     {

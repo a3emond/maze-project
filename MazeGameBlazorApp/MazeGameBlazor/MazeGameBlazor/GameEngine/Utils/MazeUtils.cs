@@ -1,6 +1,7 @@
-﻿using System;
+﻿using MazeGameBlazor.GameEngine.Models;
+using System;
 
-namespace MazeGameBlazor.GameEngine;
+namespace MazeGameBlazor.GameEngine.Utils;
 
 public static class MazeUtils
 {
