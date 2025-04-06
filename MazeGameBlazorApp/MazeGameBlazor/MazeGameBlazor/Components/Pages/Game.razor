@@ -1,7 +1,6 @@
 ﻿@page "/play"
-@using MazeGameBlazor.GameEngine.Models
-@using MazeGameBlazor.GameEngine.Services
 @rendermode InteractiveServer
+
 @inject IJSRuntime Js
 @inject NavigationManager NavigationManager
 @inject MazeGameManager GameManager
@@ -12,40 +11,33 @@
 <PageTitle>Play the Maze Game</PageTitle>
 
 <div class="game-container">
+    <!-- Game Header and Instructions -->
     <header class="game-header">
         <h1>Maze Game</h1>
-        <p>Find the exit<img width="50" src="assets/sprites/items/goal.png" /> and avoid traps! Use the WASD keys to move.</p>
+        <p>
+            Find the exit
+            <img width="50" src="assets/sprites/items/goal.png" />
+            and avoid traps! Use the WASD keys to move.
+        </p>
         <p>Press Start Button to spawn your character</p>
     </header>
 
-    <div class="algorithm-selection">
-        <label for="algorithmSelect">Select Maze Algorithm:</label>
-        <select id="algorithmSelect" @bind="GameState.SelectedAlgorithm" @bind:after="OnAlgorithmChange">
-            @foreach (var algorithm in Enum.GetValues(typeof(MazeAlgorithmType)))
-            {
-                <option value="@algorithm">@algorithm</option>
-            }
-        </select>
-    </div>
+    <!-- Maze Generation Algorithm Selector -->
+    <MazeAlgorithmSelector Value="GameState.SelectedAlgorithm"
+                           OnChange="GameManager.OnAlgorithmChangeAsync" />
 
-    <div class="game-screen" tabindex="0" @onfocus="SetFocus">
-        <canvas id="mazeCanvas"></canvas>
-        <canvas id="minimapCanvas"></canvas>
-        <div class="game-overlay" id="gameOverlay">
-            <p id="gameStatus">Ready?</p>
-        </div>
-    </div>
+    <!-- Game Canvas + Minimap + Overlay + Loading handled internally -->
+    <MazeRenderer OnFocus="GameManager.FocusGameScreenAsync" />
 
+    <!-- Player HUD (Health, Inventory, Status, Timer) -->
     <MazeHud MaxHearts="@GameState.MaxHearts"
              CurrentHearts="@GameState.CurrentHearts"
              InventorySlots="@GameState.InventorySlots"
              Timer="@GameState.Timer"
              StatusEffect="@GameState.StatusEffect" />
 
-    <div class="game-controls">
-        <button class="control-button" @onclick="StartGame"><i class="fas fa-play"></i> Start</button>
-        <button class="control-button" @onclick="RestartGame"><i class="fas fa-redo"></i> Restart</button>
-    </div>
+    <!-- Game Controls (Start, Restart) -->
+    <MazeControls OnStart="@StartGame" OnRestart="@RestartGame" />
 </div>
 
 @code {
@@ -54,28 +46,23 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+        GameManager.NotifyUi = () =>
+        {
+            StateHasChanged();
+            return Task.CompletedTask;
+        };
+
         await GameManager.InitializeAsync();
         _dotNetRef = DotNetObjectReference.Create(this);
         await Js.InvokeVoidAsync("registerKeyListeners", _dotNetRef);
     }
 
-    private async Task SetFocus() => await Js.InvokeVoidAsync("focusGameScreen");
 
     private async Task StartGame() => await GameManager.StartGameAsync();
+    private void RestartGame() => GameManager.RestartGame();
 
-    private void RestartGame()
-    {
-        GameManager.RestartGame();
-        _ = GameManager.InitializeAsync();
-    }
-
-    private void OnAlgorithmChange() => _ = GameManager.InitializeAsync();
-
-    [JSInvokable]
-    public async Task HandleKeyPress(string key) => await GameManager.HandleKeyPressAsync(key);
-
-    [JSInvokable]
-    public void HandleKeyRelease(string key) => GameManager.HandleKeyRelease(key);
+    [JSInvokable] public Task HandleKeyPress(string key) => GameManager.HandleKeyPressAsync(key);
+    [JSInvokable] public void HandleKeyRelease(string key) => GameManager.HandleKeyRelease(key);
 
     public ValueTask DisposeAsync()
     {

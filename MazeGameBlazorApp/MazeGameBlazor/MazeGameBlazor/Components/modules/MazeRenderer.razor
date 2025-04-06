@@ -1,0 +1,27 @@
+﻿<div class="game-screen" tabindex="0" @onfocus="HandleFocus">
+    <canvas id="mazeCanvas"></canvas>
+    <canvas id="minimapCanvas"></canvas>
+
+    <div class="game-overlay" id="gameOverlay">
+        <p id="gameStatus">Ready?</p>
+    </div>
+
+    @if (!GameState.MazeInitialized)
+    {
+        <div class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Generating maze...</p>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback OnFocus { get; set; }
+    [Inject] public GameState GameState { get; set; } = default!;
+
+    private async Task HandleFocus()
+    {
+        if (OnFocus.HasDelegate)
+            await OnFocus.InvokeAsync();
+    }
+}

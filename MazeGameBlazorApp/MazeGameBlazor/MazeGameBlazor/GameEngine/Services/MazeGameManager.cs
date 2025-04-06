@@ -26,6 +26,8 @@ namespace MazeGameBlazor.GameEngine.Services
 
         public async Task InitializeAsync()
         {
+            _state.MazeInitialized = false; // Show loading
+
             _state.Maze = _gameService.GenerateMaze(_state.SelectedAlgorithm);
             var spriteGrid = _gameService.GenerateSpriteGrid(_state.Maze);
             var flattened = spriteGrid.Cast<string>().ToArray();
@@ -34,7 +36,14 @@ namespace MazeGameBlazor.GameEngine.Services
 
             var items = _state.Maze.ItemGrid.GetAllItems().Select(i => new { i.X, i.Y, i.Sprite }).ToList();
             await _js.InvokeVoidAsync("updateItemData", items);
+
+            _state.MazeInitialized = true;
+            if (NotifyUi is not null)
+                await NotifyUi.Invoke();
+
         }
+
+        public Func<Task>? NotifyUi { get; set; }
 
         public async Task StartGameAsync()
         {
@@ -48,11 +57,20 @@ namespace MazeGameBlazor.GameEngine.Services
             await _js.InvokeVoidAsync("updatePlayerOnMinimap", x, y);
         }
 
+        public Task OnAlgorithmChangeAsync() => InitializeAsync();
+
+
         public void RestartGame()
         {
             _state.GameStarted = false;
             _state.GameRunning = false;
+            _ = InitializeAsync();
         }
+        public async Task FocusGameScreenAsync()
+        {
+            await _js.InvokeVoidAsync("focusGameScreen");
+        }
+
 
         public async Task HandleKeyPressAsync(string key)
         {

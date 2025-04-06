@@ -1,0 +1,16 @@
+﻿<select @bind="Value" @bind:after="OnChangeHandler">
+    @foreach (var algorithm in Enum.GetValues(typeof(MazeAlgorithmType)))
+    {
+        <option value="@algorithm">@algorithm</option>
+    }
+</select>
+
+@code {
+    [Parameter] public MazeAlgorithmType Value { get; set; }
+    [Parameter] public EventCallback<MazeAlgorithmType> OnChange { get; set; }
+
+    private async Task OnChangeHandler()
+    {
+        await OnChange.InvokeAsync(Value);
+    }
+}

@@ -9,6 +9,8 @@ public class GameState
     public bool GameStarted { get; set; }
     public bool GameRunning { get; set; }
     public MazeAlgorithmType SelectedAlgorithm { get; set; } = MazeAlgorithmType.RecursiveBacktracking;
+    public bool MazeInitialized { get; set; } = false;
+
 
     public int MaxHearts { get; set; } = 5;
     public int CurrentHearts { get; set; } = 3;
