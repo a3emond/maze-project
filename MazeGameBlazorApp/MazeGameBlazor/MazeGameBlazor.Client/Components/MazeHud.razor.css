@@ -1,0 +1,84 @@
+﻿/* HUD Container */
+.game-hud {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    background: rgba(30, 30, 30, 0.95);
+    border: 2px solid #444;
+    border-radius: 12px;
+    color: #f0f0f0;
+    padding: 15px 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Each Section (Health, Inventory, Timer, Status) */
+.hud-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+/* Health Bar */
+.heart-container {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.heart-icon {
+    width: 32px;
+    height: 32px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.heart-icon:hover {
+    transform: scale(1.2);
+}
+
+/* Inventory Slots */
+.inventory {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.inventory-slot {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid #aaa;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: border-color 0.3s ease;
+}
+
+.inventory-slot:hover {
+    border-color: #fff;
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 600px) {
+    .game-hud {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .hud-section {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .inventory {
+        justify-content: center;
+    }
+}

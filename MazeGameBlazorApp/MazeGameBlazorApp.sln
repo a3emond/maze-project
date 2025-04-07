@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MazeGameBlazor", "MazeGameB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MazeGameBlazor.Client", "MazeGameBlazor\MazeGameBlazor.Client\MazeGameBlazor.Client.csproj", "{426A516A-B87C-493C-B033-05DAD75BCF4C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MazeGameBlazor.Shared", "MazeGameBlazor.Shared\MazeGameBlazor.Shared.csproj", "{E121927B-4664-4820-9235-578819274E3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,8 +23,15 @@ Global
 		{426A516A-B87C-493C-B033-05DAD75BCF4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{426A516A-B87C-493C-B033-05DAD75BCF4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{426A516A-B87C-493C-B033-05DAD75BCF4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E121927B-4664-4820-9235-578819274E3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E121927B-4664-4820-9235-578819274E3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E121927B-4664-4820-9235-578819274E3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E121927B-4664-4820-9235-578819274E3C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1609C863-6A60-4462-8F76-B53D53268172}
 	EndGlobalSection
 EndGlobal

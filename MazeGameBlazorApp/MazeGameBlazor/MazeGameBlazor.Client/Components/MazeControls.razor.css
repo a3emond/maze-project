@@ -1,0 +1,32 @@
+﻿/* Controls & Actions */
+.game-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 2rem;
+    flex-wrap: wrap; /* Better responsiveness on smaller screens */
+}
+
+.control-button {
+    background: linear-gradient(145deg, #ff5c5c, #ff1f1f);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 12px 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s ease, transform 0.1s ease;
+}
+
+.control-button:hover {
+    background: linear-gradient(145deg, #e63e3e, #cc1919);
+    transform: translateY(-2px);
+}
+
+.control-button:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}

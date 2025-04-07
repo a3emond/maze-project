@@ -1,0 +1,73 @@
+﻿@page "/play"
+@rendermode InteractiveAuto
+
+@inject IJSRuntime Js
+@inject NavigationManager NavigationManager
+@inject MazeGameManager GameManager
+@inject GameState GameState
+
+@using MazeGameBlazor.Shared.GameEngine.Models
+@implements IAsyncDisposable
+
+<PageTitle>Play the Maze Game</PageTitle>
+
+<div class="game-container">
+    <!-- Game Header and Instructions -->
+    <header class="game-header">
+        <h1>Maze Game</h1>
+        <p>
+            Find the exit
+            <img width="50" src="assets/sprites/items/goal.png" />
+            and avoid traps! Use the WASD keys to move.
+        </p>
+        <p>Press Start Button to spawn your character</p>
+    </header>
+
+    <!-- Maze Generation Algorithm Selector -->
+    <MazeAlgorithmSelector Value="GameState.SelectedAlgorithm"
+                           OnChange="GameManager.OnAlgorithmChangeAsync" />
+
+    <!-- Game Canvas + Minimap + Overlay + Loading handled internally -->
+    <MazeRenderer OnFocus="GameManager.FocusGameScreenAsync" />
+
+    <!-- Player HUD (Health, Inventory, Status, Timer) -->
+    <MazeHud MaxHearts="@GameState.MaxHearts"
+             CurrentHearts="@GameState.CurrentHearts"
+             InventorySlots="@GameState.InventorySlots"
+             Timer="@GameState.Timer"
+             StatusEffect="@GameState.StatusEffect" />
+
+    <!-- Game Controls (Start, Restart) -->
+    <MazeControls OnStart="@StartGame" OnRestart="@RestartGame" />
+</div>
+
+@code {
+    private DotNetObjectReference<Game>? _dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        GameManager.NotifyUi = () =>
+        {
+            StateHasChanged();
+            return Task.CompletedTask;
+        };
+
+        await GameManager.InitializeAsync();
+        _dotNetRef = DotNetObjectReference.Create(this);
+        await Js.InvokeVoidAsync("registerKeyListeners", _dotNetRef);
+    }
+
+
+    private async Task StartGame() => await GameManager.StartGameAsync();
+    private void RestartGame() => GameManager.RestartGame();
+
+    [JSInvokable] public Task HandleKeyPress(string key) => GameManager.HandleKeyPressAsync(key);
+    [JSInvokable] public void HandleKeyRelease(string key) => GameManager.HandleKeyRelease(key);
+
+    public ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
