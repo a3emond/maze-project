@@ -19,10 +19,22 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
 
+<<<<<<< Updated upstream
         builder.WebHost.ConfigureKestrel(serverOptions =>
         {
             serverOptions.ListenAnyIP(5000); // Allow external access on port 5000
         });
+=======
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.WebHost.ConfigureKestrel(serverOptions =>
+            {
+                serverOptions.ListenAnyIP(5000); // Allow external access on port 5000
+            });
+        }
+
+        
+>>>>>>> Stashed changes
 
         // Register API controllers
         builder.Services.AddControllers();
