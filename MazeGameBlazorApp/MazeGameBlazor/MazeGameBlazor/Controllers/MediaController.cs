@@ -3,6 +3,8 @@ using MazeGameBlazor.Database.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+namespace MazeGameBlazor.Controllers;
+
 [ApiController]
 [Route("api/media")]
 public class MediaController : ControllerBase

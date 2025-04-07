@@ -1,0 +1,10 @@
+﻿@rendermode InteractiveAuto
+<div class="game-controls">
+    <button class="control-button" @onclick="OnStart"><i class="fas fa-play"></i> Start</button>
+    <button class="control-button" @onclick="OnRestart"><i class="fas fa-redo"></i> Restart</button>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnStart { get; set; }
+    [Parameter] public EventCallback OnRestart { get; set; }
+}

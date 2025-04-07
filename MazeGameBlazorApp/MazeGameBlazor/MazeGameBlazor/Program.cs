@@ -1,7 +1,10 @@
+using MazeGameBlazor.Client;
 using MazeGameBlazor.Components;
 using MazeGameBlazor.Database;
 using MazeGameBlazor.Database.Models;
 using MazeGameBlazor.Services;
+using MazeGameBlazor.Shared.GameEngine.Models;
+using MazeGameBlazor.Shared.GameEngine.Services;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -19,10 +22,11 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.WebHost.ConfigureKestrel(serverOptions =>
-        {
-            serverOptions.ListenAnyIP(5000); // Allow external access on port 5000
-        });
+        //TODO: make this switching dynamically based on environment (this part is needed for the production environment)
+        //builder.WebHost.ConfigureKestrel(serverOptions =>
+        //{
+        //    serverOptions.ListenAnyIP(5000); // Allow external access on port 5000
+        //});
 
         // Register API controllers
         builder.Services.AddControllers();
@@ -78,19 +82,14 @@ public class Program
                 });
         });
 
-        //builder.Services.AddCors(options =>
-        //{
-        //    options.AddDefaultPolicy(builder =>
-        //    {
-        //        builder.AllowAnyOrigin()
-        //            .AllowAnyMethod()
-        //            .AllowAnyHeader();
-        //    });
-        //});
-
         // Custom services
         builder.Services.AddScoped<AuthService>();
         builder.Services.AddScoped<BlogService>();
+
+        builder.Services.AddScoped<GameState>();
+        builder.Services.AddScoped<MazeInputManager>();
+        builder.Services.AddScoped<MazeGameService>();
+        builder.Services.AddScoped<MazeGameManager>();
 
 
         var app = builder.Build();
@@ -112,61 +111,6 @@ public class Program
             DefaultContentType = "application/octet-stream", // Handle different formats
             OnPrepareResponse = ctx => { ctx.Context.Response.Headers.Append("Accept-Ranges", "bytes"); }
         });
-
-        //// add a default user with guest as id
-        //using (var scope = app.Services.CreateScope())
-        //{
-        //    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-        //    var user = await userManager.FindByIdAsync("guest");
-        //    if (user == null)
-        //    {
-        //        user = new User
-        //        {
-        //            Id = "guest",
-        //            UserName = "guest",
-        //            Email = "guest@guest.ca"
-        //        };
-        //        await userManager.CreateAsync(user);
-        //    }
-        //}
-
-        // Add Default Roles and Admin User
-        //using (var scope = app.Services.CreateScope())
-        //{
-        //    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-        //    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-
-        //    // Add default roles
-        //    if (!await roleManager.RoleExistsAsync("Admin"))
-        //    {
-        //        await roleManager.CreateAsync(new Role { Name = "Admin" });
-        //    }
-        //    if (!await roleManager.RoleExistsAsync("User"))
-        //    {
-        //        await roleManager.CreateAsync(new Role { Name = "User" });
-        //    }
-
-        //    // Add default admin user
-        //    var adminUser = await userManager.FindByEmailAsync("a3emond@gmail.com");
-        //    if (adminUser == null)
-        //    {
-        //        adminUser = new User
-        //        {
-        //            UserName = "admin",
-        //            Email = "a3emond@gmail.com",
-        //            EmailConfirmed = true
-        //        };
-
-        //        // Get password from environment variables
-        //        var password = Environment.GetEnvironmentVariable("AdminPassword") ?? throw new Exception("Admin password not set in environment variables.");
-        //        var result = await userManager.CreateAsync(adminUser, password);
-        //        if (result.Succeeded)
-        //        {
-        //            await userManager.AddToRoleAsync(adminUser, "Admin");
-        //        }
-        //    }
-
-        //}
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

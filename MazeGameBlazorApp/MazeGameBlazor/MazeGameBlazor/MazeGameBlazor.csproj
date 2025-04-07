@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\MazeGameBlazor.Shared\MazeGameBlazor.Shared.csproj" />
     <ProjectReference Include="..\MazeGameBlazor.Client\MazeGameBlazor.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.1" />
@@ -32,7 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="GameEngine\SolvingAlgorithms\" />
     <Folder Include="wwwroot\assets\hud\health\" />
     <Folder Include="wwwroot\assets\minimap\icons\" />
     <Folder Include="wwwroot\assets\sprites\items\" />
