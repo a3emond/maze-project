@@ -22,11 +22,15 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
 
-        //TODO: make this switching dynamically based on environment (this part is needed for the production environment)
-        //builder.WebHost.ConfigureKestrel(serverOptions =>
-        //{
-        //    serverOptions.ListenAnyIP(5000); // Allow external access on port 5000
-        //});
+        // if environement is production
+        if (builder.Environment.IsProduction())
+        {
+            builder.WebHost.ConfigureKestrel(serverOptions =>
+            {
+                serverOptions.ListenAnyIP(5000); // Allow external access on port 5000
+            });
+        }
+        
 
         // Register API controllers
         builder.Services.AddControllers();
