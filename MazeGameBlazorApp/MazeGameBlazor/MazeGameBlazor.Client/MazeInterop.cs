@@ -1,12 +1,8 @@
-﻿using Microsoft.JSInterop;
+﻿using MazeGameBlazor.Shared.GameEngine.Models;
+using Microsoft.JSInterop;
 
 namespace MazeGameBlazor.Client
 {
-    public enum MazeRendererType
-    {
-        Canvas2D,
-        WebGL
-    }
 
     public static class MazeInterop
     {

@@ -11,6 +11,7 @@ public class GameState
     public bool GameStarted { get; set; }
     public bool GameRunning { get; set; }
     public MazeAlgorithmType SelectedAlgorithm { get; set; } = MazeAlgorithmType.RecursiveBacktracking;
+    public MazeRendererType RendererType { get; set; } = MazeRendererType.Canvas2D;
     public bool MazeInitialized { get; set; } = false;
 
 
