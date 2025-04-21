@@ -1,7 +1,5 @@
 ﻿using Microsoft.JSInterop;
 
-// THIS IS NOT USED... need to migrate game.razor to web assembly before
-
 namespace MazeGameBlazor.Client
 {
     public enum MazeRendererType
@@ -37,7 +35,10 @@ namespace MazeGameBlazor.Client
         {
             await js.InvokeVoidAsync("MazeRenderer.updateItems", items);
         }
+
+        public static async Task SetMinimapGoalAsync(IJSRuntime js, int x, int y)
+        {
+            await js.InvokeVoidAsync("MazeRenderer.setGoal", x, y);
+        }
     }
-
-
 }

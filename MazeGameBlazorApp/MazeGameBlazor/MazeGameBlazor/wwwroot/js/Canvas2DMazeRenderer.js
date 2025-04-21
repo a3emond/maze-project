@@ -1,439 +1,260 @@
 ﻿// -------------------------------------------------------------------------------
-// Global variables
+// Core Configuration
 // -------------------------------------------------------------------------------
-window.canvas = null;
-window.ctx = null;
-window.bufferCanvas = null;
-window.bufferCtx = null;
-window.tileSize = 16; // Base tile size
-window.zoomLevel = 3; // Zoom factor (adjust for desired view)
-window.cameraX = 0; // Camera position (top-left)
+window.cameraX = 0;
 window.cameraY = 0;
-window.moveSpeed = 16; // How fast the camera moves
 
-window.tileData = [];
-window.tileTextures = {};
-window.itemImageCache = {}; // Cache item images for performance
-window.mazeWidth = 0;
-window.mazeHeight = 0;
+window.MazeConfig = {
+    tileSize: 16,
+    zoomLevel: 3,
+    moveSpeed: 16
+};
 
 // -------------------------------------------------------------------------------
-// Canvas2D initialization
+// Canvas2D Initialization
 // -------------------------------------------------------------------------------
 window.initCanvas2D = function (tileDataInput, width, height) {
     console.log("Initializing Canvas2D...");
 
-    window.canvas = document.getElementById("mazeCanvas");
-    if (!window.canvas) {
+    const canvas = document.getElementById("mazeCanvas");
+    if (!canvas) {
         console.error("Canvas element not found!");
         return;
     }
-    window.ctx = window.canvas.getContext("2d");
 
-    // Create an off-screen canvas for double buffering
-    window.bufferCanvas = document.createElement("canvas");
-    window.bufferCanvas.width = width * window.tileSize * window.zoomLevel;
-    window.bufferCanvas.height = height * window.tileSize * window.zoomLevel;
-    window.bufferCtx = window.bufferCanvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
+    const bufferCanvas = document.createElement("canvas");
+    const bufferCtx = bufferCanvas.getContext("2d");
 
-    // Store maze data
-    window.tileData = tileDataInput;
-    window.mazeWidth = width;
-    window.mazeHeight = height;
+    const tileSize = window.MazeConfig.tileSize;
+    const zoomLevel = window.MazeConfig.zoomLevel;
 
-    // Set fixed canvas size for game window (DO NOT SCALE CANVAS)
-    window.canvas.width = 800; // Fixed game window width
-    window.canvas.height = 600; // Fixed game window height
+    bufferCanvas.width = width * tileSize * zoomLevel;
+    bufferCanvas.height = height * tileSize * zoomLevel;
 
-    console.log(`Maze Size: ${width} x ${height}, Canvas: ${canvas.width} x ${canvas.height}`);
+    canvas.width = 800;
+    canvas.height = 600;
 
-    // Load textures and render the maze
+    window.Canvas2DState = {
+        canvas,
+        ctx,
+        bufferCanvas,
+        bufferCtx,
+        tileData: tileDataInput,
+        mazeWidth: width,
+        mazeHeight: height,
+        tileTextures: {},
+        itemImageCache: {},
+        player: null,
+        playerSpriteCache: {},
+        minimapScale: 4
+    };
+
+    // Shared state for Minimap and WebGL
+    window.MazeSharedState = {
+        mazeWidth: width,
+        mazeHeight: height,
+        tileData: tileDataInput
+    };
+
     loadTextures(tileDataInput).then(textures => {
-        window.tileTextures = textures;
-        renderFullMaze();
-        renderViewport();
-    }).catch(error => console.error("Texture loading failed:", error));
+        window.Canvas2DState.tileTextures = textures;
+        renderFullMaze2D();
+        renderViewport2D();
+    });
 
-    // Initialize the minimap
-    initMinimap(tileDataInput, width, height);
+    window.MinimapRenderer.init(tileDataInput, width, height);
 };
 
+
 // -------------------------------------------------------------------------------
-// Maze Rendering
+// Rendering Logic
 // -------------------------------------------------------------------------------
-function renderFullMaze() {
-    const ctx = window.bufferCtx; // Use buffer context for drawing
-    ctx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+function renderFullMaze2D() {
+    const state = window.Canvas2DState;
+    const ctx = state.bufferCtx;
+    ctx.clearRect(0, 0, state.bufferCanvas.width, state.bufferCanvas.height);
 
-    const tileSize = window.tileSize * window.zoomLevel;
+    const tileSize = window.MazeConfig.tileSize * window.MazeConfig.zoomLevel;
 
-    for (let y = 0; y < window.mazeHeight; y++) {
-        for (let x = 0; x < window.mazeWidth; x++) {
-            const tileIndex = y * window.mazeWidth + x;
-            const tileTextureKey = window.tileData[tileIndex];
-            const texture = window.tileTextures[tileTextureKey];
-
+    for (let y = 0; y < state.mazeHeight; y++) {
+        for (let x = 0; x < state.mazeWidth; x++) {
+            const tileIndex = y * state.mazeWidth + x;
+            const tileTextureKey = state.tileData[tileIndex];
+            const texture = state.tileTextures[tileTextureKey];
             if (!texture) continue;
 
-            // Calculate position on the buffer canvas
             const drawX = x * tileSize;
             const drawY = y * tileSize;
-
             ctx.drawImage(texture, drawX, drawY, tileSize, tileSize);
         }
     }
-    renderItems(ctx, tileSize); // Render items on top of the maze
+
+    renderItems2D(ctx, tileSize);
 }
 
-function renderViewport() {
-    const ctx = window.ctx; // Use visible canvas context for drawing
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function renderViewport2D() {
+    const state = window.Canvas2DState;
+    const ctx = state.ctx;
 
-    const tileSize = window.tileSize * window.zoomLevel;
+    ctx.clearRect(0, 0, state.canvas.width, state.canvas.height);
 
-    // Calculate the portion of the buffer canvas to draw
     const sourceX = window.cameraX;
     const sourceY = window.cameraY;
-    const sourceWidth = window.canvas.width;
-    const sourceHeight = window.canvas.height;
 
-    // Draw the portion of the buffer canvas to the visible canvas
-    ctx.drawImage(window.bufferCanvas, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+    ctx.drawImage(
+        state.bufferCanvas,
+        sourceX, sourceY,
+        state.canvas.width, state.canvas.height,
+        0, 0,
+        state.canvas.width, state.canvas.height
+    );
 }
 
-// Load textures for the maze tiles
 function loadTextures(tileData) {
     return new Promise(resolve => {
         const tileTextures = {};
         let loadedCount = 0;
 
         const uniqueTextures = [...new Set(tileData.filter(url => url))];
-        //console.log("Loading Textures:", uniqueTextures);
 
         uniqueTextures.forEach(url => {
             const image = new Image();
             image.onload = () => {
                 tileTextures[url] = image;
                 loadedCount++;
-
                 if (loadedCount === uniqueTextures.length) resolve(tileTextures);
             };
-            image.onerror = () => console.error(`❌ Failed to Load Texture: ${url}`);
+            image.onerror = () => console.error(`Failed to load texture: ${url}`);
             image.src = url;
         });
     });
 }
 
-// -------------------------------------------------------------------------------
-// Item Rendering
-// -------------------------------------------------------------------------------
-// Receive item data from C# and store it globally
-window.updateItemData = function (items) {
-    window.itemData = items; // Store item data globally
-    renderFullMaze(); // Re-render full maze with updated items
-    renderViewport(); // Re-render viewport with updated items
+window.updateItemData2D = function (items) {
+    const state = window.Canvas2DState;
+    state.itemData = items;
+    renderFullMaze2D();
+    renderViewport2D();
 };
 
-// Render items on the maze
-function renderItems(ctx, tileSize) {
-    if (!window.itemData) return;
+function renderItems2D(ctx, tileSize) {
+    const state = window.Canvas2DState;
+    if (!state.itemData) return;
 
-    window.itemData.forEach(item => {
-        if (!window.itemImageCache[item.sprite]) {
+    state.itemData.forEach(item => {
+        if (!state.itemImageCache[item.sprite]) {
             const img = new Image();
             img.src = item.sprite;
-
             img.onload = () => {
-                window.itemImageCache[item.sprite] = img;
-                drawItem(ctx, img, item, tileSize);
+                state.itemImageCache[item.sprite] = img;
+                drawItem2D(ctx, img, item, tileSize);
             };
         } else {
-            const img = window.itemImageCache[item.sprite];
-            drawItem(ctx, img, item, tileSize);
+            const img = state.itemImageCache[item.sprite];
+            drawItem2D(ctx, img, item, tileSize);
         }
     });
 }
 
-function drawItem(ctx, img, item, tileSize) {
-    const drawX = item.x * tileSize;
-    const drawY = item.y * tileSize;
-    ctx.drawImage(img, drawX, drawY, tileSize, tileSize);
+function drawItem2D(ctx, img, item, tileSize) {
+    ctx.drawImage(img, item.x * tileSize, item.y * tileSize, tileSize, tileSize);
 }
 
+window.spawnPlayer2D = function (gridX, gridY, sprite) {
+    const state = window.Canvas2DState;
 
-// -------------------------------------------------------------------------------
-// Player Rendering
-// -------------------------------------------------------------------------------
-// Spawn the player at the specified grid position
-window.spawnPlayer = function (gridX, gridY, sprite) {
-    window.player = {
-        x: gridX, // Logical grid position
-        y: gridY,
-        sprite: sprite
-    };
+    state.player = { x: gridX, y: gridY, sprite };
 
-    // Ensure the camera is positioned to center on the player at the start
-    window.cameraX = (window.player.x * window.tileSize * window.zoomLevel) - (window.canvas.width / 2);
-    window.cameraY = (window.player.y * window.tileSize * window.zoomLevel) - (window.canvas.height / 2);
+    const canvas = state.canvas;
+    window.cameraX = (gridX * window.MazeConfig.tileSize * window.MazeConfig.zoomLevel) - (canvas.width / 2);
+    window.cameraY = (gridY * window.MazeConfig.tileSize * window.MazeConfig.zoomLevel) - (canvas.height / 2);
 
-    // Make sure the camera doesn't go out of bounds
-    enforceCameraBounds();
-
-    // Render everything
-    renderViewport();
-    renderPlayer();
+    enforceCameraBounds(canvas);
+    renderViewport2D();
+    renderPlayer2D();
+    window.MinimapRenderer.updatePlayerPosition(gridX, gridY);
 };
 
-// Render the player on the maze
-// Global Player Image Cache
-window.playerSpriteCache = {};
+window.updatePlayerPosition2D = function (gridX, gridY, sprite) {
+    const state = window.Canvas2DState;
+    const canvas = state.canvas;
 
-window.renderPlayer = function () {
-    const ctx = window.ctx;
+    state.player.x = gridX;
+    state.player.y = gridY;
+    state.player.sprite = sprite;
 
-    // Use Cached Image if Available
-    if (!window.playerSpriteCache[window.player.sprite]) {
+    window.cameraX = (gridX * window.MazeConfig.tileSize * window.MazeConfig.zoomLevel) - (canvas.width / 2);
+    window.cameraY = (gridY * window.MazeConfig.tileSize * window.MazeConfig.zoomLevel) - (canvas.height / 2);
+
+    enforceCameraBounds(canvas);
+    renderViewport2D();
+    renderPlayer2D();
+    window.MinimapRenderer.updatePlayerPosition(gridX, gridY);
+};
+
+window.renderPlayer2D = function () {
+    const state = window.Canvas2DState;
+    const player = state.player;
+    const tileSize = window.MazeConfig.tileSize * window.MazeConfig.zoomLevel;
+    const ctx = state.ctx;
+
+    const drawPlayer = (img) => {
+        const drawX = (player.x * tileSize) - window.cameraX;
+        const drawY = (player.y * tileSize) - window.cameraY;
+        renderViewport2D();
+        ctx.drawImage(img, drawX, drawY, tileSize, tileSize);
+    };
+
+    if (!state.playerSpriteCache[player.sprite]) {
         const img = new Image();
-        img.src = window.player.sprite;
-
+        img.src = player.sprite;
         img.onload = () => {
-            window.playerSpriteCache[window.player.sprite] = img; // Store in Cache
+            state.playerSpriteCache[player.sprite] = img;
             drawPlayer(img);
         };
     } else {
-        drawPlayer(window.playerSpriteCache[window.player.sprite]); // Use Cached Version
+        drawPlayer(state.playerSpriteCache[player.sprite]);
     }
 };
 
-// Extracted Draw Function
-function drawPlayer(img) {
-    const ctx = window.ctx;
-    const tileSize = window.tileSize * window.zoomLevel;
-    const drawX = (window.player.x * tileSize) - window.cameraX;
-    const drawY = (window.player.y * tileSize) - window.cameraY;
+function enforceCameraBounds(canvas) {
+    const mazePixelWidth = window.Canvas2DState.mazeWidth * window.MazeConfig.tileSize * window.MazeConfig.zoomLevel;
+    const mazePixelHeight = window.Canvas2DState.mazeHeight * window.MazeConfig.tileSize * window.MazeConfig.zoomLevel;
 
-    renderViewport();
-    ctx.drawImage(img, drawX, drawY, tileSize, tileSize);
+    const maxCameraX = Math.max(0, mazePixelWidth - canvas.width);
+    const maxCameraY = Math.max(0, mazePixelHeight - canvas.height);
+
+    window.cameraX = Math.max(0, Math.min(window.cameraX, maxCameraX));
+    window.cameraY = Math.max(0, Math.min(window.cameraY, maxCameraY));
 }
 
-
-// Update the player's position on the maze
-window.updatePlayerPosition = function (gridX, gridY, sprite) {
-    window.player.x = gridX;
-    window.player.y = gridY;
-    window.player.sprite = sprite;
-
-    // Center the camera on the player
-    window.cameraX = (gridX * window.tileSize * window.zoomLevel) - (window.canvas.width / 2);
-    window.cameraY = (gridY * window.tileSize * window.zoomLevel) - (window.canvas.height / 2);
-
-    enforceCameraBounds(); // Keep camera inside maze
-    renderViewport();
-    renderPlayer();
-
-    // Update minimap with player's new position
-    updatePlayerOnMinimap(gridX, gridY);
-};
-
 // -------------------------------------------------------------------------------
-// Camera Movement
+// Input and Utility Hooks
 // -------------------------------------------------------------------------------
-// Focus the game screen (called from C#)
 window.focusGameScreen = function () {
     const gameScreen = document.querySelector(".game-screen");
-    if (gameScreen) {
-        gameScreen.focus();
-    }
+    if (gameScreen) gameScreen.focus();
 };
 
-// Clear the overlay (called from C#)
 window.clearOverlay = function () {
     document.getElementById("gameOverlay").style.display = "none";
 };
 
-// Enforce camera bounds to keep it within the maze
-function enforceCameraBounds() {
-    const mazePixelWidth = window.mazeWidth * window.tileSize * window.zoomLevel;
-    const mazePixelHeight = window.mazeHeight * window.tileSize * window.zoomLevel;
-
-    const maxCameraX = Math.max(0, mazePixelWidth - window.canvas.width);
-    const maxCameraY = Math.max(0, mazePixelHeight - window.canvas.height);
-
-    window.cameraX = Math.max(0, Math.min(window.cameraX, maxCameraX));
-    window.cameraY = Math.max(0, Math.min(window.cameraY, maxCameraY));
-
-    //console.log(`Camera Bounds Enforced: X(${window.cameraX}/${maxCameraX}), Y(${window.cameraY}/${maxCameraY})`);
-}
-
-// -------------------------------------------------------------------------------
-// Keyboard Input
-// -------------------------------------------------------------------------------
-// Register key listeners for player movement (called from C#)
 window.registerKeyListeners = (dotNetInstance) => {
     const activeKeys = new Set();
 
-    document.addEventListener("keydown",
-        (event) => {
-            const key = event.key.toLowerCase();
-            if (!activeKeys.has(key)) {
-                activeKeys.add(key);
-                dotNetInstance.invokeMethodAsync("HandleKeyPress", key);
-            }
-        });
+    document.addEventListener("keydown", (event) => {
+        const key = event.key.toLowerCase();
+        if (!activeKeys.has(key)) {
+            activeKeys.add(key);
+            dotNetInstance.invokeMethodAsync("HandleKeyPress", key);
+        }
+    });
 
-    document.addEventListener("keyup",
-        (event) => {
-            const key = event.key.toLowerCase();
-            activeKeys.delete(key);
-            dotNetInstance.invokeMethodAsync("HandleKeyRelease", key);
-        });
+    document.addEventListener("keyup", (event) => {
+        const key = event.key.toLowerCase();
+        activeKeys.delete(key);
+        dotNetInstance.invokeMethodAsync("HandleKeyRelease", key);
+    });
 };
-
-// -------------------------------------------------------------------------------
-// Minimap Rendering
-// -------------------------------------------------------------------------------
-// Initialize the minimap
-function initMinimap(tileData, width, height) {
-    const minimapCanvas = document.getElementById("minimapCanvas");
-    if (!minimapCanvas) {
-        console.error("Minimap canvas not found!");
-        return;
-    }
-
-    const ctx = minimapCanvas.getContext("2d");
-    if (!ctx) {
-        console.error("2D context not supported for minimap!");
-        return;
-    }
-
-    const scale = 4; // Minimap scale factor (4px per tile)
-    minimapCanvas.width = width * scale;
-    minimapCanvas.height = height * scale;
-
-    // Disable smoothing for sharp pixel-based rendering
-    ctx.imageSmoothingEnabled = false;
-
-    console.log(`Initializing Minimap (${width} x ${height})`);
-
-    // Predefine colors for walls, floors, and unexplored areas
-    const wallColor = "#222"; // Dark gray for walls
-    const floorColor = "#DDD"; // Light gray for walkable paths
-    const fogColor = "#000"; // Completely black for unexplored areas
-
-    // Initialize fog of war to fully hidden
-    window.fogOfWar = Array.from({ length: height }, () => Array(width).fill(true));
-
-    // Draw fully hidden minimap initially
-    ctx.fillStyle = fogColor;
-    ctx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
-
-    //console.log("Minimap Initialized with Full Fog of War");
-}
-
-// Render the minimap
-window.renderMinimap = function () {
-    const minimapCanvas = document.getElementById("minimapCanvas");
-    if (!minimapCanvas) {
-        console.error("Minimap canvas not found!");
-        return;
-    }
-
-    const ctx = minimapCanvas.getContext("2d");
-    const scale = 4; // Minimap scale
-
-    ctx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height); // Clear previous minimap
-
-    // Predefine colors for walls, floors, and unexplored areas
-    const wallColor = "#AAA";  // Dark gray for walls
-    const floorColor = "#FFF"; // White for revealed areas (fix!)
-    const fogColor = "#000";   // Black for unexplored areas
-
-    for (let y = 0; y < window.mazeHeight; y++) {
-        for (let x = 0; x < window.mazeWidth; x++) {
-            const tileIndex = y * window.mazeWidth + x;
-            const tileType = window.tileData[tileIndex];
-
-            if (!tileType) continue;
-
-            // If the tile is NOT revealed, keep it black (fog)
-            if (!window.fogOfWar[y][x]) {
-                ctx.fillStyle = fogColor;
-            } else {
-                // Reveal walls and floors properly
-                ctx.fillStyle = tileType.includes("wall") ? wallColor : floorColor;
-            }
-
-            ctx.fillRect(x * scale, y * scale, scale, scale);
-        }
-    }
-
-}
-
-// Reveal an area around the player on the minimap
-function revealMinimapArea(playerX, playerY, radius = 3) {
-    const width = window.mazeWidth;
-    const height = window.mazeHeight;
-
-    for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-            const nx = playerX + dx;
-            const ny = playerY + dy;
-
-            if (nx >= 0 && ny >= 0 && nx < width && ny < height) {
-                window.fogOfWar[ny][nx] = true; // Mark as revealed (fix!)
-            }
-        }
-    }
-
-    renderMinimap(); // Update minimap immediately
-}
-
-// Animate the player marker on the minimap
-function animatePlayerMarker(ctx, x, y, scale) {
-    playerBlinkState += blinkDirection;
-    if (playerBlinkState <= 0.3 || playerBlinkState >= 1.0) {
-        blinkDirection *= -1; // Reverse direction for smooth blinking
-    }
-
-    ctx.globalAlpha = playerBlinkState; // Apply opacity
-    ctx.fillStyle = "red";
-    ctx.fillRect(x * scale, y * scale, scale, scale);
-    ctx.globalAlpha = 1.0; // Reset opacity for other elements
-
-    requestAnimationFrame(() => animatePlayerMarker(ctx, x, y, scale)); // Keep animating
-}
-
-// Update the player's position on the minimap
-window.updatePlayerOnMinimap = function (playerX, playerY) {
-    const minimapCanvas = document.getElementById("minimapCanvas");
-    if (!minimapCanvas) {
-        console.error("Minimap canvas not found!");
-        return;
-    }
-
-    const ctx = minimapCanvas.getContext("2d");
-    if (!ctx) {
-        console.error("2D context not supported for minimap!");
-        return;
-    }
-
-    const scale = 4; // Minimap scale factor (make sure it's correct)
-
-    if (playerX < 0 || playerX >= window.mazeWidth || playerY < 0 || playerY >= window.mazeHeight) {
-        console.warn(`⚠️ Player position (${playerX}, ${playerY}) is out of minimap bounds.`);
-        return;
-    }
-
-    //console.log(`📍 Updating player position on minimap: (${playerX}, ${playerY})`);
-
-    // Update fog of war and render minimap first
-    revealMinimapArea(playerX, playerY);
-    renderMinimap(); // Ensure previous markers are cleared
-
-    // Draw the player marker ON TOP without leaving a trail
-    ctx.fillStyle = "red";
-    const dotSize = scale * 8; // Increase the size of the red dot
-    ctx.fillRect((playerX * scale) - (dotSize / 4), (playerY * scale) - (dotSize / 4), dotSize, dotSize);
-
-    //console.log(`Player dot drawn at (${playerX * scale}, ${playerY * scale}) on minimap.`);
-}

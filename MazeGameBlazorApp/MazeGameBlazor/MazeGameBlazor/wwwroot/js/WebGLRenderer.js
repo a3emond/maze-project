@@ -285,10 +285,20 @@ window.player = {
     texture: null // WebGL texture
 };
 
+window.playerTextureCache = {}; // Cache sprite textures by URL
+
 window.spawnPlayerWebGL = function (gridX, gridY, sprite) {
     window.player.x = gridX;
     window.player.y = gridY;
     window.player.sprite = sprite;
+
+    const cached = window.playerTextureCache[sprite];
+    if (cached) {
+        window.player.texture = cached;
+        centerCameraOnPlayer(gridX, gridY);
+        renderWebGL();
+        return;
+    }
 
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -300,36 +310,39 @@ window.spawnPlayerWebGL = function (gridX, gridY, sprite) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
         window.player.texture = texture;
+        window.playerTextureCache[sprite] = texture;
 
-        // Camera center
-        const canvas = window.canvas;
-        window.cameraX = (gridX * window.tileSize * window.zoomLevel) - (canvas.width / 2);
-        window.cameraY = (gridY * window.tileSize * window.zoomLevel) - (canvas.height / 2);
-        enforceCameraBoundsWebGL();
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-        renderWebGL(); // Initial draw with player
+        centerCameraOnPlayer(gridX, gridY);
+        renderWebGL();
     };
     img.src = sprite;
 };
 
 window.updatePlayerPositionWebGL = function (x, y, sprite) {
-    window.player.x = x;
-    window.player.y = y;
-
     if (window.player.sprite !== sprite) {
-        window.spawnPlayerWebGL(x, y, sprite); // Reload texture if it changed
+        // Re-invoke spawn with new sprite (will use cache if available)
+        window.spawnPlayerWebGL(x, y, sprite);
         return;
     }
 
-    // Center the camera
+    window.player.x = x;
+    window.player.y = y;
+
+    centerCameraOnPlayer(x, y);
+    renderWebGL();
+};
+
+function centerCameraOnPlayer(x, y) {
     const canvas = window.canvas;
     window.cameraX = (x * window.tileSize * window.zoomLevel) - (canvas.width / 2);
     window.cameraY = (y * window.tileSize * window.zoomLevel) - (canvas.height / 2);
     enforceCameraBoundsWebGL();
-
-    renderWebGL();
-};
+}
 
 function enforceCameraBoundsWebGL() {
     const mazePixelWidth = window.mazeWidth * window.tileSize * window.zoomLevel;

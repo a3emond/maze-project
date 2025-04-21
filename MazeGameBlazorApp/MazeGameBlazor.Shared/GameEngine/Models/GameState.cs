@@ -4,6 +4,8 @@ namespace MazeGameBlazor.Shared.GameEngine.Models;
 
 public class GameState
 {
+
+    // class that holds the state of the game (shared between server and client)
     public Maze? Maze { get; set; }
     public Player? Player { get; set; }
     public bool GameStarted { get; set; }

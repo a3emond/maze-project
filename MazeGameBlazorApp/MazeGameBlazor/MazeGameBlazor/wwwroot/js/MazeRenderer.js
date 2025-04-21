@@ -1,5 +1,8 @@
-﻿// log to console
+﻿// -------------------------------------------------------------------------------
+// MazeRenderer Wrapper
+// -------------------------------------------------------------------------------
 console.log("MazeRenderer.js loaded.");
+
 function supportsWebGL() {
     try {
         const canvas = document.createElement("canvas");
@@ -14,7 +17,7 @@ function supportsWebGL() {
 }
 
 window.MazeRenderer = {
-    rendererType: "canvas2d", // Default (will be overridden)
+    rendererType: "canvas2d",
 
     init: function (tileData, width, height) {
         console.log("MazeRenderer.init called.");
@@ -31,6 +34,12 @@ window.MazeRenderer = {
             window.initCanvas2D(tileData, width, height);
         }
 
+        try {
+            MinimapRenderer.init(tileData, width, height);
+        } catch (err) {
+            console.warn("MinimapRenderer init failed:", err);
+        }
+
         console.log("MazeRenderer using:", this.rendererType);
         window.MazeRendererReady = true;
     },
@@ -39,7 +48,7 @@ window.MazeRenderer = {
         if (this.rendererType === "webgl") {
             window.renderWebGL();
         } else {
-            window.renderViewport();
+            renderViewport2D();
         }
     },
 
@@ -47,7 +56,11 @@ window.MazeRenderer = {
         if (this.rendererType === "webgl") {
             window.spawnPlayerWebGL(x, y, sprite);
         } else {
-            window.spawnPlayer(x, y, sprite);
+            window.spawnPlayer2D(x, y, sprite);
+        }
+
+        if (typeof MinimapRenderer?.updatePlayerPosition === "function") {
+            MinimapRenderer.updatePlayerPosition(x, y);
         }
     },
 
@@ -55,7 +68,11 @@ window.MazeRenderer = {
         if (this.rendererType === "webgl") {
             window.updatePlayerPositionWebGL(x, y, sprite);
         } else {
-            window.updatePlayerPosition(x, y, sprite);
+            window.updatePlayerPosition2D(x, y, sprite);
+        }
+
+        if (typeof MinimapRenderer?.updatePlayerPosition === "function") {
+            MinimapRenderer.updatePlayerPosition(x, y);
         }
     },
 
@@ -63,11 +80,16 @@ window.MazeRenderer = {
         if (this.rendererType === "webgl") {
             window.updateItemDataWebGL(items);
         } else {
-            window.updateItemData(items);
+            window.updateItemData2D(items);
+        }
+    },
+
+    setGoal: function (x, y) {
+        if (typeof MinimapRenderer?.setGoal === "function") {
+            MinimapRenderer.setGoal(x, y);
         }
     }
 };
 
-// Ensure global flags are defined before any C# interop
 window.MazeRendererReady = false;
-window.MazeRendererType = "canvas2d"; // Will be overwritten by init()
+window.MazeRendererType = "canvas2d";

@@ -32,18 +32,17 @@ namespace MazeGameBlazor.Client
             var spriteGrid = _gameService.GenerateSpriteGrid(_state.Maze);
             var flattened = spriteGrid.Cast<string>().ToArray();
 
-            await _js.InvokeVoidAsync("initCanvas2D", flattened, _state.Maze.Width, _state.Maze.Height);
+            await MazeInterop.InitRendererAsync(_js, MazeRendererType.Canvas2D, flattened, _state.Maze.Width, _state.Maze.Height);
 
             var items = _state.Maze.ItemGrid.GetAllItems().Select(i => new { i.X, i.Y, i.Sprite }).ToList();
-            await _js.InvokeVoidAsync("updateItemData", items);
+            await MazeInterop.UpdateItemsAsync(_js, MazeRendererType.Canvas2D, items);
 
             _state.MazeInitialized = true;
             if (NotifyUi is not null)
                 await NotifyUi.Invoke();
-
         }
 
-        public Func<Task>? NotifyUi { get; set; }
+        public Func<Task>? NotifyUi { get; set; } // to notify the UI when the maze is initialized
 
         public async Task StartGameAsync()
         {
@@ -52,13 +51,11 @@ namespace MazeGameBlazor.Client
             var (x, y) = _state.Maze?.StartPosition ?? (0, 0);
             _state.Player = new Player(x, y, _state.Maze);
 
-            await _js.InvokeVoidAsync("clearOverlay");
-            await _js.InvokeVoidAsync("spawnPlayer", x, y, _state.Player.GetCurrentSprite());
-            await _js.InvokeVoidAsync("updatePlayerOnMinimap", x, y);
-        }
+            await _js.InvokeVoidAsync("clearOverlay"); // No corresponding MazeInterop method for this
+            await MazeInterop.SpawnPlayerAsync(_js, MazeRendererType.Canvas2D, x, y, _state.Player.GetCurrentSprite());
+        } 
 
         public Task OnAlgorithmChangeAsync() => InitializeAsync();
-
 
         public void RestartGame()
         {
@@ -66,12 +63,13 @@ namespace MazeGameBlazor.Client
             _state.GameRunning = false;
             _ = InitializeAsync();
         }
-        public async Task FocusGameScreenAsync()
+
+        public async Task FocusGameScreenAsync() // helper method to focus the game screen on start
         {
-            await _js.InvokeVoidAsync("focusGameScreen");
+            await _js.InvokeVoidAsync("focusGameScreen"); // No corresponding MazeInterop method for this
         }
 
-
+        // handle keypress/release to void jerky movement ( as long as the key is pressed, the player moves)
         public async Task HandleKeyPressAsync(string key)
         {
             var direction = key switch
@@ -105,7 +103,7 @@ namespace MazeGameBlazor.Client
                 _inputManager.Release(direction);
         }
 
-        public async Task TickLoopAsync()
+        public async Task TickLoopAsync() // this is the main game loop
         {
             if (_loopRunning || !_state.GameStarted || _state.Player == null) return;
 
@@ -115,7 +113,7 @@ namespace MazeGameBlazor.Client
                 var dir = _inputManager.GetLastDirection();
                 _state.Player.Move(dir, _state.Maze);
 
-                await _js.InvokeVoidAsync("updatePlayerPosition", _state.Player.X, _state.Player.Y, _state.Player.GetCurrentSprite());
+                await MazeInterop.UpdatePlayerAsync(_js, MazeRendererType.Canvas2D, _state.Player.X, _state.Player.Y, _state.Player.GetCurrentSprite());
                 _state.Player.TryPickupItem(_state.Maze);
 
                 await Task.Delay(30);
