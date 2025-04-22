@@ -4,10 +4,18 @@
 window.cameraX = 0;
 window.cameraY = 0;
 
+window.playerLightRadius = 3; // default light radius
+
 window.MazeConfig = {
     tileSize: 16,
     zoomLevel: 3,
     moveSpeed: 16
+};
+
+window.setPlayerLightRadius = function (radius) {
+    console.log("Canvas2D setPlayerLightRadius:", radius);
+    window.playerLightRadius = radius;
+    renderViewport2D();
 };
 
 // -------------------------------------------------------------------------------
@@ -50,7 +58,6 @@ window.initCanvas2D = function (tileDataInput, width, height) {
         minimapScale: 4
     };
 
-    // Shared state for Minimap and WebGL
     window.MazeSharedState = {
         mazeWidth: width,
         mazeHeight: height,
@@ -66,10 +73,6 @@ window.initCanvas2D = function (tileDataInput, width, height) {
     window.MinimapRenderer.init(tileDataInput, width, height);
 };
 
-
-// -------------------------------------------------------------------------------
-// Rendering Logic
-// -------------------------------------------------------------------------------
 function renderFullMaze2D() {
     const state = window.Canvas2DState;
     const ctx = state.bufferCtx;
@@ -109,6 +112,8 @@ function renderViewport2D() {
         0, 0,
         state.canvas.width, state.canvas.height
     );
+
+    renderPlayer2D();
 }
 
 function loadTextures(tileData) {
@@ -172,7 +177,6 @@ window.spawnPlayer2D = function (gridX, gridY, sprite) {
 
     enforceCameraBounds(canvas);
     renderViewport2D();
-    renderPlayer2D();
     window.MinimapRenderer.updatePlayerPosition(gridX, gridY);
 };
 
@@ -189,7 +193,6 @@ window.updatePlayerPosition2D = function (gridX, gridY, sprite) {
 
     enforceCameraBounds(canvas);
     renderViewport2D();
-    renderPlayer2D();
     window.MinimapRenderer.updatePlayerPosition(gridX, gridY);
 };
 
@@ -199,10 +202,23 @@ window.renderPlayer2D = function () {
     const tileSize = window.MazeConfig.tileSize * window.MazeConfig.zoomLevel;
     const ctx = state.ctx;
 
+    const drawX = (player.x * tileSize) - window.cameraX;
+    const drawY = (player.y * tileSize) - window.cameraY;
+
+    // Draw fog gradient first
+    const radius = window.playerLightRadius * tileSize;
+    const gradient = ctx.createRadialGradient(
+        drawX + tileSize / 2, drawY + tileSize / 2, tileSize / 4,
+        drawX + tileSize / 2, drawY + tileSize / 2, radius
+    );
+
+    gradient.addColorStop(0, "rgba(255,255,255,0.05)");
+    gradient.addColorStop(1, "rgba(0,0,0,0.95)");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, state.canvas.width, state.canvas.height);
+
     const drawPlayer = (img) => {
-        const drawX = (player.x * tileSize) - window.cameraX;
-        const drawY = (player.y * tileSize) - window.cameraY;
-        renderViewport2D();
         ctx.drawImage(img, drawX, drawY, tileSize, tileSize);
     };
 
@@ -229,15 +245,10 @@ function enforceCameraBounds(canvas) {
     window.cameraY = Math.max(0, Math.min(window.cameraY, maxCameraY));
 }
 
-// -------------------------------------------------------------------------------
-// Input and Utility Hooks
-// -------------------------------------------------------------------------------
 window.focusGameScreen = function () {
     const gameScreen = document.querySelector(".game-screen");
     if (gameScreen) gameScreen.focus();
 };
-
-
 
 window.registerKeyListeners = (dotNetInstance) => {
     const activeKeys = new Set();
