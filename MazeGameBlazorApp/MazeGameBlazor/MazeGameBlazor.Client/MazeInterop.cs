@@ -37,6 +37,10 @@ namespace MazeGameBlazor.Client
             await js.InvokeVoidAsync("MazeRenderer.setGoal", x, y);
         }
 
+        public static async Task SetLightRadiusAsync(IJSRuntime js, int radius)
+        {
+            await js.InvokeVoidAsync("setPlayerLightRadius", radius);
+        }
 
     }
 }

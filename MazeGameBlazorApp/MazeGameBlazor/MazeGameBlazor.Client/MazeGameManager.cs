@@ -149,6 +149,8 @@ namespace MazeGameBlazor.Client
                     await EndGameAsync();
                     break;
                 }
+                await MazeInterop.SetLightRadiusAsync(_js, _state.Player.LightRadius);
+
                 if (_state.StatusEffect == "Guided") // triggered on compass pickup
                 {
                     var goal = _state.Maze.GoalPosition;

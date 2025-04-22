@@ -196,6 +196,9 @@ function setupShaders(gl) {
 // ------------------------------------------------------------------------------------------------
 // SECTION: Tile Drawing with Fog of War
 // ------------------------------------------------------------------------------------------------
+// In your JS WebGLRenderer.js
+// Modify drawTile fog logic to dynamically use updated radius
+
 function drawTile(gl, texture, tileX, tileY, tileSize) {
     const screenX = (tileX * tileSize) - window.cameraX;
     const screenY = (tileY * tileSize) - window.cameraY;
@@ -213,23 +216,25 @@ function drawTile(gl, texture, tileX, tileY, tileSize) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(gl.u_image, 0);
 
-    // === FOG SETTINGS ===
     const pixelTileSize = window.tileSize * window.zoomLevel;
-
-    // Convert player world coords to screen-space directly
     const playerCanvasX = (window.player.x + 0.5) * pixelTileSize - window.cameraX;
     const playerCanvasY = (window.player.y + 0.5) * pixelTileSize - window.cameraY;
 
-    // Send fog data
-    gl.uniform1f(gl.u_canvasHeight, gl.canvas.height);
-
     gl.uniform2f(gl.u_playerScreenPos, playerCanvasX, playerCanvasY);
     gl.uniform1f(gl.u_lightRadius, (window.playerLightRadius || 5) * pixelTileSize);
-    gl.uniform4f(gl.u_overlayColor, 0.0, 0.0, 0.0, 1.0); // Full darkness at edges
+    gl.uniform4f(gl.u_overlayColor, 0.0, 0.0, 0.0, 1.0);
+
+    gl.uniform1f(gl.u_canvasHeight, gl.canvas.height);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
+
+// === New API to dynamically update the radius ===
+window.setPlayerLightRadius = function (radiusInTiles) {
+    window.playerLightRadius = radiusInTiles;
+    requestRedraw();
+};
 
 
 
