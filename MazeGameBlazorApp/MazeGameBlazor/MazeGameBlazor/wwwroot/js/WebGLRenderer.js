@@ -1,9 +1,17 @@
-﻿// Optimized WebGLRenderer.js with Debug Statements, Alpha Fix, and Defensive Checks
+﻿// ==========================================================================================
+// WebGLRenderer.js - Optimized and Structured for Fog of War Support and Player Preload
+// ==========================================================================================
 
+// ------------------------------------------------------------------------------------------------
+// SECTION: Global Data Stores
+// ------------------------------------------------------------------------------------------------
 window.itemData = [];
 window.itemTextureCache = {};
 window.playerTextureCache = {};
-window.tileTextures = {}; // Global texture cache
+window.tileTextures = {}; // Global tile texture cache
+window.extraLights = []; // Dynamic light sources for Fog of War
+window.playerLightRadius = 3; // in tiles, adjust as needed
+
 
 let sharedQuadBuffer;
 let needsRedraw = true;
@@ -13,6 +21,36 @@ window.cameraY = 0;
 window.tileSize = 16;
 window.zoomLevel = 3;
 
+// ------------------------------------------------------------------------------------------------
+// SECTION: Fog of War Interop
+// ------------------------------------------------------------------------------------------------
+window.updateFogOfWar = function (type, sources) {
+    if (type !== "webgl") return;
+
+    window.extraLights = sources.map(s => ({
+        x: s.x,
+        y: s.y,
+        radius: s.radius
+    }));
+
+    requestRedraw();
+};
+
+
+
+// ------------------------------------------------------------------------------------------------
+// SECTION: Player Data Container
+// ------------------------------------------------------------------------------------------------
+window.player = {
+    x: 0,
+    y: 0,
+    sprite: null,
+    texture: null // WebGL texture reference
+};
+
+// ------------------------------------------------------------------------------------------------
+// SECTION: WebGL Initialization
+// ------------------------------------------------------------------------------------------------
 window.initWebGL = function (tileDataInput, width, height) {
     console.log("Initializing WebGL...");
 
@@ -31,8 +69,6 @@ window.initWebGL = function (tileDataInput, width, height) {
     canvas.width = 800;
     canvas.height = 600;
 
-    console.log("Canvas and GL initialized", { width, height });
-
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -44,17 +80,45 @@ window.initWebGL = function (tileDataInput, width, height) {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     loadTexturesWebGL(tileDataInput).then(() => {
-        console.log("All textures loaded. Starting render.");
         requestRedraw();
         window.renderIfNeeded();
     });
 };
 
-console.log("initWebGL function is ready:", typeof window.initWebGL);
+// ------------------------------------------------------------------------------------------------
+// SECTION: Shader Setup
+// ------------------------------------------------------------------------------------------------
+
+function createShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error("Shader compile error:", gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+    }
+
+    return shader;
+}
+
+function createProgram(gl, vertexShader, fragmentShader) {
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error("Shader link error:", gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+        return null;
+    }
+
+    return program;
+}
 
 function setupShaders(gl) {
-    console.log("Setting up shaders...");
-
     const vertexShaderSource = `
         attribute vec2 a_position;
         attribute vec2 a_texCoord;
@@ -78,8 +142,29 @@ function setupShaders(gl) {
         varying vec2 v_texCoord;
         uniform sampler2D u_image;
 
+        uniform vec4 u_overlayColor;
+        uniform vec2 u_playerScreenPos;
+        uniform float u_lightRadius;
+        uniform float u_canvasHeight;
+
         void main() {
-            gl_FragColor = texture2D(u_image, v_texCoord);
+            vec4 base = texture2D(u_image, v_texCoord);
+
+            // Flip Y to match canvas screen coords
+            vec2 fragPos = vec2(gl_FragCoord.x, u_canvasHeight - gl_FragCoord.y);
+            float dist = distance(fragPos, u_playerScreenPos);
+
+            // Gradient alpha falloff
+            float alpha = pow(smoothstep(0.0, u_lightRadius, dist), 1.2);
+
+            // Blueish fog fading to black
+            vec4 fog = mix(
+                vec4(0.0, 0.1, 0.2, 0.05),  // soft glow near center
+                vec4(0.0, 0.0, 0.0, 1.0),   // full black far away
+                alpha
+            );
+
+            gl_FragColor = mix(base, fog, fog.a);
         }
     `;
 
@@ -90,50 +175,68 @@ function setupShaders(gl) {
     gl.useProgram(program);
     gl.program = program;
 
+    // === Attributes ===
     gl.a_position = gl.getAttribLocation(program, "a_position");
     gl.a_texCoord = gl.getAttribLocation(program, "a_texCoord");
-    gl.u_resolution = gl.getUniformLocation(program, "u_resolution");
-    gl.u_image = gl.getUniformLocation(program, "u_image");
-    gl.u_offset = gl.getUniformLocation(program, "u_offset");
-
     gl.enableVertexAttribArray(gl.a_position);
     gl.enableVertexAttribArray(gl.a_texCoord);
 
-    console.log("Shader setup complete", {
-        a_position: gl.a_position,
-        a_texCoord: gl.a_texCoord,
-        u_resolution: gl.u_resolution,
-        u_image: gl.u_image,
-        u_offset: gl.u_offset
-    });
+    // === Uniforms ===
+    gl.u_resolution = gl.getUniformLocation(program, "u_resolution");
+    gl.u_image = gl.getUniformLocation(program, "u_image");
+    gl.u_offset = gl.getUniformLocation(program, "u_offset");
+    gl.u_overlayColor = gl.getUniformLocation(program, "u_overlayColor");
+    gl.u_playerScreenPos = gl.getUniformLocation(program, "u_playerScreenPos");
+    gl.u_lightRadius = gl.getUniformLocation(program, "u_lightRadius");
+    gl.u_canvasHeight = gl.getUniformLocation(program, "u_canvasHeight");
 }
 
-function createShader(gl, type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error("Shader compile failed:", gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-        return null;
-    }
-    return shader;
+
+
+// ------------------------------------------------------------------------------------------------
+// SECTION: Tile Drawing with Fog of War
+// ------------------------------------------------------------------------------------------------
+function drawTile(gl, texture, tileX, tileY, tileSize) {
+    const screenX = (tileX * tileSize) - window.cameraX;
+    const screenY = (tileY * tileSize) - window.cameraY;
+
+    if (screenX + tileSize < 0 || screenX > gl.canvas.width ||
+        screenY + tileSize < 0 || screenY > gl.canvas.height) return;
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, sharedQuadBuffer);
+    gl.vertexAttribPointer(gl.a_position, 2, gl.FLOAT, false, 16, 0);
+    gl.vertexAttribPointer(gl.a_texCoord, 2, gl.FLOAT, false, 16, 8);
+
+    gl.uniform2f(gl.u_resolution, gl.canvas.width, gl.canvas.height);
+    gl.uniform2f(gl.u_offset, screenX, screenY);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.uniform1i(gl.u_image, 0);
+
+    // === FOG SETTINGS ===
+    const pixelTileSize = window.tileSize * window.zoomLevel;
+
+    // Convert player world coords to screen-space directly
+    const playerCanvasX = (window.player.x + 0.5) * pixelTileSize - window.cameraX;
+    const playerCanvasY = (window.player.y + 0.5) * pixelTileSize - window.cameraY;
+
+    // Send fog data
+    gl.uniform1f(gl.u_canvasHeight, gl.canvas.height);
+
+    gl.uniform2f(gl.u_playerScreenPos, playerCanvasX, playerCanvasY);
+    gl.uniform1f(gl.u_lightRadius, (window.playerLightRadius || 5) * pixelTileSize);
+    gl.uniform4f(gl.u_overlayColor, 0.0, 0.0, 0.0, 1.0); // Full darkness at edges
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
-function createProgram(gl, vShader, fShader) {
-    const program = gl.createProgram();
-    gl.attachShader(program, vShader);
-    gl.attachShader(program, fShader);
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error("Program link failed:", gl.getProgramInfoLog(program));
-        return null;
-    }
-    return program;
-}
 
+
+
+// ------------------------------------------------------------------------------------------------
+// SECTION: Buffer Initialization
+// ------------------------------------------------------------------------------------------------
 function setupBuffers(gl) {
-    console.log("Setting up shared quad buffer...");
     sharedQuadBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, sharedQuadBuffer);
 
@@ -147,90 +250,22 @@ function setupBuffers(gl) {
         size, size, 1, 1
     ]);
 
-
     gl.bufferData(gl.ARRAY_BUFFER, quadData, gl.STATIC_DRAW);
-    console.log("Buffer initialized");
 }
 
-
+// ------------------------------------------------------------------------------------------------
+// SECTION: Redraw Control
+// ------------------------------------------------------------------------------------------------
 function requestRedraw() {
     needsRedraw = true;
 }
 
 window.renderIfNeeded = function () {
     if (needsRedraw) {
-        console.log("Calling renderWebGL...");
         renderWebGL();
         needsRedraw = false;
     }
 };
-
-function loadTexturesWebGL(tileData) {
-    return new Promise((resolve) => {
-        const gl = window.gl;
-        let loadedCount = 0;
-        const uniqueTextures = [...new Set(tileData.filter(url => url))];
-        const total = uniqueTextures.length;
-
-
-        if (total === 0) return resolve();
-
-        uniqueTextures.forEach(url => {
-            if (window.tileTextures[url]) {
-                loadedCount++;
-                if (loadedCount === total) resolve();
-                return;
-            }
-
-            const image = new Image();
-            image.crossOrigin = "anonymous";
-
-            image.onload = () => {
-                const texture = gl.createTexture();
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-                window.tileTextures[url] = texture;
-
-                loadedCount++;
-                if (loadedCount === total) resolve();
-            };
-
-            image.onerror = () => {
-                console.error("Failed to load texture:", url);
-                loadedCount++;
-                if (loadedCount === total) resolve();
-            };
-
-            image.src = url;
-        });
-    });
-}
-
-function drawTile(gl, texture, tileX, tileY, tileSize) {
-    const screenX = (tileX * tileSize) - window.cameraX;
-    const screenY = (tileY * tileSize) - window.cameraY;
-
-    if (screenX + tileSize < 0 || screenX > gl.canvas.width ||
-        screenY + tileSize < 0 || screenY > gl.canvas.height) return;
-
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, sharedQuadBuffer);
-    gl.vertexAttribPointer(gl.a_position, 2, gl.FLOAT, false, 16, 0);
-    gl.vertexAttribPointer(gl.a_texCoord, 2, gl.FLOAT, false, 16, 8);
-
-    gl.uniform2f(gl.u_resolution, gl.canvas.width, gl.canvas.height);
-    gl.uniform2f(gl.u_offset, screenX, screenY);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(gl.u_image, 0);
-
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-}
 
 function renderWebGL() {
     const gl = window.gl;
@@ -240,7 +275,6 @@ function renderWebGL() {
     const startX = Math.floor(window.cameraX / tileSize);
     const startY = Math.floor(window.cameraY / tileSize);
 
-
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -249,10 +283,7 @@ function renderWebGL() {
             if (x < 0 || y < 0 || x >= window.mazeWidth || y >= window.mazeHeight) continue;
             const index = y * window.mazeWidth + x;
             const textureKey = window.tileData[index];
-            if (!textureKey || !window.tileTextures[textureKey]) {
-                console.warn("Missing texture:", textureKey, "at", x, y);
-                continue;
-            }
+            if (!textureKey || !window.tileTextures[textureKey]) continue;
             drawTile(gl, window.tileTextures[textureKey], x, y, tileSize);
         }
     }
@@ -265,9 +296,50 @@ function renderWebGL() {
     if (window.player.texture) {
         drawTile(gl, window.player.texture, window.player.x, window.player.y, tileSize);
     }
-
 }
 
+// ------------------------------------------------------------------------------------------------
+// SECTION: Texture Loader
+// ------------------------------------------------------------------------------------------------
+function loadTexturesWebGL(tileData) {
+    return new Promise((resolve) => {
+        const gl = window.gl;
+        const uniqueTextures = [...new Set(tileData.filter(url => url))];
+        let loadedCount = 0;
+        const total = uniqueTextures.length;
+
+        if (total === 0) return resolve();
+
+        uniqueTextures.forEach(url => {
+            if (window.tileTextures[url]) {
+                loadedCount++;
+                if (loadedCount === total) resolve();
+                return;
+            }
+
+            const image = new Image();
+            image.crossOrigin = "anonymous";
+            image.onload = () => {
+                const texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                window.tileTextures[url] = texture;
+                loadedCount++;
+                if (loadedCount === total) resolve();
+            };
+            image.onerror = () => {
+                console.error("Failed to load texture:", url);
+                loadedCount++;
+                if (loadedCount === total) resolve();
+            };
+            image.src = url;
+        });
+    });
+}
 
 //------------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------PLAYER SUPPORT------------------------------------------------------------------

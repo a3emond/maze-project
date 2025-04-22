@@ -2,19 +2,12 @@
 
 public class FogOfWar
 {
-    private bool[,] _visibilityMap;
+    public List<LightSource> Sources { get; } = new();
 
-    public void UpdateFog(int playerX, int playerY, int visionRadius)
+    public void AddLightSource(int x, int y, int radius)
     {
-        for (var y = -visionRadius; y <= visionRadius; y++)
-        for (var x = -visionRadius; x <= visionRadius; x++)
-        {
-            var checkX = playerX + x;
-            var checkY = playerY + y;
-            //if (IsValidTile(checkX, checkY))
-            //{
-            //    visibilityMap[checkY, checkX] = true;
-            //}
-        }
+        Sources.Add(new LightSource(x, y, radius));
     }
+
+    public void Clear() => Sources.Clear();
 }

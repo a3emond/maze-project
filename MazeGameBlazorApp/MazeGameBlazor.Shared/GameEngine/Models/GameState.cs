@@ -6,6 +6,8 @@ public class GameState
 {
     public Maze? Maze { get; set; }
     public Player? Player { get; set; }
+    public FogOfWar FogOfWar { get; set; } = new();
+
     public bool GameStarted { get; set; }
     public bool GameRunning { get; set; }
     public MazeAlgorithmType SelectedAlgorithm { get; set; } = MazeAlgorithmType.RecursiveBacktracking;

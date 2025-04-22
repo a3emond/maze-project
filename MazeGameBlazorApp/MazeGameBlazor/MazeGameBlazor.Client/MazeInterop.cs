@@ -36,5 +36,7 @@ namespace MazeGameBlazor.Client
         {
             await js.InvokeVoidAsync("MazeRenderer.setGoal", x, y);
         }
+
+
     }
 }

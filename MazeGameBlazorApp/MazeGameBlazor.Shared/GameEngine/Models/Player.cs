@@ -9,6 +9,8 @@ public class Player
     private int _frameCounter;
     private Maze _maze;
     private GameState _state;
+    public int LightRadius { get; private set; } = 3;
+
 
 
 
@@ -168,5 +170,8 @@ public class Player
 
     private void IncreaseVisionRadius()
     {
+        LightRadius += 2;
+        _state.StatusEffect = "Vision Radius Increased";
     }
+
 }

@@ -34,6 +34,16 @@ namespace MazeGameBlazor.Client
             var spriteGrid = _gameService.GenerateSpriteGrid(_state.Maze);
             var flattened = spriteGrid.Cast<string>().ToArray();
 
+            var (x, y) = _state.Maze?.StartPosition ?? (0, 0);
+            _state.Player = new Player(x, y, _state.Maze, _state);
+
+            // Set initial player data for early rendering (before WebGL init)
+            await _js.InvokeVoidAsync("eval", $@"
+                window.initialPlayerX = {x};
+                window.initialPlayerY = {y};
+                window.initialPlayerSprite = '{_state.Player.GetCurrentSprite()}';
+            ");
+
             await MazeInterop.InitRendererAsync(_js, _state.RendererType, flattened, _state.Maze.Width, _state.Maze.Height);
 
             var items = _state.Maze.ItemGrid.GetAllItems()
@@ -45,6 +55,8 @@ namespace MazeGameBlazor.Client
             if (NotifyUi is not null)
                 await NotifyUi.Invoke();
         }
+
+
 
         public async Task StartGameAsync()
         {
@@ -128,6 +140,8 @@ namespace MazeGameBlazor.Client
             {
                 var dir = _inputManager.GetLastDirection();
                 _state.Player.Move(dir, _state.Maze);
+
+
 
                 _state.Player.TryPickupItem(_state.Maze);
                 if (_state.CurrentHearts <= 0 && !_state.GameOver) // check for game over (0 life)
