@@ -19,4 +19,7 @@ public class GameState
     public string StatusEffect { get; set; } = "Normal";
     public bool GameOver { get; set; } = false;
 
+    public bool GoalUnlocked { get; set; } = false;
+
+
 }

@@ -109,10 +109,14 @@ namespace MazeGameBlazor.Client
         {
             _state.GameOver = true;
             _state.GameRunning = false;
-            await _js.InvokeVoidAsync("showOverlay", "Game Over", true);
+
+            var message = _state.CurrentHearts <= 0 ? "You Died!" : "You Escaped!";
+            await _js.InvokeVoidAsync("showOverlay", message, true);
+
             if (NotifyUi is not null)
                 await NotifyUi.Invoke();
         }
+
 
 
         public async Task TickLoopAsync()
@@ -131,7 +135,25 @@ namespace MazeGameBlazor.Client
                     await EndGameAsync();
                     break;
                 }
+                if (_state.StatusEffect == "Guided") // triggered on compass pickup
+                {
+                    var goal = _state.Maze.GoalPosition;
+                    await MazeInterop.SetMinimapGoalAsync(_js, goal.x, goal.y);
+                    _state.StatusEffect = "Normal"; //prevent re-trigger
+                }
 
+                var atGoal = _state.Maze.GoalPosition == (_state.Player.X, _state.Player.Y);
+                if (atGoal && _state.GoalUnlocked)
+                {
+                    await EndGameAsync(); 
+                    return;
+                }
+
+                if (atGoal)
+                {
+                    // goal is locked
+                    _state.StatusEffect = "Goal Locked, find the key..."; //TODO: improve this
+                }
 
 
                 await MazeInterop.UpdatePlayerAsync(_js, _state.RendererType, _state.Player.X, _state.Player.Y, _state.Player.GetCurrentSprite());

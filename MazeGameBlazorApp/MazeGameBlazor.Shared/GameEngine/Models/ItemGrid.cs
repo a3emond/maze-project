@@ -50,8 +50,8 @@ namespace MazeGameBlazor.Shared.GameEngine.Models
             var itemsToGenerate = new List<(ItemName name, bool walkable, bool interactable, bool collectible, ItemEffect effect, int count)>
             {
                 (ItemName.Key, false, false, true, ItemEffect.Unlock, 1),
-                (ItemName.Potion, false, true, true, ItemEffect.Heal, 10),
-                (ItemName.Lantern, false, false, true, ItemEffect.LightRadiusIncrease, 3),
+                (ItemName.Potion, false, true, true, ItemEffect.Heal, 15),
+                (ItemName.Lantern, false, false, true, ItemEffect.LightRadiusIncrease, 6),
                 (ItemName.Compass, false, false, true, ItemEffect.ShowDirection, 1),
                 (ItemName.TeleportCircle, true, false, false, ItemEffect.Teleport, 20),
                 (ItemName.Trap, true, false, false, ItemEffect.Damage, 200)
@@ -62,7 +62,6 @@ namespace MazeGameBlazor.Shared.GameEngine.Models
 
         public void SpawnItemsFromList(Maze maze, List<(ItemName name, bool walkable, bool interactable, bool collectible, ItemEffect effect, int count)> itemList)
         {
-            PlaceStartAndGoal(maze);
             var shuffledWalkableTiles = MazeUtils.ShuffleWalkableTiles(maze);
             int tileIndex = 0;
 
@@ -83,33 +82,23 @@ namespace MazeGameBlazor.Shared.GameEngine.Models
                         item.walkable, item.interactable, item.collectible, item.effect);
                 }
             }
+            PlaceStartAndGoal(maze);
+
         }
 
         public void PlaceStartAndGoal(Maze maze)
         {
-            var start = MazeUtils.FindStartPosition(maze);
-            var goal = MazeUtils.FindGoalPosition(maze, start);
+            var start = maze.StartPosition;
+            var goal = maze.GoalPosition;
+
             var startSprite = Item.GetSprite(ItemName.Start);
             var goalSprite = Item.GetSprite(ItemName.Goal);
+
             AddItem(ItemName.Start, start.Item1, start.Item2, startSprite, false, false, false, ItemEffect.None);
             AddItem(ItemName.Goal, goal.Item1, goal.Item2, goalSprite, false, false, false, ItemEffect.None);
         }
 
-        public Item? PickupItem(int x, int y)
-        {
-            var item = GetItemAt(x, y);
 
-            if (item == null)
-                return null;
-
-            if (item.Collectible)
-            {
-                Items.Remove(item);
-                Console.WriteLine($"Picked up: {item.Name}");
-                return item;
-            }
-
-            return item;
-        }
+        
     }
 }

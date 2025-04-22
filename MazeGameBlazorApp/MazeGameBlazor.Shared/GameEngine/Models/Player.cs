@@ -10,6 +10,8 @@ public class Player
     private Maze _maze;
     private GameState _state;
 
+
+
     public Dictionary<string, string[]> Animations = new()
     {
         { "up", [
@@ -123,7 +125,10 @@ public class Player
                 Heal(0.5);
                 break;
             case ItemEffect.Unlock:
+                _state.GoalUnlocked = true;
+                _state.StatusEffect = "Goal Unlocked";
                 break;
+
             case ItemEffect.Teleport:
                 TeleportToRandomLocation();
                 break;

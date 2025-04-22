@@ -63,7 +63,7 @@ window.MinimapRenderer = {
         if (this.goalPosition) {
             const { x, y } = this.goalPosition;
             ctx.fillStyle = "lime";
-            const radius = scale * 2;
+            const radius = scale * 5;
             ctx.beginPath();
             ctx.arc((x + 0.5) * scale, (y + 0.5) * scale, radius, 0, Math.PI * 2);
             ctx.fill();
