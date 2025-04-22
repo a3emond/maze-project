@@ -35,7 +35,7 @@ namespace MazeGameBlazor.Client
             var flattened = spriteGrid.Cast<string>().ToArray();
 
             await MazeInterop.InitRendererAsync(_js, _state.RendererType, flattened, _state.Maze.Width, _state.Maze.Height);
-         
+
             var items = _state.Maze.ItemGrid.GetAllItems()
                 .Select(i => new { i.X, i.Y, i.Sprite }).ToList();
 
@@ -51,16 +51,13 @@ namespace MazeGameBlazor.Client
             _state.GameStarted = true;
 
             var (x, y) = _state.Maze?.StartPosition ?? (0, 0);
-            _state.Player = new Player(x, y, _state.Maze);
+            _state.Player = new Player(x, y, _state.Maze, _state);
 
             await _js.InvokeVoidAsync("clearOverlay");
             await MazeInterop.SpawnPlayerAsync(_js, _state.RendererType, x, y, _state.Player.GetCurrentSprite());
         }
 
-
-        public Func<Task>? NotifyUi { get; set; } // to notify the UI when the maze is initialized
-
-        
+        public Func<Task>? NotifyUi { get; set; }
 
         public Task OnAlgorithmChangeAsync() => InitializeAsync();
 
@@ -71,12 +68,11 @@ namespace MazeGameBlazor.Client
             _ = InitializeAsync();
         }
 
-        public async Task FocusGameScreenAsync() // helper method to focus the game screen on start
+        public async Task FocusGameScreenAsync()
         {
-            await _js.InvokeVoidAsync("focusGameScreen"); // No corresponding MazeInterop method for this
+            await _js.InvokeVoidAsync("focusGameScreen");
         }
 
-        // handle keypress/release to void jerky movement ( as long as the key is pressed, the player moves)
         public async Task HandleKeyPressAsync(string key)
         {
             var direction = key switch
@@ -109,8 +105,17 @@ namespace MazeGameBlazor.Client
             if (direction != null)
                 _inputManager.Release(direction);
         }
+        public async Task EndGameAsync()
+        {
+            _state.GameOver = true;
+            _state.GameRunning = false;
+            await _js.InvokeVoidAsync("showOverlay", "Game Over", true);
+            if (NotifyUi is not null)
+                await NotifyUi.Invoke();
+        }
 
-        public async Task TickLoopAsync() // this is the main game loop
+
+        public async Task TickLoopAsync()
         {
             if (_loopRunning || !_state.GameStarted || _state.Player == null) return;
 
@@ -120,9 +125,21 @@ namespace MazeGameBlazor.Client
                 var dir = _inputManager.GetLastDirection();
                 _state.Player.Move(dir, _state.Maze);
 
-                await MazeInterop.UpdatePlayerAsync(_js, _state.RendererType, _state.Player.X, _state.Player.Y, _state.Player.GetCurrentSprite());
-
                 _state.Player.TryPickupItem(_state.Maze);
+                if (_state.CurrentHearts <= 0 && !_state.GameOver) // check for game over (0 life)
+                {
+                    await EndGameAsync();
+                    break;
+                }
+
+
+
+                await MazeInterop.UpdatePlayerAsync(_js, _state.RendererType, _state.Player.X, _state.Player.Y, _state.Player.GetCurrentSprite());
+                await MazeInterop.UpdateItemsAsync(_js, _state.RendererType,
+                    _state.Maze.ItemGrid.GetAllItems().Select(i => new { i.X, i.Y, i.Sprite }).ToList());
+
+                if (NotifyUi is not null)
+                    await NotifyUi.Invoke();
 
                 await Task.Delay(30);
             }

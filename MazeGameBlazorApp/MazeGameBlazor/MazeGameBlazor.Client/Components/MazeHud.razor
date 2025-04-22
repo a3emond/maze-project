@@ -1,7 +1,6 @@
 ﻿@rendermode InteractiveAuto
 
 <div class="game-hud">
-    <!-- Health Section -->
     <div class="hud-section">
         <span>Health:</span>
         <div class="heart-container">
@@ -12,7 +11,6 @@
         </div>
     </div>
 
-    <!-- Inventory Section -->
     <div class="hud-section">
         <span>Inventory:</span>
         <div class="inventory">
@@ -28,7 +26,6 @@
         </div>
     </div>
 
-    <!-- Timer and Status -->
     <div class="hud-section">
         <span>Time: @Timer</span>
         <span>Status: @StatusEffect</span>
@@ -37,11 +34,21 @@
 
 @code {
     [Parameter] public int MaxHearts { get; set; }
-    [Parameter] public int CurrentHearts { get; set; }
+    [Parameter] public double CurrentHearts { get; set; }
     [Parameter] public string[] InventorySlots { get; set; } = Array.Empty<string>();
     [Parameter] public TimeSpan Timer { get; set; } = TimeSpan.Zero;
     [Parameter] public string StatusEffect { get; set; } = "Normal";
 
-    private string GetHeartImage(int index) =>
-        index < CurrentHearts ? "/assets/hud/health/heart_100.png" : "/assets/hud/health/heart_0.png";
+    private string GetHeartImage(int index)
+    {
+        var value = CurrentHearts - index;
+        return value switch
+        {
+            >= 1.0 => "/assets/hud/health/heart_100.png",
+            >= 0.75 => "/assets/hud/health/heart_75.png",
+            >= 0.5 => "/assets/hud/health/heart_50.png",
+            >= 0.25 => "/assets/hud/health/heart_25.png",
+            _ => "/assets/hud/health/heart_0.png"
+        };
+    }
 }

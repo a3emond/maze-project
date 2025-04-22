@@ -4,43 +4,38 @@ namespace MazeGameBlazor.Shared.GameEngine.Models;
 
 public class Player
 {
-    private const int AnimationSpeed = 10; // Adjust for animation timing
+    private const int AnimationSpeed = 10;
     private int _animationFrame;
     private int _frameCounter;
     private Maze _maze;
+    private GameState _state;
 
     public Dictionary<string, string[]> Animations = new()
     {
         { "up", [
             "/assets/sprites/player/character_walk/up_1.png", "/assets/sprites/player/character_walk/up_2.png",
-                        "/assets/sprites/player/character_walk/up_3.png", "/assets/sprites/player/character_walk/up_4.png"
-            ]
-        },
-
+            "/assets/sprites/player/character_walk/up_3.png", "/assets/sprites/player/character_walk/up_4.png"
+        ]},
         { "down", [
             "/assets/sprites/player/character_walk/down_1.png", "/assets/sprites/player/character_walk/down_2.png",
-                          "/assets/sprites/player/character_walk/down_3.png", "/assets/sprites/player/character_walk/down_4.png"
-            ]
-        },
-
+            "/assets/sprites/player/character_walk/down_3.png", "/assets/sprites/player/character_walk/down_4.png"
+        ]},
         { "left", [
             "/assets/sprites/player/character_walk/left_1.png", "/assets/sprites/player/character_walk/left_2.png",
-                          "/assets/sprites/player/character_walk/left_3.png", "/assets/sprites/player/character_walk/left_4.png"
-            ]
-        },
-
+            "/assets/sprites/player/character_walk/left_3.png", "/assets/sprites/player/character_walk/left_4.png"
+        ]},
         { "right", [
             "/assets/sprites/player/character_walk/right_1.png", "/assets/sprites/player/character_walk/right_2.png",
-                           "/assets/sprites/player/character_walk/right_3.png", "/assets/sprites/player/character_walk/right_4.png"
-            ]
-        }
+            "/assets/sprites/player/character_walk/right_3.png", "/assets/sprites/player/character_walk/right_4.png"
+        ]}
     };
 
-    public Player(int startX, int startY, Maze maze)
+    public Player(int startX, int startY, Maze maze, GameState state)
     {
         X = startX;
         Y = startY;
         _maze = maze;
+        _state = state;
         Direction = "down";
     }
 
@@ -62,7 +57,6 @@ public class Player
 
         Direction = direction;
 
-        // Update position based on direction
         switch (direction)
         {
             case "up":
@@ -82,7 +76,7 @@ public class Player
         Animate();
     }
 
-    private void Animate()  //TODO: Adjust for animation speed
+    private void Animate()
     {
         _frameCounter++;
         if (_frameCounter >= AnimationSpeed)
@@ -92,25 +86,43 @@ public class Player
         }
     }
 
-    public void TryPickupItem(Maze maze)  // TODO: integrate and check for item removal
+    public void TryPickupItem(Maze maze)
     {
-        var item = maze.ItemGrid.PickupItem(X, Y);
+        var item = maze.ItemGrid.GetItemAt(X, Y);
 
         if (item != null)
         {
             ApplyItemEffect(item);
+
+            if (item.Collectible && item.Effect != ItemEffect.Heal)
+            {
+                for (int i = 0; i < _state.InventorySlots.Length; i++)
+                {
+                    if (string.IsNullOrEmpty(_state.InventorySlots[i]))
+                    {
+                        _state.InventorySlots[i] = item.Sprite;
+                        break;
+                    }
+                }
+
+                maze.ItemGrid.RemoveItem(item.X, item.Y);
+            }
+            else if (item.Collectible && item.Effect == ItemEffect.Heal)
+            {
+                maze.ItemGrid.RemoveItem(item.X, item.Y);
+            }
         }
     }
+
 
     private void ApplyItemEffect(Item item)
     {
         switch (item.Effect)
         {
             case ItemEffect.Heal:
-                Heal(10);
+                Heal(0.5);
                 break;
             case ItemEffect.Unlock:
-                // Unlock logic
                 break;
             case ItemEffect.Teleport:
                 TeleportToRandomLocation();
@@ -119,34 +131,28 @@ public class Player
                 IncreaseVisionRadius();
                 break;
             case ItemEffect.ShowDirection:
-                // Show direction logic
+                _state.StatusEffect = "Guided";
                 break;
             case ItemEffect.Damage:
-                TakeDamage(5);
+                TakeDamage(0.25);
                 break;
             default:
                 break;
         }
     }
 
-    private void Heal(int amount)
+    private void Heal(double amount)
     {
-        // Heal logic
-        Console.WriteLine("heal");
+        _state.CurrentHearts = Math.Min(_state.CurrentHearts + amount, _state.MaxHearts);
     }
 
-    private void TakeDamage(int amount)
+    private void TakeDamage(double amount)
     {
-        // Take damage logic
-        Console.WriteLine("damage");
+        _state.CurrentHearts = Math.Max(_state.CurrentHearts - amount, 0);
     }
 
     private void TeleportToRandomLocation()
     {
-        // Teleport logic
-        Console.WriteLine("teleport");
-
-        // update player position with a random walkable tile
         var randomTile = MazeUtils.GetRandomWalkableTile(_maze);
         if (randomTile.HasValue)
         {
@@ -157,7 +163,5 @@ public class Player
 
     private void IncreaseVisionRadius()
     {
-        // Increase vision radius logic
-        Console.WriteLine("increase vision radius");
     }
 }

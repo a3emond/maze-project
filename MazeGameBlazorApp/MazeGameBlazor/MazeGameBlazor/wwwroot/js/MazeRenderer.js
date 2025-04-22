@@ -93,3 +93,28 @@ window.MazeRenderer = {
 
 window.MazeRendererReady = false;
 window.MazeRendererType = "canvas2d";
+
+
+
+// -------------------------------------------------------------------------------
+// Overlay Support
+// -------------------------------------------------------------------------------
+window.showOverlay = function (message = "Paused", showButton = false) {
+    const overlay = document.getElementById("gameOverlay");
+    const status = document.getElementById("gameStatus");
+
+    if (overlay) overlay.style.display = "flex";
+
+    if (status) {
+        status.textContent = message;
+        status.classList.remove("pulse");
+    }
+
+    const btn = overlay.querySelector("button");
+    if (btn) btn.style.display = showButton ? "inline-block" : "none";
+};
+
+window.clearOverlay = function () {
+    const overlay = document.getElementById("gameOverlay");
+    if (overlay) overlay.style.display = "none";
+};

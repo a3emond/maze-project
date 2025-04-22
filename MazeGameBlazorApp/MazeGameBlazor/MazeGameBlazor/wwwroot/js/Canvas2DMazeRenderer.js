@@ -237,9 +237,7 @@ window.focusGameScreen = function () {
     if (gameScreen) gameScreen.focus();
 };
 
-window.clearOverlay = function () {
-    document.getElementById("gameOverlay").style.display = "none";
-};
+
 
 window.registerKeyListeners = (dotNetInstance) => {
     const activeKeys = new Set();

@@ -12,7 +12,6 @@
 <PageTitle>Play the Maze Game</PageTitle>
 
 <div class="game-container">
-    <!-- Game Header and Instructions -->
     <header class="game-header">
         <h1>Maze Game</h1>
         <p>
@@ -23,21 +22,17 @@
         <p>Press Start Button to spawn your character</p>
     </header>
 
-    <!-- Maze Generation Algorithm Selector -->
     <MazeAlgorithmSelector Value="GameState.SelectedAlgorithm"
                            OnChange="GameManager.OnAlgorithmChangeAsync" />
 
-    <!-- Game Canvas + Minimap + Overlay + Loading handled internally -->
     <MazeRenderer OnFocus="GameManager.FocusGameScreenAsync" />
 
-    <!-- Player HUD (Health, Inventory, Status, Timer) -->
     <MazeHud MaxHearts="@GameState.MaxHearts"
              CurrentHearts="@GameState.CurrentHearts"
              InventorySlots="@GameState.InventorySlots"
              Timer="@GameState.Timer"
              StatusEffect="@GameState.StatusEffect" />
 
-    <!-- Game Controls (Start, Restart) -->
     <MazeControls OnStart="@StartGame" OnRestart="@RestartGame" />
 </div>
 
@@ -57,7 +52,6 @@
         _dotNetRef = DotNetObjectReference.Create(this);
         await Js.InvokeVoidAsync("registerKeyListeners", _dotNetRef);
     }
-
 
     private async Task StartGame() => await GameManager.StartGameAsync();
     private void RestartGame() => GameManager.RestartGame();

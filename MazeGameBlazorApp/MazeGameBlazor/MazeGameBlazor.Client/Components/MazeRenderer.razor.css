@@ -40,7 +40,7 @@
     pointer-events: none;
 }
 
-/* Game Overlay (for status messages) */
+/* Game Overlay (for status messages & Game Over) */
 .game-overlay {
     position: absolute;
     top: 0;
@@ -48,21 +48,41 @@
     width: 100%;
     height: 100%;
     backdrop-filter: blur(4px);
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.75);
     color: #fff;
     font-size: 1.8rem;
     font-weight: bold;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 5;
-    pointer-events: none;
     border-radius: 6px;
 }
 
-#gameStatus {
-    animation: pulse 1.5s infinite ease-in-out;
+.overlay-content {
+    text-align: center;
+    background: rgba(30, 30, 30, 0.95);
+    padding: 32px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px #000;
 }
+
+    .overlay-content h2 {
+        margin-bottom: 20px;
+        font-size: 32px;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .overlay-content button {
+        margin-top: 16px;
+        padding: 12px 24px;
+        font-size: 16px;
+        background: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
 
 /* Loading Overlay */
 .loading-overlay {
@@ -137,5 +157,14 @@
 
     .game-screen {
         padding: 8px;
+    }
+
+    .overlay-content h2 {
+        font-size: 24px;
+    }
+
+    .overlay-content button {
+        font-size: 14px;
+        padding: 10px 20px;
     }
 }

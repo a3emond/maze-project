@@ -32,7 +32,7 @@ namespace MazeGameBlazor.Client
             await js.InvokeVoidAsync("MazeRenderer.updateItems", items);
         }
 
-        public static async Task SetMinimapGoalAsync(IJSRuntime js, int x, int y)
+        public static async Task SetMinimapGoalAsync(IJSRuntime js, int x, int y) //TODO : Implement with compass maybe
         {
             await js.InvokeVoidAsync("MazeRenderer.setGoal", x, y);
         }

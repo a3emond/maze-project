@@ -4,9 +4,13 @@
     <canvas id="mazeCanvas"></canvas>
     <canvas id="minimapCanvas"></canvas>
 
-    <div class="game-overlay" id="gameOverlay">
-        <p id="gameStatus">Ready?</p>
+    <div class="game-overlay" id="gameOverlay" style="display: none;">
+        <div class="overlay-content">
+            <h2 id="gameStatus">Game Over</h2>
+            <button onclick="location.reload()">Restart</button>
+        </div>
     </div>
+
 
     @if (!GameState.MazeInitialized)
     {
