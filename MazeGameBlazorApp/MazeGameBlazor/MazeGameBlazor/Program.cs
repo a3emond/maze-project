@@ -115,6 +115,19 @@ public class Program
             DefaultContentType = "application/octet-stream", // Handle different formats
             OnPrepareResponse = ctx => { ctx.Context.Response.Headers.Append("Accept-Ranges", "bytes"); }
         });
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(
+                Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "assets", "audio")),
+            RequestPath = "/assets/audio",
+            ServeUnknownFileTypes = true,
+            DefaultContentType = "audio/mpeg",
+            OnPrepareResponse = ctx =>
+            {
+                ctx.Context.Response.Headers.Append("Accept-Ranges", "bytes");
+            }
+        });
+
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
