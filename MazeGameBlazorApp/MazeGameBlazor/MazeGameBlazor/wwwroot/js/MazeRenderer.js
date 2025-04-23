@@ -118,3 +118,86 @@ window.clearOverlay = function () {
     const overlay = document.getElementById("gameOverlay");
     if (overlay) overlay.style.display = "none";
 };
+
+window.focusGameScreen = function () {
+    const gameScreen = document.querySelector(".game-screen");
+    if (gameScreen) gameScreen.focus();
+};
+window.autoFocusGame = function () {
+    const gameScreen = document.querySelector(".game-screen");
+
+    const focusGame = () => {
+        if (gameScreen) {
+            gameScreen.focus();
+            console.log("[MazeRenderer] Focus restored to .game-screen");
+        }
+    };
+
+    // Restore focus when user switches back to the tab
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+            focusGame();
+        }
+    });
+
+    // Restore focus on mouse/touch return
+    window.addEventListener("focus", focusGame);
+
+    // Optional: restore on pointer move if user didn't click
+    document.addEventListener("pointermove", () => {
+        if (document.activeElement !== gameScreen) {
+            focusGame();
+        }
+    });
+};
+
+
+window.registerKeyListeners = (dotNetInstance) => {
+    const activeKeys = new Set();
+    const gameScreen = document.querySelector(".game-screen");
+
+    const normalizeKey = (key) => key.toLowerCase();
+
+    document.addEventListener("keydown", (event) => {
+        const key = normalizeKey(event.key);
+        if (!activeKeys.has(key)) {
+            activeKeys.add(key);
+            dotNetInstance.invokeMethodAsync("HandleKeyPress", key);
+        }
+    });
+
+    document.addEventListener("keyup", (event) => {
+        const key = normalizeKey(event.key);
+        if (activeKeys.has(key)) {
+            activeKeys.delete(key);
+            dotNetInstance.invokeMethodAsync("HandleKeyRelease", key);
+        }
+    });
+
+    // Clear keys on window blur (e.g. tab switch or click outside)
+    window.addEventListener("blur", () => {
+        for (const key of activeKeys) {
+            dotNetInstance.invokeMethodAsync("HandleKeyRelease", key);
+        }
+        activeKeys.clear();
+    });
+
+    // Also clear on visibility change (minimized, tab switch, etc.)
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            for (const key of activeKeys) {
+                dotNetInstance.invokeMethodAsync("HandleKeyRelease", key);
+            }
+            activeKeys.clear();
+        }
+    });
+
+    // Restore focus on click/tap
+    if (gameScreen) {
+        gameScreen.addEventListener("click", () => {
+            gameScreen.focus();
+        });
+    }
+
+    console.log("MazeRenderer: Key listener registered.");
+};

@@ -245,25 +245,3 @@ function enforceCameraBounds(canvas) {
     window.cameraY = Math.max(0, Math.min(window.cameraY, maxCameraY));
 }
 
-window.focusGameScreen = function () {
-    const gameScreen = document.querySelector(".game-screen");
-    if (gameScreen) gameScreen.focus();
-};
-
-window.registerKeyListeners = (dotNetInstance) => {
-    const activeKeys = new Set();
-
-    document.addEventListener("keydown", (event) => {
-        const key = event.key.toLowerCase();
-        if (!activeKeys.has(key)) {
-            activeKeys.add(key);
-            dotNetInstance.invokeMethodAsync("HandleKeyPress", key);
-        }
-    });
-
-    document.addEventListener("keyup", (event) => {
-        const key = event.key.toLowerCase();
-        activeKeys.delete(key);
-        dotNetInstance.invokeMethodAsync("HandleKeyRelease", key);
-    });
-};

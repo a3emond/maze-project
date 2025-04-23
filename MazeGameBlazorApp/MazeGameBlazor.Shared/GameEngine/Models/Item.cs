@@ -2,7 +2,7 @@
 {
     public class Item
     {
-        private static readonly Dictionary<ItemName, string> SpritePaths = new()
+        public static readonly Dictionary<ItemName, string> SpritePaths = new()
             {
                 { ItemName.Key, "assets/sprites/items/keys/keys_1_1.png" },
                 { ItemName.Potion, "assets/sprites/items/potions/potion_large_red.png" },

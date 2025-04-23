@@ -1,0 +1,67 @@
+﻿@inject IJSRuntime JS
+@using MazeGameBlazor.Shared.GameEngine.Audio
+
+<div class="music-player">
+    <div class="music-display">
+        <span class="music-scroll">
+            @currentTrackName&nbsp;&nbsp;&nbsp;&nbsp;
+            @currentTrackName&nbsp;&nbsp;&nbsp;&nbsp;
+        </span>
+    </div>
+
+
+    <button class="music-button" @onclick="TogglePlay">
+        @(isPlaying ? "Pause" : "Play")
+    </button>
+
+    <button class="music-button" @onclick="NextTrack">
+        Next
+    </button>
+
+    <input type="range" min="0" max="1" step="0.01" value="@volume"
+           @oninput="e => SetVolume(Convert.ToDouble(e.Value?.ToString()))"
+           class="music-volume" />
+</div>
+
+
+@code {
+    private int currentIndex = 0;
+    private bool isPlaying = false;
+    private double volume = 1;
+    private bool _initialized = false;
+
+    private string currentTrackName => Path.GetFileNameWithoutExtension(AudioTracks.MusicPlaylist[currentIndex]);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+            await MazeInterop.InitAudioAsync(JS);
+            await MazeInterop.SetBackgroundVolumeAsync(JS, volume);
+        }
+    }
+
+    private async Task TogglePlay()
+    {
+        if (isPlaying)
+            await MazeInterop.PauseBackgroundMusicAsync(JS);
+        else
+            await MazeInterop.ResumeBackgroundMusicAsync(JS);
+
+        isPlaying = !isPlaying;
+    }
+
+    private async Task NextTrack()
+    {
+        currentIndex = (currentIndex + 1) % AudioTracks.MusicPlaylist.Length;
+        await MazeInterop.PlayBackgroundMusicAsync(JS, AudioTracks.MusicPlaylist[currentIndex]);
+        isPlaying = true;
+    }
+
+    private async Task SetVolume(double newVolume)
+    {
+        volume = newVolume;
+        await MazeInterop.SetBackgroundVolumeAsync(JS, volume);
+    }
+}

@@ -7,33 +7,25 @@
 @inject GameState GameState
 
 @using MazeGameBlazor.Shared.GameEngine.Models
+@using MazeGameBlazor.Client.Components.Audio;
 @implements IAsyncDisposable
 
 <PageTitle>Play the Maze Game</PageTitle>
 
 <div class="game-container">
-    <header class="game-header">
-        <h1>Maze Game</h1>
-        <p>
-            Find the exit
-            <img width="50" src="assets/sprites/items/goal.png" />
-            and avoid traps! Use the WASD keys to move.
-        </p>
-        <p>Press Start Button to spawn your character</p>
-    </header>
-
     <MazeAlgorithmSelector Value="GameState.SelectedAlgorithm"
                            OnChange="GameManager.OnAlgorithmChangeAsync" />
 
-    <MazeRenderer OnFocus="GameManager.FocusGameScreenAsync" />
-
-    <MazeHud MaxHearts="@GameState.MaxHearts"
-             CurrentHearts="@GameState.CurrentHearts"
-             InventorySlots="@GameState.InventorySlots"
-             Timer="@GameState.Timer"
-             StatusEffect="@GameState.StatusEffect" />
-
+    <BackgroundMusicPlayer />
     <MazeControls OnStart="@StartGame" OnRestart="@RestartGame" />
+
+
+    <MazeRenderer MaxHearts="@GameState.MaxHearts"
+                  CurrentHearts="@GameState.CurrentHearts"
+                  InventorySlots="@GameState.InventorySlots"
+                  Timer="@GameState.Timer"
+                  StatusEffect="@GameState.StatusEffect"
+                  OnFocus="GameManager.FocusGameScreenAsync" />
 </div>
 
 @code {
@@ -42,6 +34,7 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
         GameManager.NotifyUi = () =>
         {
             StateHasChanged();
@@ -49,8 +42,12 @@
         };
 
         await GameManager.InitializeAsync();
+
         _dotNetRef = DotNetObjectReference.Create(this);
+
+        // Register key listeners AND auto-focus logic
         await Js.InvokeVoidAsync("registerKeyListeners", _dotNetRef);
+        await Js.InvokeVoidAsync("autoFocusGame"); 
     }
 
     private async Task StartGame() => await GameManager.StartGameAsync();

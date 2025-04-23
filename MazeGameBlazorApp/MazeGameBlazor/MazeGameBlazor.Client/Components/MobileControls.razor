@@ -1,0 +1,73 @@
+﻿
+@* MobileControls.razor *@
+@code {
+    [Parameter] public EventCallback<string> OnPress { get; set; }
+    [Parameter] public EventCallback<string> OnRelease { get; set; }
+    [Parameter] public string Position { get; set; } = "left"; // "left" | "right"
+
+    private async Task Press(string key) => await OnPress.InvokeAsync(key);
+    private async Task Release(string key) => await OnRelease.InvokeAsync(key);
+}
+
+<div class='mobile-dpad @Position'>
+    <div class='dpad-row top'>
+        <button @onpointerdown='() => Press("w")' @onpointerup='() => Release("w")'>↑</button>
+    </div>
+    <div class='dpad-row middle'>
+        <button @onpointerdown='() => Press("a")' @onpointerup='() => Release("a")'>←</button>
+        <div class='dpad-center'></div>
+        <button @onpointerdown='() => Press("d")' @onpointerup='() => Release("d")'>→</button>
+    </div>
+    <div class='dpad-row bottom'>
+        <button @onpointerdown='() => Press("s")' @onpointerup='() => Release("s")'>↓</button>
+    </div>
+</div>
+
+
+<style>
+    .mobile-dpad {
+        position: absolute;
+        bottom: 20px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        background: rgba(20, 20, 20, 0.8);
+        border: 2px solid #00ffcc;
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 0 10px #00ffcc;
+    }
+
+    .mobile-dpad.left { left: 20px; }
+    .mobile-dpad.right { right: 20px; }
+
+    .dpad-row { display: flex; gap: 4px; justify-content: center; }
+
+    .dpad-center {
+        width: 40px;
+        height: 40px;
+    }
+
+    .mobile-dpad button {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #00ffcc;
+        background: #111;
+        border: 2px solid #00ffcc;
+        border-radius: 8px;
+        box-shadow: inset 0 0 5px #00ffcc;
+        cursor: pointer;
+        user-select: none;
+        touch-action: manipulation;
+    }
+
+    .mobile-dpad button:active {
+        background: #00ffcc;
+        color: #000;
+        transform: scale(0.95);
+    }
+</style>

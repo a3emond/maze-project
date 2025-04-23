@@ -1,8 +1,15 @@
 ﻿@rendermode InteractiveAuto
 @using MazeGameBlazor.Shared.GameEngine.Models
-<div class="game-screen" tabindex="0" @onfocus="HandleFocus">
+@inject MazeGameBlazor.Client.MazeGameManager GameManager
+@inject GameState GameState
+
+<div class="game-screen" tabindex="0" @onfocus='HandleFocus'>
     <canvas id="mazeCanvas"></canvas>
-    <canvas id="minimapCanvas"></canvas>
+    <div class="minimap-wrapper">
+        <canvas id="minimapCanvas"></canvas>
+        <div class="timer-top-right">@TimerDisplay</div>
+    </div>
+
 
     <div class="game-overlay" id="gameOverlay" style="display: none;">
         <div class="overlay-content">
@@ -11,19 +18,112 @@
         </div>
     </div>
 
-
     @if (!GameState.MazeInitialized)
     {
         <div class="loading-overlay">
             <div class="spinner"></div>
             <p>Generating maze...</p>
+            <div class="instructions">
+                <h1>Maze Game</h1>
+                <p>
+                    You awaken in a dark dungeon. The door locks behind you as poison fills the air.<br />
+                    You have exactly <strong>5 minutes</strong> to find the <strong>Key</strong>,
+                    unlock the <strong>Goal</strong>, and escape before the toxins claim your life.
+                </p>
+                <p>
+                    <strong>Controls:</strong> Use the <code>W A S D</code> keys to move.<br />
+                    Interact with items automatically by stepping over them.
+                </p>
+                <h3>Items</h3>
+                <ul style="display: flex; flex-wrap: wrap; gap: 1rem; padding-left: 0; list-style: none;">
+                    <li><img width="32" src="assets/sprites/items/keys/keys_1_1.png" /> Key</li>
+                    <li><img width="32" src="assets/sprites/items/potions/potion_large_red.png" /> Potion</li>
+                    <li><img width="32" src="assets/sprites/items/torch.png" /> Lantern</li>
+                    <li><img width="32" src="assets/sprites/items/compass.png" /> Compass</li>
+                    <li><img width="32" height="32" src="assets/sprites/items/portal.png" /> Teleport</li>
+                    <li><img width="32" src="assets/sprites/items/peaks/peaks_1.png" /> Trap</li>
+                    <li><img width="32" src="assets/sprites/items/start.png" /> Start</li>
+                    <li><img width="32" src="assets/sprites/items/goal.png" /> Goal</li>
+                </ul>
+            </div>
         </div>
     }
+
+    <!-- Integrated HUD Elements -->
+    <div class="hud hearts-top-left">
+        <div class="heart-container">
+            @for (var i = 0; i < MaxHearts; i++)
+            {
+                <img src="@GetHeartImage(i)" class="heart-icon" />
+            }
+        </div>
+        <div class="status-effect">@StatusEffect</div>
+    </div>
+
+    
+    <div class="hud inventory-bottom-right">
+        @for (var i = 0; i < InventorySlots.Length; i++)
+        {
+            <div class="inventory-slot">
+                @if (!string.IsNullOrEmpty(InventorySlots[i]))
+                {
+                    <img width="36" src="@InventorySlots[i]" />
+                }
+            </div>
+        }
+    </div>
+
+    <div class="hud controls-bottom-left">
+        <div class="mobile-controls">
+            <button @onpointerdown='() => Press("w")' @onpointerup='() => Release("w")'>↑</button>
+            <div class="mobile-controls-row">
+                <button @onpointerdown='() => Press("a")' @onpointerup='() => Release("a")'>←</button>
+                <button @onpointerdown='() => Press("s")' @onpointerup='() => Release("s")'>↓</button>
+                <button @onpointerdown='() => Press("d")' @onpointerup='() => Release("d")'>→</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
     [Parameter] public EventCallback OnFocus { get; set; }
-    [Inject] public GameState GameState { get; set; } = default!;
+    [Parameter] public int MaxHearts { get; set; }
+    [Parameter] public double CurrentHearts { get; set; }
+    [Parameter] public string[] InventorySlots { get; set; } = Array.Empty<string>();
+    [Parameter] public TimeSpan Timer { get; set; } = TimeSpan.Zero;
+    [Parameter] public string StatusEffect { get; set; } = "Normal";
+
+    private string TimerDisplay => Timer.ToString(@"mm\:ss");
+
+    private System.Timers.Timer? _refreshTimer;
+
+    protected override void OnInitialized()
+    {
+        _refreshTimer = new System.Timers.Timer(1000);
+        _refreshTimer.Elapsed += (_, _) => InvokeAsync(StateHasChanged);
+        _refreshTimer.Start();
+    }
+
+    public void Dispose()
+    {
+        _refreshTimer?.Dispose();
+    }
+
+    private string GetHeartImage(int index)
+    {
+        var value = CurrentHearts - index;
+        return value switch
+        {
+            >= 1.0 => "/assets/hud/health/heart_100.png",
+            >= 0.75 => "/assets/hud/health/heart_75.png",
+            >= 0.5 => "/assets/hud/health/heart_50.png",
+            >= 0.25 => "/assets/hud/health/heart_25.png",
+            _ => "/assets/hud/health/heart_0.png"
+        };
+    }
+
+    private async Task Press(string key) => await GameManager.HandleKeyPressAsync(key);
+    private void Release(string key) => GameManager.HandleKeyRelease(key);
 
     private async Task HandleFocus()
     {

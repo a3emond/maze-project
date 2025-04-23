@@ -208,11 +208,11 @@ body {
 /* Main Content */
 
 .content {
+    width: 100%;
     background-color: var(--background-main);
     box-shadow: inset 0 2px 4px var(--shadow-color);
     color: var(--text-primary);
     flex: 1;
-    padding: 2.5rem;
 }
 
 /* Footer */

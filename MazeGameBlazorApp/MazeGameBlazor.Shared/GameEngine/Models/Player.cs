@@ -125,28 +125,32 @@ public class Player
         {
             case ItemEffect.Heal:
                 Heal(0.5);
+                _state.PlayHealSound = true;
                 break;
             case ItemEffect.Unlock:
                 _state.GoalUnlocked = true;
                 _state.StatusEffect = "Goal Unlocked";
+                _state.PlayPowerUpSound = true;
                 break;
-
             case ItemEffect.Teleport:
                 TeleportToRandomLocation();
+                _state.PlayTeleportSound = true;
                 break;
             case ItemEffect.LightRadiusIncrease:
                 IncreaseVisionRadius();
+                _state.PlayPowerUpSound = true;
                 break;
             case ItemEffect.ShowDirection:
                 _state.StatusEffect = "Guided";
+                _state.PlayPowerUpSound = true;
                 break;
             case ItemEffect.Damage:
                 TakeDamage(0.25);
-                break;
-            default:
+                _state.PlayTrapDamageSound = true;
                 break;
         }
     }
+
 
     private void Heal(double amount)
     {
