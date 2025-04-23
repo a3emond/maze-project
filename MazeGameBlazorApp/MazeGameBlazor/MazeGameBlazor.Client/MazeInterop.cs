@@ -70,6 +70,11 @@ namespace MazeGameBlazor.Client
             await js.InvokeVoidAsync("AudioManager.resumeBackgroundMusic");
         }
 
+        public static async Task StopBackgroundMusicAsync(IJSRuntime js)
+        {
+            await js.InvokeVoidAsync("AudioManager.stopBackgroundMusic");
+        }
+
         public static async Task NextBackgroundTrackAsync(IJSRuntime js)
         {
             await js.InvokeVoidAsync("AudioManager.nextTrack");

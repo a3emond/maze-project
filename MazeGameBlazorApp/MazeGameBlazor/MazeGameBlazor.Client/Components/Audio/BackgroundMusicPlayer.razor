@@ -9,7 +9,6 @@
         </span>
     </div>
 
-
     <button class="music-button" @onclick="TogglePlay">
         @(isPlaying ? "Pause" : "Play")
     </button>
@@ -23,11 +22,10 @@
            class="music-volume" />
 </div>
 
-
 @code {
     private int currentIndex = 0;
     private bool isPlaying = false;
-    private double volume = 1;
+    private double volume = 1.0;
     private bool _initialized = false;
 
     private string currentTrackName => Path.GetFileNameWithoutExtension(AudioTracks.MusicPlaylist[currentIndex]);
@@ -45,9 +43,16 @@
     private async Task TogglePlay()
     {
         if (isPlaying)
+        {
             await MazeInterop.PauseBackgroundMusicAsync(JS);
+        }
         else
-            await MazeInterop.ResumeBackgroundMusicAsync(JS);
+        {
+            if (currentIndex < 0 || currentIndex >= AudioTracks.MusicPlaylist.Length)
+                currentIndex = 0;
+
+            await MazeInterop.PlayBackgroundMusicAsync(JS, AudioTracks.MusicPlaylist[currentIndex]);
+        }
 
         isPlaying = !isPlaying;
     }
