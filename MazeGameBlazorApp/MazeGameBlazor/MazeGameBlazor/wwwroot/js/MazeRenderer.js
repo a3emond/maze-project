@@ -3,23 +3,23 @@
 // -------------------------------------------------------------------------------
 console.log("MazeRenderer.js loaded.");
 
-//function supportsWebGL() {
-//    try {
-//        const canvas = document.createElement("canvas");
-//        const supported = !!(window.WebGLRenderingContext &&
-//            (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")));
-//        console.log("supportsWebGL:", supported);
-//        return supported;
-//    } catch (e) {
-//        console.log("supportsWebGL threw an error:", e);
-//        return false;
-//    }
-//}
-
 function supportsWebGL() {
-    console.warn("[TEST MODE] WebGL support forcibly disabled.");
-    return false; // <-- force Canvas2D regardless of device capability
+    try {
+        const canvas = document.createElement("canvas");
+        const supported = !!(window.WebGLRenderingContext &&
+            (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")));
+        console.log("supportsWebGL:", supported);
+        return supported;
+    } catch (e) {
+        console.log("supportsWebGL threw an error:", e);
+        return false;
+    }
 }
+
+//function supportsWebGL() {
+//    console.warn("[TEST MODE] WebGL support forcibly disabled.");
+//    return false; // <-- force Canvas2D regardless of device capability
+//}
 
 
 window.MazeRenderer = {
