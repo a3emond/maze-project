@@ -120,12 +120,11 @@ body {
     text-decoration: none;
 }
 
-.navbar-logo img {
-    display: block;
-    height: 50px; /* Adjust as needed */
-    width: auto;
-}
-
+    .navbar-logo img {
+        display: block;
+        height: 50px; /* Adjust as needed */
+        width: auto;
+    }
 
 /* Navigation Menu */
 
@@ -137,33 +136,35 @@ body {
     padding: 0;
 }
 
-.navbar-menu li { margin: 0; }
+    .navbar-menu li {
+        margin: 0;
+    }
 
-.navbar-menu a {
-    background-color: var(--button-primary-bg);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px var(--shadow-color);
-    color: var(--text-primary);
-    display: inline-block;
-    font-size: 1rem;
-    font-weight: 500;
-    padding: 0.8rem 1.2rem;
-    text-align: center;
-    text-decoration: none;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-}
+    .navbar-menu a {
+        background-color: var(--button-primary-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px var(--shadow-color);
+        color: var(--text-primary);
+        display: inline-block;
+        font-size: 1rem;
+        font-weight: 500;
+        padding: 0.8rem 1.2rem;
+        text-align: center;
+        text-decoration: none;
+        transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    }
 
-.navbar-menu a:hover {
-    background-color: var(--button-primary-hover-bg);
-    box-shadow: 0 4px 8px var(--shadow-color);
-    transform: translateY(-2px);
-}
+        .navbar-menu a:hover {
+            background-color: var(--button-primary-hover-bg);
+            box-shadow: 0 4px 8px var(--shadow-color);
+            transform: translateY(-2px);
+        }
 
-.navbar-menu .active {
-    background-color: var(--accent-secondary);
-    box-shadow: 0 4px 6px var(--shadow-color);
-    font-weight: bold;
-}
+    .navbar-menu .active {
+        background-color: var(--accent-secondary);
+        box-shadow: 0 4px 6px var(--shadow-color);
+        font-weight: bold;
+    }
 
 /* Hamburger Menu (Hidden on Desktop) */
 
@@ -184,26 +185,35 @@ body {
         background-color: var(--background-secondary);
         border-radius: 0 0 8px 8px;
         box-shadow: 0 2px 6px var(--shadow-color);
-        display: none;
         flex-direction: column;
         left: 0;
         padding: 1rem;
         position: absolute;
         top: 100%;
         width: 100%;
-    }
-
-    .navbar-menu.open { display: flex; }
-
-    .navbar-menu a {
+        /* Animated toggle support */
         display: block;
-        padding: 1rem;
-        text-align: center;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-in-out;
     }
 
-    .navbar-toggle { display: block; }
-}
+        .navbar-menu.open {
+            max-height: 800px;
+        }
 
+        .navbar-menu a,
+        .navbar-menu button {
+            display: block;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+        }
+
+    .navbar-toggle {
+        display: block;
+    }
+}
 
 /* Main Content */
 
