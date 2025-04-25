@@ -19,9 +19,9 @@
         // 🔊 Sound Effects Mapping
         // ================================
         public const string Loading = "epic-hybrid-logo-157092.mp3";
-        public const string Teleport = "time-warp-effect-85843.mp3";
+        public const string Teleport = "time-warp-effect-83543.mp3";
         public const string PowerUp = "game-bonus-144751.mp3";
-        public const string GameOver = "game-over-39-19830.mp3";
+        public const string GameOver = "game-over-39-199830.mp3";
         public const string PotionPickup = "video-game-bonus-323603.mp3";
         public const string WinGame = "winning-218995.mp3";
         public const string TrapDamage = "game-teleport-90735.mp3";

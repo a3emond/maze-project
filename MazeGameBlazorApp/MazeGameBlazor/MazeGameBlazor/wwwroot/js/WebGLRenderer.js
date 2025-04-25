@@ -138,35 +138,41 @@ function setupShaders(gl) {
     `;
 
     const fragmentShaderSource = `
-        precision mediump float;
-        varying vec2 v_texCoord;
-        uniform sampler2D u_image;
+    precision mediump float;
 
-        uniform vec4 u_overlayColor;
-        uniform vec2 u_playerScreenPos;
-        uniform float u_lightRadius;
-        uniform float u_canvasHeight;
+    varying vec2 v_texCoord;
+    uniform sampler2D u_image;
 
-        void main() {
-            vec4 base = texture2D(u_image, v_texCoord);
+    uniform vec2 u_playerScreenPos;
+    uniform float u_lightRadius;
+    uniform float u_canvasHeight;
 
-            // Flip Y to match canvas screen coords
-            vec2 fragPos = vec2(gl_FragCoord.x, u_canvasHeight - gl_FragCoord.y);
-            float dist = distance(fragPos, u_playerScreenPos);
+    void main() {
+        vec4 base = texture2D(u_image, v_texCoord);
 
-            // Gradient alpha falloff
-            float alpha = pow(smoothstep(0.0, u_lightRadius, dist), 1.2);
+        // Flip Y to match canvas screen coords
+        vec2 fragPos = vec2(gl_FragCoord.x, u_canvasHeight - gl_FragCoord.y);
+        float dist = distance(fragPos, u_playerScreenPos);
+        float norm = dist / u_lightRadius;
 
-            // Blueish fog fading to black
-            vec4 fog = mix(
-                vec4(0.0, 0.1, 0.2, 0.05),  // soft glow near center
-                vec4(0.0, 0.0, 0.0, 1.0),   // full black far away
-                alpha
-            );
+        // Poison fog color stops
+        vec4 color0 = vec4(0.392, 1.0, 0.705, 0.3);   // rgba(100,255,180,0.3)
+        vec4 color1 = vec4(0.47, 0.31, 1.0, 0.4);     // rgba(120,80,255,0.4)
+        vec4 color2 = vec4(0.31, 0.0, 0.55, 0.6);     // rgba(80,0,140,0.6)
+        vec4 color3 = vec4(0.0, 0.0, 0.0, 1.0);       // rgba(0,0,0,1.0)
 
-            gl_FragColor = mix(base, fog, fog.a);
+        vec4 fog;
+        if (norm < 0.3) {
+            fog = mix(color0, color1, norm / 0.3);
+        } else if (norm < 0.6) {
+            fog = mix(color1, color2, (norm - 0.3) / 0.3);
+        } else {
+            fog = mix(color2, color3, (norm - 0.6) / 0.4);
         }
-    `;
+
+        gl_FragColor = mix(base, fog, fog.a);
+    }
+`;
 
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);

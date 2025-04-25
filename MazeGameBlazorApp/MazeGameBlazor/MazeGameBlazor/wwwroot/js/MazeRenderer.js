@@ -3,18 +3,24 @@
 // -------------------------------------------------------------------------------
 console.log("MazeRenderer.js loaded.");
 
+//function supportsWebGL() {
+//    try {
+//        const canvas = document.createElement("canvas");
+//        const supported = !!(window.WebGLRenderingContext &&
+//            (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")));
+//        console.log("supportsWebGL:", supported);
+//        return supported;
+//    } catch (e) {
+//        console.log("supportsWebGL threw an error:", e);
+//        return false;
+//    }
+//}
+
 function supportsWebGL() {
-    try {
-        const canvas = document.createElement("canvas");
-        const supported = !!(window.WebGLRenderingContext &&
-            (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")));
-        console.log("supportsWebGL:", supported);
-        return supported;
-    } catch (e) {
-        console.log("supportsWebGL threw an error:", e);
-        return false;
-    }
+    console.warn("[TEST MODE] WebGL support forcibly disabled.");
+    return false; // <-- force Canvas2D regardless of device capability
 }
+
 
 window.MazeRenderer = {
     rendererType: "canvas2d",
@@ -22,7 +28,7 @@ window.MazeRenderer = {
     init: function (tileData, width, height) {
         console.log("MazeRenderer.init called.");
 
-        if (supportsWebGL()) {
+        if (supportsWebGL()) {   
             console.log("WebGL is supported. Initializing WebGL renderer...");
             this.rendererType = "webgl";
             window.MazeRendererType = "webgl";
